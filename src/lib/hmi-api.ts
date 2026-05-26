@@ -90,6 +90,13 @@ class Simulator {
     return { ok: true, message: `Simulated connection to ${ip}` };
   }
 
+  disconnect() {
+    this.state.connected = false;
+    this.state.outputs.forward = false;
+    this.state.outputs.reverse = false;
+    return { ok: true, message: `Simulated disconnect from ${this.state.ip}` };
+  }
+
   private tick() {
     // Translate memory commands -> outputs, enforce interlock.
     if (this.state.memory.stopCmd) {
