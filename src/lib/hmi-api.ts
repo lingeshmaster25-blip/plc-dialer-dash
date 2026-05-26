@@ -178,6 +178,23 @@ export const hmiApi = {
       return sim.connect(ip, rack, slot);
     }
   },
+  async disconnect() {
+    if (useSim) return sim.disconnect();
+    try {
+      const r = await realApi.disconnect();
+      return r;
+    } catch {
+      useSim = true;
+      return sim.disconnect();
+    }
+  },
+      useSim = false;
+      return r;
+    } catch {
+      useSim = true;
+      return sim.connect(ip, rack, slot);
+    }
+  },
   async status(): Promise<PlcStatus> {
     if (useSim) return sim.status();
     try {
