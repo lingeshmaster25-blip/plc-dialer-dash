@@ -52,6 +52,8 @@ export const realApi = {
       method: "POST",
       body: JSON.stringify({ ip, rack, slot }),
     }),
+  disconnect: () =>
+    call<{ ok: boolean; message: string }>("/disconnect", { method: "POST" }),
   status: () => call<PlcStatus>("/status"),
   forward: () => call<{ ok: boolean }>("/forward", { method: "POST" }),
   reverse: () => call<{ ok: boolean }>("/reverse", { method: "POST" }),
@@ -86,6 +88,13 @@ class Simulator {
     this.state.connected = true;
     this.state.lastError = undefined;
     return { ok: true, message: `Simulated connection to ${ip}` };
+  }
+
+  disconnect() {
+    this.state.connected = false;
+    this.state.outputs.forward = false;
+    this.state.outputs.reverse = false;
+    return { ok: true, message: `Simulated disconnect from ${this.state.ip}` };
   }
 
   private tick() {
@@ -167,6 +176,16 @@ export const hmiApi = {
     } catch {
       useSim = true;
       return sim.connect(ip, rack, slot);
+    }
+  },
+  async disconnect() {
+    if (useSim) return sim.disconnect();
+    try {
+      const r = await realApi.disconnect();
+      return r;
+    } catch {
+      useSim = true;
+      return sim.disconnect();
     }
   },
   async status(): Promise<PlcStatus> {

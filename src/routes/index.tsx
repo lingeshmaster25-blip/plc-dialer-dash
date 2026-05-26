@@ -78,6 +78,16 @@ function HmiDashboard() {
     }
   };
 
+  const handleDisconnect = async () => {
+    addLog("info", "Disconnecting from PLC…");
+    try {
+      const r = await hmiApi.disconnect();
+      addLog(r.ok ? "ok" : "error", r.message);
+    } catch (e) {
+      addLog("error", `Disconnect failed: ${(e as Error).message}`);
+    }
+  };
+
   const connected = status?.connected ?? false;
   const fwd = status?.outputs.forward ?? false;
   const rev = status?.outputs.reverse ?? false;
@@ -129,15 +139,24 @@ function HmiDashboard() {
               <h2 className="text-xs uppercase tracking-widest text-muted-foreground">
                 Motor Control
               </h2>
-              <div className="text-[10px] font-mono text-muted-foreground">
-                M0.0/M0.1/M0.2
+              <div className="flex items-center gap-3">
+                <div className="text-[10px] font-mono text-muted-foreground">
+                  I0.0/I0.1/I0.2
+                </div>
+                <button
+                  onClick={handleDisconnect}
+                  disabled={!connected}
+                  className="bg-red-600/80 hover:bg-red-500 text-white text-[10px] font-bold uppercase tracking-widest rounded px-3 py-1.5 transition disabled:opacity-40 disabled:cursor-not-allowed ring-1 ring-red-900"
+                >
+                  Disconnect
+                </button>
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 items-center justify-items-center">
               <ControlButton
                 variant="forward"
                 label="Forward"
-                sublabel="WRITE M0.0"
+                sublabel="WRITE I0.0"
                 active={fwd}
                 disabled={!connected || rev}
                 onClick={() => handleCmd("forward")}
@@ -145,14 +164,14 @@ function HmiDashboard() {
               <ControlButton
                 variant="estop"
                 label="STOP"
-                sublabel="WRITE M0.2"
+                sublabel="WRITE I0.2"
                 disabled={!connected}
                 onClick={() => handleCmd("stop")}
               />
               <ControlButton
                 variant="reverse"
                 label="Reverse"
-                sublabel="WRITE M0.1"
+                sublabel="WRITE I0.1"
                 active={rev}
                 disabled={!connected || fwd}
                 onClick={() => handleCmd("reverse")}

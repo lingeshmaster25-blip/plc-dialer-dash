@@ -45,6 +45,11 @@ app.post("/connect", asyncH(async (req, res) => {
   res.json({ ok: true, message: `Connected to ${plc.ip}` });
 }));
 
+app.post("/disconnect", asyncH(async (_req, res) => {
+  plc.disconnect();
+  res.json({ ok: true, message: `Disconnected from ${plc.ip}` });
+}));
+
 app.get("/status", (_req, res) => res.json(plc.snapshot()));
 
 app.post("/forward", asyncH(async (_req, res) => {
