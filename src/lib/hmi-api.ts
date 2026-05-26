@@ -52,6 +52,8 @@ export const realApi = {
       method: "POST",
       body: JSON.stringify({ ip, rack, slot }),
     }),
+  disconnect: () =>
+    call<{ ok: boolean; message: string }>("/disconnect", { method: "POST" }),
   status: () => call<PlcStatus>("/status"),
   forward: () => call<{ ok: boolean }>("/forward", { method: "POST" }),
   reverse: () => call<{ ok: boolean }>("/reverse", { method: "POST" }),
