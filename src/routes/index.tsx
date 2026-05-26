@@ -78,6 +78,16 @@ function HmiDashboard() {
     }
   };
 
+  const handleDisconnect = async () => {
+    addLog("info", "Disconnecting from PLC…");
+    try {
+      const r = await hmiApi.disconnect();
+      addLog(r.ok ? "ok" : "error", r.message);
+    } catch (e) {
+      addLog("error", `Disconnect failed: ${(e as Error).message}`);
+    }
+  };
+
   const connected = status?.connected ?? false;
   const fwd = status?.outputs.forward ?? false;
   const rev = status?.outputs.reverse ?? false;
