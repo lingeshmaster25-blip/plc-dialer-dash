@@ -172,18 +172,45 @@ class PlcService {
     });
   }
 
-  /** Forward command: M0.0 = 1, M0.1 = 0, M0.2 = 0 (interlock). */
+  /** Set/clear a single bit in QB0 (process output) atomically. */
+  writeOutputBit(bit, value) {
+    return new Promise((resolve, reject) => {
+      if (!this.connected) return reject(new Error("PLC not connected"));
+      this.client.ReadArea(
+        this.client.S7AreaPA, 0, 0, 1, this.client.S7WLByte,
+        (err, buf) => {
+          if (err) return reject(new Error(this.client.ErrorText(err)));
+          const newByte = SET_BIT(buf[0], bit, value);
+          const out = Buffer.from([newByte]);
+          this.client.WriteArea(
+            this.client.S7AreaPA, 0, 0, 1, this.client.S7WLByte, out,
+            (werr) => {
+              if (werr) return reject(new Error(this.client.ErrorText(werr)));
+              resolve(true);
+            }
+          );
+        }
+      );
+    });
+  }
+
+  // All three buttons drive the single physical output Q0.0.
+  // Forward/Reverse energize it, Stop de-energizes it. The mirror bits in
+  // MB0 are kept for the HMI status panel.
   async commandForward() {
-    await this.writeMemoryBit(1, false); // M0.1
-    await this.writeMemoryBit(2, false); // M0.2
-    await this.writeMemoryBit(0, true);  // M0.0
+    await this.writeOutputBit(0, true);   // Q0.0 ON
+    await this.writeMemoryBit(1, false);
+    await this.writeMemoryBit(2, false);
+    await this.writeMemoryBit(0, true);
   }
   async commandReverse() {
+    await this.writeOutputBit(0, true);   // Q0.0 ON
     await this.writeMemoryBit(0, false);
     await this.writeMemoryBit(2, false);
     await this.writeMemoryBit(1, true);
   }
   async commandStop() {
+    await this.writeOutputBit(0, false);  // Q0.0 OFF
     await this.writeMemoryBit(0, false);
     await this.writeMemoryBit(1, false);
     await this.writeMemoryBit(2, true);
