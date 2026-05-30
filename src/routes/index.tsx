@@ -141,7 +141,7 @@ function HmiDashboard() {
               </h2>
               <div className="flex items-center gap-3">
                 <div className="text-[10px] font-mono text-muted-foreground">
-                  I0.0/I0.1/I0.2
+                  M0.0/M0.1/M0.2
                 </div>
                 <button
                   onClick={handleDisconnect}
