@@ -150,18 +150,18 @@ class PlcService {
     this.scheduleReconnect();
   }
 
-  /** Set/clear a single bit in IB0 atomically (read-modify-write). */
-  writeInputBit(bit, value) {
+  /** Set/clear a single bit in MB0 atomically (read-modify-write). */
+  writeMemoryBit(bit, value) {
     return new Promise((resolve, reject) => {
       if (!this.connected) return reject(new Error("PLC not connected"));
       this.client.ReadArea(
-        this.client.S7AreaPE, 0, 0, 1, this.client.S7WLByte,
+        this.client.S7AreaMK, 0, 0, 1, this.client.S7WLByte,
         (err, buf) => {
           if (err) return reject(new Error(this.client.ErrorText(err)));
           const newByte = SET_BIT(buf[0], bit, value);
           const out = Buffer.from([newByte]);
           this.client.WriteArea(
-            this.client.S7AreaPE, 0, 0, 1, this.client.S7WLByte, out,
+            this.client.S7AreaMK, 0, 0, 1, this.client.S7WLByte, out,
             (werr) => {
               if (werr) return reject(new Error(this.client.ErrorText(werr)));
               resolve(true);
@@ -172,21 +172,21 @@ class PlcService {
     });
   }
 
-  /** Forward command: I0.0 = 1, I0.1 = 0, I0.2 = 0 (interlock). */
+  /** Forward command: M0.0 = 1, M0.1 = 0, M0.2 = 0 (interlock). */
   async commandForward() {
-    await this.writeInputBit(1, false); // I0.1
-    await this.writeInputBit(2, false); // I0.2
-    await this.writeInputBit(0, true);  // I0.0
+    await this.writeMemoryBit(1, false); // M0.1
+    await this.writeMemoryBit(2, false); // M0.2
+    await this.writeMemoryBit(0, true);  // M0.0
   }
   async commandReverse() {
-    await this.writeInputBit(0, false);
-    await this.writeInputBit(2, false);
-    await this.writeInputBit(1, true);
+    await this.writeMemoryBit(0, false);
+    await this.writeMemoryBit(2, false);
+    await this.writeMemoryBit(1, true);
   }
   async commandStop() {
-    await this.writeInputBit(0, false);
-    await this.writeInputBit(1, false);
-    await this.writeInputBit(2, true);
+    await this.writeMemoryBit(0, false);
+    await this.writeMemoryBit(1, false);
+    await this.writeMemoryBit(2, true);
   }
 
   snapshot() {
