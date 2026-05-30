@@ -141,7 +141,7 @@ function HmiDashboard() {
               </h2>
               <div className="flex items-center gap-3">
                 <div className="text-[10px] font-mono text-muted-foreground">
-                  I0.0/I0.1/I0.2
+                  M0.0/M0.1/M0.2
                 </div>
                 <button
                   onClick={handleDisconnect}
@@ -156,7 +156,7 @@ function HmiDashboard() {
               <ControlButton
                 variant="forward"
                 label="Forward"
-                sublabel="WRITE I0.0"
+                sublabel="WRITE M0.0"
                 active={fwd}
                 disabled={!connected || rev}
                 onClick={() => handleCmd("forward")}
@@ -164,14 +164,14 @@ function HmiDashboard() {
               <ControlButton
                 variant="estop"
                 label="STOP"
-                sublabel="WRITE I0.2"
+                sublabel="WRITE M0.2"
                 disabled={!connected}
                 onClick={() => handleCmd("stop")}
               />
               <ControlButton
                 variant="reverse"
                 label="Reverse"
-                sublabel="WRITE I0.1"
+                sublabel="WRITE M0.1"
                 active={rev}
                 disabled={!connected || fwd}
                 onClick={() => handleCmd("reverse")}
