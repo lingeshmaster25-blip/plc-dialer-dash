@@ -59,7 +59,7 @@ export const realApi = {
   forward: () => call<{ ok: boolean }>("/forward", { method: "POST" }),
   reverse: () => call<{ ok: boolean }>("/reverse", { method: "POST" }),
   stop: () => call<{ ok: boolean }>("/stop", { method: "POST" }),
-  writeTag: (tag: string, value: boolean) =>
+  writeTag: (tag: string, value: boolean | number) =>
     call<{ ok: boolean }>("/write", {
       method: "POST",
       body: JSON.stringify({ tag, value }),
@@ -154,24 +154,26 @@ class Simulator {
     return { ok: true };
   }
 
-  writeTag(tag: string, value: boolean) {
+  writeTag(tag: string, value: boolean | number) {
     if (!this.state.tags) this.state.tags = {};
-    this.state.tags[tag] = value;
+    this.state.tags[tag] = value as boolean | number;
     // Mirror well-known M0.x forces into the legacy memory/output fields
     if (tag === "Start_PB") {
-      this.state.memory.forwardCmd = value;
-      if (value) {
+      const b = Boolean(value);
+      this.state.memory.forwardCmd = b;
+      if (b) {
         this.state.memory.reverseCmd = false;
         this.state.memory.stopCmd = false;
       }
     } else if (tag === "Stop_PB") {
-      this.state.memory.reverseCmd = value;
-      if (value) {
+      const b = Boolean(value);
+      this.state.memory.reverseCmd = b;
+      if (b) {
         this.state.memory.forwardCmd = false;
         this.state.memory.stopCmd = false;
       }
     } else if (tag === "Reset_PB") {
-      this.state.memory.stopCmd = value;
+      this.state.memory.stopCmd = Boolean(value);
     }
     return { ok: true };
   }
@@ -238,7 +240,7 @@ export const hmiApi = {
     if (useSim) return sim.stop();
     try { return await realApi.stop(); } catch { useSim = true; return sim.stop(); }
   },
-  async writeTag(tag: string, value: boolean) {
+  async writeTag(tag: string, value: boolean | number) {
     if (useSim) return sim.writeTag(tag, value);
     try { return await realApi.writeTag(tag, value); }
     catch { useSim = true; return sim.writeTag(tag, value); }
