@@ -216,6 +216,34 @@ class PlcService {
     });
   }
 
+  /**
+   * Generic single-bit write to any I/Q/M address (e.g. "M0.0", "Q0.2").
+   * Used by the /write endpoint to drive force buttons from the UI.
+   */
+  writeBitByAddr(addr, value) {
+    const p = parseAddress(addr);
+    if (p.kind !== "bit") {
+      return Promise.reject(new Error(`writeBitByAddr: not a bit address: ${addr}`));
+    }
+    let area;
+    if (p.area === "Q") area = this.client.S7AreaPA;
+    else if (p.area === "M") area = this.client.S7AreaMK;
+    else if (p.area === "I") area = this.client.S7AreaPE;
+    else return Promise.reject(new Error(`writeBitByAddr: unsupported area ${p.area}`));
+
+    return new Promise((resolve, reject) => {
+      if (!this.connected) return reject(new Error("PLC not connected"));
+      this.client.ReadArea(area, 0, p.byte, 1, this.client.S7WLByte, (err, buf) => {
+        if (err) return reject(new Error(this.client.ErrorText(err)));
+        const out = Buffer.from([SET_BIT(buf[0], p.bit, !!value)]);
+        this.client.WriteArea(area, 0, p.byte, 1, this.client.S7WLByte, out, (werr) => {
+          if (werr) return reject(new Error(this.client.ErrorText(werr)));
+          resolve(true);
+        });
+      });
+    });
+  }
+
   async commandForward() {
     await this.writeOutputBit(0, true);
     await this.writeMemoryBit(1, false);
