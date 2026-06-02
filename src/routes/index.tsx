@@ -164,11 +164,11 @@ function HmiDashboard() {
             onWrite={handleStageWrite}
           />
 
-          <MonitorPanel tags={status?.tags} />
-
           <OutputStatusPanel tags={status?.tags} />
 
           <SensorStatusPanel tags={status?.tags} />
+
+          <MonitorPanel tags={status?.tags} />
         </section>
 
         {/* Right column: log + telemetry */}
