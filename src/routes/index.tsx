@@ -7,6 +7,7 @@ import { StatusLamp } from "@/components/hmi/StatusLamp";
 import { EventLog, type LogEntry } from "@/components/hmi/EventLog";
 import { SettingsPanel } from "@/components/hmi/SettingsPanel";
 import { TagPanel } from "@/components/hmi/TagPanel";
+import { ForcePanel } from "@/components/hmi/ForcePanel";
 
 export const Route = createFileRoute("/")({
   component: HmiDashboard,
@@ -78,6 +79,15 @@ function HmiDashboard() {
       addLog("error", `${cmd} failed: ${(e as Error).message}`);
     }
   };
+
+  const handleForce = useCallback(async (tag: string, value: boolean) => {
+    try {
+      await hmiApi.writeTag(tag, value);
+      addLog("info", `Force ${tag} = ${value ? "1" : "0"}`);
+    } catch (e) {
+      addLog("error", `Force ${tag} failed: ${(e as Error).message}`);
+    }
+  }, [addLog]);
 
   const handleDisconnect = async () => {
     addLog("info", "Disconnecting from PLC…");
@@ -184,6 +194,13 @@ function HmiDashboard() {
               </p>
             )}
           </div>
+
+          {/* Force buttons for newly-added catalog tags */}
+          <ForcePanel
+            tags={status?.tags}
+            disabled={!connected}
+            onWrite={handleForce}
+          />
 
           {/* Status lamps */}
           <div className="panel-bevel rounded-md p-6">
