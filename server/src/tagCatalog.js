@@ -36,11 +36,12 @@ const TAGS = [
   { name: "B_Fwd",               address: "Q1.0",      group: "Outputs",         type: "bool" },
   { name: "B_Rev",               address: "Q1.1",      group: "Outputs",         type: "bool" },
   { name: "Z_Up",                address: "Q1.2",      group: "Outputs",         type: "bool" },
+  { name: "Z_Down",              address: "Q1.3",      group: "Outputs",         type: "bool" },
   { name: "Cycle_Complete",      address: "Q1.5",      group: "Outputs",         type: "bool" },
   { name: "Fault_Alarm",         address: "Q1.6",      group: "Outputs",         type: "bool" },
 
-  // --- Sensor inputs ---
-  { name: "Emergency_Stop",      address: "I1.0",      group: "Sensors",         type: "bool" },  // FIX: was I0.3 (duplicate with Door_Open_LS)
+  // --- Sensor inputs (IB0 / IB1) ---
+  { name: "Emergency_Stop",      address: "I1.0",      group: "Sensors",         type: "bool" },
   { name: "Door_Open_LS",        address: "I0.3",      group: "Sensors",         type: "bool" },
   { name: "Door_Close_LS",       address: "I0.4",      group: "Sensors",         type: "bool" },
   { name: "Tray_Out_LS",         address: "I0.6",      group: "Sensors",         type: "bool" },
@@ -69,12 +70,12 @@ const TAGS = [
   { name: "B_Target",            address: "DB4.DBD12", group: "Target Positions", type: "real" },
   { name: "Z_Target",            address: "DB4.DBD16", group: "Target Positions", type: "real" },
 
-  // --- Actual positions (DB4 REALs) — FIX: reordered so addresses ascend Y→X→A→B→Z ---
+  // --- Actual positions (DB4 REALs) ---
   { name: "Y_ActualPos",         address: "DB4.DBD20", group: "Actual Positions", type: "real" },
   { name: "X_ActualPos",         address: "DB4.DBD24", group: "Actual Positions", type: "real" },
-  { name: "A_ActualPos",         address: "DB4.DBD28", group: "Actual Positions", type: "real" },
-  { name: "B_ActualPos",         address: "DB4.DBD32", group: "Actual Positions", type: "real" },
-  { name: "Z_ActualPos",         address: "DB4.DBD36", group: "Actual Positions", type: "real" },
+  { name: "B_ActualPos",         address: "DB4.DBD28", group: "Actual Positions", type: "real" },
+  { name: "Z_ActualPos",         address: "DB4.DBD32", group: "Actual Positions", type: "real" },
+  { name: "A_ActualPos",         address: "DB4.DBD36", group: "Actual Positions", type: "real" },
 
   // --- Watch words (M area) ---
   { name: "Step",                address: "MW100",     group: "Watch Values",    type: "int" },
