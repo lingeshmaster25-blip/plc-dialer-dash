@@ -5,7 +5,10 @@ import { ConnectionStatus } from "@/components/hmi/ConnectionStatus";
 import { EventLog, type LogEntry } from "@/components/hmi/EventLog";
 import { SettingsPanel } from "@/components/hmi/SettingsPanel";
 import { ForcePanel } from "@/components/hmi/ForcePanel";
+import { StageBinsPanel } from "@/components/hmi/StageBinsPanel";
+import { MonitorPanel } from "@/components/hmi/MonitorPanel";
 import { OutputStatusPanel } from "@/components/hmi/OutputStatusPanel";
+import { SensorStatusPanel } from "@/components/hmi/SensorStatusPanel";
 
 export const Route = createFileRoute("/")({
   component: HmiDashboard,
@@ -21,7 +24,7 @@ function HmiDashboard() {
     setLog((l) => [{ ts: Date.now(), level, message }, ...l].slice(0, 200));
   }, []);
 
-  // Poll status every 500ms
+  // Poll status every 500ms — drives real-time monitor + sensor lamps
   useEffect(() => {
     let cancelled = false;
     const tick = async () => {
@@ -78,6 +81,18 @@ function HmiDashboard() {
         addLog("info", `Force ${tag} = ${value ? "1" : "0"}`);
       } catch (e) {
         addLog("error", `Force ${tag} failed: ${(e as Error).message}`);
+      }
+    },
+    [addLog],
+  );
+
+  const handleStageWrite = useCallback(
+    async (tag: string, value: number) => {
+      try {
+        await hmiApi.writeTag(tag, value);
+        addLog("info", `${tag} = ${value}`);
+      } catch (e) {
+        addLog("error", `Write ${tag} failed: ${(e as Error).message}`);
       }
     },
     [addLog],
@@ -143,7 +158,17 @@ function HmiDashboard() {
             onDisconnect={handleDisconnect}
           />
 
+          <StageBinsPanel
+            tags={status?.tags}
+            disabled={!connected}
+            onWrite={handleStageWrite}
+          />
+
+          <MonitorPanel tags={status?.tags} />
+
           <OutputStatusPanel tags={status?.tags} />
+
+          <SensorStatusPanel tags={status?.tags} />
         </section>
 
         {/* Right column: log + telemetry */}
