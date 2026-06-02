@@ -24,6 +24,7 @@ export type PlcStatus = {
     reverseCmd: boolean; // M0.1
     stopCmd: boolean;    // M0.2
   };
+  tags?: Record<string, boolean | number | null>;
   lastError?: string;
   simulated?: boolean;
   timestamp: number;
