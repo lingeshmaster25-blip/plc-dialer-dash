@@ -6,6 +6,7 @@ import { ControlButton } from "@/components/hmi/ControlButton";
 import { StatusLamp } from "@/components/hmi/StatusLamp";
 import { EventLog, type LogEntry } from "@/components/hmi/EventLog";
 import { SettingsPanel } from "@/components/hmi/SettingsPanel";
+import { TagPanel } from "@/components/hmi/TagPanel";
 
 export const Route = createFileRoute("/")({
   component: HmiDashboard,
@@ -255,6 +256,8 @@ function HmiDashboard() {
               ))}
             </div>
           </div>
+
+          <TagPanel tags={status?.tags} />
         </section>
 
         {/* Right column: log */}
