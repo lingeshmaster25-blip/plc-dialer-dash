@@ -3,29 +3,30 @@
  *   - connect / disconnect
  *   - cyclic read every POLL_MS (default 500 ms)
  *   - auto-reconnect on failure
- *   - write helpers for memory bits (M0.0, M0.1, M0.2)
+ *   - write helpers for memory bits (M0.0, M0.1, M0.2) and output bits (Q0.0)
+ *   - reads the full tag catalog (TAGS) and exposes them in snapshot.tags
  *
- * Address map (matches the HMI frontend):
- *   Inputs  (IB0):
- *     I0.0 Start Forward
- *     I0.1 Stop
- *     I0.2 Open Limit Switch
- *     I0.3 Close Limit Switch
- *     I0.4 Start Reverse
- *   Outputs (QB0):
- *     Q0.0 Forward
- *     Q0.1 Reverse
- *   Memory  (MB0):
- *     M0.0 Forward Command
- *     M0.1 Reverse Command
- *     M0.2 Stop Command
+ * Hardware command mapping:
+ *   Forward / Reverse → Q0.0 ON   (+ M0.0 / M0.1 mirror)
+ *   Stop              → Q0.0 OFF  (+ M0.2 mirror)
  */
 
 const snap7 = require("node-snap7");
+const { TAGS, parseAddress } = require("./tagCatalog");
 
 const BIT = (byte, bit) => (byte & (1 << bit)) !== 0;
 const SET_BIT = (byte, bit, on) =>
   on ? byte | (1 << bit) : byte & ~(1 << bit);
+
+// Byte ranges to read for each area, large enough to cover all tags.
+const READ_PLAN = {
+  I:  [{ start: 0, len: 2 }],            // IB0..IB1
+  Q:  [{ start: 0, len: 2 }],            // QB0..QB1
+  M:  [{ start: 0, len: 20 },            // MB0..MB19  (M0.x, M2.x, M10.x, MW12..MW18)
+       { start: 100, len: 2 }],          // MW100
+  DB3:[{ start: 0, len: 10 }],           // DBW0..DBW8
+  DB4:[{ start: 0, len: 40 }],           // DBD0..DBD36
+};
 
 class PlcService {
   constructor({ ip, rack = 0, slot = 1, pollMs = 500, logger = console } = {}) {
@@ -41,16 +42,17 @@ class PlcService {
     this.pollTimer = null;
     this.reconnectTimer = null;
 
+    // Raw buffers per area (Buffer or null)
+    this.buffers = { I: null, Q: null, M0: null, M100: null, DB3: null, DB4: null };
+
     this.state = {
       inputs: {
-        startForward: false,
-        stop: false,
-        openLimit: false,
-        closeLimit: false,
-        startReverse: false,
+        startForward: false, stop: false, openLimit: false,
+        closeLimit: false,   startReverse: false,
       },
       outputs: { forward: false, reverse: false },
-      memory: { forwardCmd: false, reverseCmd: false, stopCmd: false },
+      memory:  { forwardCmd: false, reverseCmd: false, stopCmd: false },
+      tags: {},
       timestamp: Date.now(),
     };
   }
@@ -61,7 +63,6 @@ class PlcService {
     if (slot !== undefined) this.slot = slot;
   }
 
-  /** Connect to the PLC. Returns a promise. */
   connect() {
     return new Promise((resolve, reject) => {
       this.logger.log(`[PLC] Connecting to ${this.ip} (rack=${this.rack}, slot=${this.slot})…`);
@@ -95,7 +96,7 @@ class PlcService {
     if (this.reconnectTimer) return;
     this.reconnectTimer = setTimeout(() => {
       this.reconnectTimer = null;
-      this.connect().catch(() => {/* will reschedule */});
+      this.connect().catch(() => {});
     }, 3000);
   }
 
@@ -104,113 +105,131 @@ class PlcService {
     this.pollTimer = setInterval(() => this.pollOnce(), this.pollMs);
   }
 
-  /** Read 1 byte from inputs (IB0), outputs (QB0), memory (MB0). */
-  pollOnce() {
-    if (!this.connected) return;
-    // Reads are wrapped in try/catch; on any error we mark disconnected and reconnect.
-    this.client.ReadArea(
-      this.client.S7AreaPE, 0, 0, 1, this.client.S7WLByte,
-      (err, ibuf) => {
-        if (err) return this.handleIoError(err, "read I");
-        this.client.ReadArea(
-          this.client.S7AreaPA, 0, 0, 1, this.client.S7WLByte,
-          (err2, qbuf) => {
-            if (err2) return this.handleIoError(err2, "read Q");
-            this.client.ReadArea(
-              this.client.S7AreaMK, 0, 0, 1, this.client.S7WLByte,
-              (err3, mbuf) => {
-                if (err3) return this.handleIoError(err3, "read M");
-                const ib = ibuf[0], qb = qbuf[0], mb = mbuf[0];
-                this.state = {
-                  inputs: {
-                    startForward: BIT(ib, 0),
-                    stop:         BIT(ib, 1),
-                    openLimit:    BIT(ib, 2),
-                    closeLimit:   BIT(ib, 3),
-                    startReverse: BIT(ib, 4),
-                  },
-                  outputs: { forward: BIT(qb, 0), reverse: BIT(qb, 1) },
-                  memory:  { forwardCmd: BIT(mb, 0), reverseCmd: BIT(mb, 1), stopCmd: BIT(mb, 2) },
-                  timestamp: Date.now(),
-                };
-              }
-            );
-          }
-        );
-      }
-    );
+  // Promise wrapper around ReadArea
+  readArea(area, dbNum, start, len) {
+    return new Promise((resolve, reject) => {
+      this.client.ReadArea(area, dbNum, start, len, this.client.S7WLByte, (err, buf) => {
+        if (err) return reject(new Error(this.client.ErrorText(err)));
+        resolve(buf);
+      });
+    });
   }
 
-  handleIoError(err, op) {
-    this.lastError = this.client.ErrorText(err);
-    this.logger.warn(`[PLC] I/O error during ${op}: ${this.lastError}`);
+  async pollOnce() {
+    if (!this.connected) return;
+    try {
+      const [ib, qb, mb0, mb100, db3, db4] = await Promise.all([
+        this.readArea(this.client.S7AreaPE, 0, READ_PLAN.I[0].start, READ_PLAN.I[0].len),
+        this.readArea(this.client.S7AreaPA, 0, READ_PLAN.Q[0].start, READ_PLAN.Q[0].len),
+        this.readArea(this.client.S7AreaMK, 0, READ_PLAN.M[0].start, READ_PLAN.M[0].len),
+        this.readArea(this.client.S7AreaMK, 0, READ_PLAN.M[1].start, READ_PLAN.M[1].len),
+        this.readArea(this.client.S7AreaDB, 3, READ_PLAN.DB3[0].start, READ_PLAN.DB3[0].len),
+        this.readArea(this.client.S7AreaDB, 4, READ_PLAN.DB4[0].start, READ_PLAN.DB4[0].len),
+      ]);
+
+      this.buffers = { I: ib, Q: qb, M0: mb0, M100: mb100, DB3: db3, DB4: db4 };
+
+      // Legacy fixed fields (kept for the existing UI panels)
+      const ib0 = ib[0], qb0 = qb[0], mb = mb0[0];
+      this.state.inputs = {
+        startForward: BIT(ib0, 0),
+        stop:         BIT(ib0, 1),
+        openLimit:    BIT(ib0, 2),
+        closeLimit:   BIT(ib0, 3),
+        startReverse: BIT(ib0, 4),
+      };
+      this.state.outputs = { forward: BIT(qb0, 0), reverse: BIT(qb0, 1) };
+      this.state.memory  = { forwardCmd: BIT(mb, 0), reverseCmd: BIT(mb, 1), stopCmd: BIT(mb, 2) };
+
+      // Decode every tag from the catalog
+      this.state.tags = this.decodeTags();
+      this.state.timestamp = Date.now();
+    } catch (e) {
+      this.handleIoError(e);
+    }
+  }
+
+  // Pick the right buffer + offset for a parsed address.
+  bufferFor(p) {
+    if (p.area === "I") return { buf: this.buffers.I, off: p.byte };
+    if (p.area === "Q") return { buf: this.buffers.Q, off: p.byte };
+    if (p.area === "M") {
+      if (p.byte >= 100) return { buf: this.buffers.M100, off: p.byte - 100 };
+      return { buf: this.buffers.M0, off: p.byte };
+    }
+    if (p.area === "DB" && p.db === 3) return { buf: this.buffers.DB3, off: p.byte };
+    if (p.area === "DB" && p.db === 4) return { buf: this.buffers.DB4, off: p.byte };
+    return { buf: null, off: 0 };
+  }
+
+  decodeTags() {
+    const out = {};
+    for (const tag of TAGS) {
+      try {
+        const p = parseAddress(tag.address);
+        const { buf, off } = this.bufferFor(p);
+        if (!buf) { out[tag.name] = null; continue; }
+        if (p.kind === "bit")   out[tag.name] = BIT(buf[off], p.bit);
+        else if (p.kind === "word")  out[tag.name] = buf.readInt16BE(off);
+        else if (p.kind === "dword") out[tag.name] = buf.readFloatBE(off);
+      } catch {
+        out[tag.name] = null;
+      }
+    }
+    return out;
+  }
+
+  handleIoError(err) {
+    this.lastError = err.message || String(err);
+    this.logger.warn(`[PLC] I/O error: ${this.lastError}`);
     this.connected = false;
     if (this.pollTimer) { clearInterval(this.pollTimer); this.pollTimer = null; }
     try { this.client.Disconnect(); } catch (_) {}
     this.scheduleReconnect();
   }
 
-  /** Set/clear a single bit in MB0 atomically (read-modify-write). */
   writeMemoryBit(bit, value) {
     return new Promise((resolve, reject) => {
       if (!this.connected) return reject(new Error("PLC not connected"));
-      this.client.ReadArea(
-        this.client.S7AreaMK, 0, 0, 1, this.client.S7WLByte,
-        (err, buf) => {
-          if (err) return reject(new Error(this.client.ErrorText(err)));
-          const newByte = SET_BIT(buf[0], bit, value);
-          const out = Buffer.from([newByte]);
-          this.client.WriteArea(
-            this.client.S7AreaMK, 0, 0, 1, this.client.S7WLByte, out,
-            (werr) => {
-              if (werr) return reject(new Error(this.client.ErrorText(werr)));
-              resolve(true);
-            }
-          );
-        }
-      );
+      this.client.ReadArea(this.client.S7AreaMK, 0, 0, 1, this.client.S7WLByte, (err, buf) => {
+        if (err) return reject(new Error(this.client.ErrorText(err)));
+        const out = Buffer.from([SET_BIT(buf[0], bit, value)]);
+        this.client.WriteArea(this.client.S7AreaMK, 0, 0, 1, this.client.S7WLByte, out, (werr) => {
+          if (werr) return reject(new Error(this.client.ErrorText(werr)));
+          resolve(true);
+        });
+      });
     });
   }
 
-  /** Set/clear a single bit in QB0 (process output) atomically. */
   writeOutputBit(bit, value) {
     return new Promise((resolve, reject) => {
       if (!this.connected) return reject(new Error("PLC not connected"));
-      this.client.ReadArea(
-        this.client.S7AreaPA, 0, 0, 1, this.client.S7WLByte,
-        (err, buf) => {
-          if (err) return reject(new Error(this.client.ErrorText(err)));
-          const newByte = SET_BIT(buf[0], bit, value);
-          const out = Buffer.from([newByte]);
-          this.client.WriteArea(
-            this.client.S7AreaPA, 0, 0, 1, this.client.S7WLByte, out,
-            (werr) => {
-              if (werr) return reject(new Error(this.client.ErrorText(werr)));
-              resolve(true);
-            }
-          );
-        }
-      );
+      this.client.ReadArea(this.client.S7AreaPA, 0, 0, 1, this.client.S7WLByte, (err, buf) => {
+        if (err) return reject(new Error(this.client.ErrorText(err)));
+        const out = Buffer.from([SET_BIT(buf[0], bit, value)]);
+        this.client.WriteArea(this.client.S7AreaPA, 0, 0, 1, this.client.S7WLByte, out, (werr) => {
+          if (werr) return reject(new Error(this.client.ErrorText(werr)));
+          resolve(true);
+        });
+      });
     });
   }
 
-  // All three buttons drive the single physical output Q0.0.
-  // Forward/Reverse energize it, Stop de-energizes it. The mirror bits in
-  // MB0 are kept for the HMI status panel.
   async commandForward() {
-    await this.writeOutputBit(0, true);   // Q0.0 ON
+    await this.writeOutputBit(0, true);
     await this.writeMemoryBit(1, false);
     await this.writeMemoryBit(2, false);
     await this.writeMemoryBit(0, true);
   }
   async commandReverse() {
-    await this.writeOutputBit(0, true);   // Q0.0 ON
+    await this.writeOutputBit(0, true);
     await this.writeMemoryBit(0, false);
     await this.writeMemoryBit(2, false);
     await this.writeMemoryBit(1, true);
   }
   async commandStop() {
-    await this.writeOutputBit(0, false);  // Q0.0 OFF
+    await this.writeOutputBit(0, false);
     await this.writeMemoryBit(0, false);
     await this.writeMemoryBit(1, false);
     await this.writeMemoryBit(2, true);
@@ -224,7 +243,8 @@ class PlcService {
       slot: this.slot,
       inputs: this.state.inputs,
       outputs: this.state.outputs,
-      memory: this.state.memory,
+      memory:  this.state.memory,
+      tags:    this.state.tags,
       lastError: this.lastError || undefined,
       simulated: false,
       timestamp: this.state.timestamp,
@@ -232,4 +252,4 @@ class PlcService {
   }
 }
 
-module.exports = { PlcService };
+module.exports = { PlcService, TAGS };
