@@ -1,328 +1,347 @@
-/**
- * PlcService — wraps node-snap7 with:
- *   - connect / disconnect
- *   - cyclic read every POLL_MS (default 500 ms)
- *   - auto-reconnect on failure
- *   - write helpers for memory bits (M0.0, M0.1, M0.2) and output bits (Q0.0)
- *   - reads the full tag catalog (TAGS) and exposes them in snapshot.tags
- *
- * Hardware command mapping:
- *   Forward / Reverse → Q0.0 ON   (+ M0.0 / M0.1 mirror)
- *   Stop              → Q0.0 OFF  (+ M0.2 mirror)
- */
+// HMI API client. Talks to the Node.js + node-snap7 backend.
+// If backend is unreachable (e.g. running in Lovable preview without the local
+// server running), the client transparently falls back to a simulation mode so
+// the UI stays interactive.
 
-const snap7 = require("node-snap7");
-const { TAGS, parseAddress } = require("./tagCatalog");
-
-const BIT = (byte, bit) => (byte & (1 << bit)) !== 0;
-const SET_BIT = (byte, bit, on) =>
-  on ? byte | (1 << bit) : byte & ~(1 << bit);
-
-// Byte ranges to read for each area, large enough to cover all tags.
-const READ_PLAN = {
-  I:  [{ start: 0, len: 2 }],            // IB0..IB1
-  Q:  [{ start: 0, len: 2 }],            // QB0..QB1
-  M:  [{ start: 0, len: 20 },            // MB0..MB19  (M0.x, M2.x, M10.x, MW12..MW18)
-       { start: 100, len: 2 }],          // MW100
-  DB3:[{ start: 0, len: 10 }],           // DBW0..DBW8
-  DB4:[{ start: 0, len: 40 }],           // DBD0..DBD36
+export type PlcStatus = {
+  connected: boolean;
+  ip: string;
+  rack: number;
+  slot: number;
+  inputs: {
+    startForward: boolean; // I0.0
+    stop: boolean;         // I0.1
+    openLimit: boolean;    // I0.2
+    closeLimit: boolean;   // I0.3
+    startReverse: boolean; // I0.4
+  };
+  outputs: {
+    forward: boolean; // Q0.0
+    reverse: boolean; // Q0.1
+  };
+  memory: {
+    forwardCmd: boolean; // M0.0
+    reverseCmd: boolean; // M0.1
+    stopCmd: boolean;    // M0.2
+  };
+  tags?: Record<string, boolean | number | null>;
+  lastError?: string;
+  simulated?: boolean;
+  timestamp: number;
 };
 
-class PlcService {
-  constructor({ ip, rack = 0, slot = 1, pollMs = 500, logger = console } = {}) {
-    this.client = new snap7.S7Client();
-    this.ip = ip;
-    this.rack = rack;
-    this.slot = slot;
-    this.pollMs = pollMs;
-    this.logger = logger;
+const API_BASE =
+  (import.meta.env.VITE_HMI_API as string | undefined)?.replace(/\/$/, "") ||
+  "http://localhost:4000";
 
-    this.connected = false;
-    this.lastError = null;
-    this.pollTimer = null;
-    this.reconnectTimer = null;
+async function call<T>(path: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(`${API_BASE}${path}`, {
+    ...init,
+    headers: { "Content-Type": "application/json", ...(init?.headers || {}) },
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`HTTP ${res.status}: ${text || res.statusText}`);
+  }
+  return (await res.json()) as T;
+}
 
-    // Raw buffers per area (Buffer or null)
-    this.buffers = { I: null, Q: null, M0: null, M100: null, DB3: null, DB4: null };
+// ---------- Real API ----------
+export const realApi = {
+  connect: (ip: string, rack = 0, slot = 1) =>
+    call<{ ok: boolean; message: string }>("/connect", {
+      method: "POST",
+      body: JSON.stringify({ ip, rack, slot }),
+    }),
+  disconnect: () =>
+    call<{ ok: boolean; message: string }>("/disconnect", { method: "POST" }),
+  status: () => call<PlcStatus>("/status"),
+  forward: () => call<{ ok: boolean }>("/forward", { method: "POST" }),
+  reverse: () => call<{ ok: boolean }>("/reverse", { method: "POST" }),
+  stop: () => call<{ ok: boolean }>("/stop", { method: "POST" }),
+  writeTag: (tag: string, value: boolean | number) =>
+    call<{ ok: boolean }>("/write", {
+      method: "POST",
+      body: JSON.stringify({ tag, value }),
+    }),
+};
 
-    this.state = {
-      inputs: {
-        startForward: false, stop: false, openLimit: false,
-        closeLimit: false,   startReverse: false,
-      },
-      outputs: { forward: false, reverse: false },
-      memory:  { forwardCmd: false, reverseCmd: false, stopCmd: false },
-      tags: {},
-      timestamp: Date.now(),
-    };
+// ---------- Simulation fallback ----------
+// Mirrors the backend behavior so the UI works without a PLC.
+class Simulator {
+  state: PlcStatus = {
+    connected: false,
+    ip: "192.168.0.1",
+    rack: 0,
+    slot: 1,
+    inputs: {
+      startForward: false,
+      stop: false,
+      openLimit: false,
+      closeLimit: false,
+      startReverse: false,
+    },
+    outputs: { forward: false, reverse: false },
+    memory: { forwardCmd: false, reverseCmd: false, stopCmd: false },
+    tags: {},
+    simulated: true,
+    timestamp: Date.now(),
+  };
+
+  // Internal sim state for axes + watch values so the Live Monitor
+  // shows realistic moving numbers when no PLC is connected.
+  // Each axis has its own travel speed so they don't move in lockstep.
+  private axes = {
+    Y: { target: 120, actual: 14,  speed: 2.4 },
+    X: { target: 80,  actual: 33,  speed: 1.7 },
+    A: { target: 45,  actual: 8,   speed: 0.6 },
+    B: { target: 60,  actual: 52,  speed: 1.1 },
+    Z: { target: 30,  actual: 90,  speed: 0.8 },
+  };
+  private watch = {
+    Step: 0,
+    CurrentStage: 1,
+    SelectedBin: 0,
+    RackNo: 0,
+    RackBin: 0,
+  };
+
+  constructor() {
+    // Seed tags so the Live Monitor shows numbers immediately
+    // (even before the user hits Connect).
+    if (!this.state.tags) this.state.tags = {};
+    for (const [name, ax] of Object.entries(this.axes)) {
+      this.state.tags[`${name}_Target`]    = ax.target;
+      this.state.tags[`${name}_ActualPos`] = ax.actual;
+      this.state.tags[`${name}_InPos`]     = false;
+    }
+    this.state.tags.Step = this.watch.Step;
+    this.state.tags.CurrentStage = this.watch.CurrentStage;
+    this.state.tags.SelectedBin = this.watch.SelectedBin;
+    this.state.tags.RackNo = this.watch.RackNo;
+    this.state.tags.RackBin = this.watch.RackBin;
   }
 
-  configure({ ip, rack, slot }) {
-    if (ip) this.ip = ip;
-    if (rack !== undefined) this.rack = rack;
-    if (slot !== undefined) this.slot = slot;
-  }
-
-  connect() {
-    return new Promise((resolve, reject) => {
-      this.logger.log(`[PLC] Connecting to ${this.ip} (rack=${this.rack}, slot=${this.slot})…`);
-      this.client.ConnectTo(this.ip, this.rack, this.slot, (err) => {
-        if (err) {
-          this.connected = false;
-          this.lastError = this.client.ErrorText(err);
-          this.logger.error(`[PLC] Connect error: ${this.lastError}`);
-          this.scheduleReconnect();
-          return reject(new Error(this.lastError));
-        }
-        this.connected = true;
-        this.lastError = null;
-        this.logger.log(`[PLC] Connected.`);
-        this.startPolling();
-        resolve(true);
-      });
-    });
+  connect(ip: string, rack = 0, slot = 1) {
+    this.state.ip = ip;
+    this.state.rack = rack;
+    this.state.slot = slot;
+    this.state.connected = true;
+    this.state.lastError = undefined;
+    return { ok: true, message: `Simulated connection to ${ip}` };
   }
 
   disconnect() {
-    if (this.pollTimer) clearInterval(this.pollTimer);
-    if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
-    this.pollTimer = null;
-    this.reconnectTimer = null;
-    try { this.client.Disconnect(); } catch (_) {}
-    this.connected = false;
+    this.state.connected = false;
+    this.state.outputs.forward = false;
+    this.state.outputs.reverse = false;
+    return { ok: true, message: `Simulated disconnect from ${this.state.ip}` };
   }
 
-  scheduleReconnect() {
-    if (this.reconnectTimer) return;
-    this.reconnectTimer = setTimeout(() => {
-      this.reconnectTimer = null;
-      this.connect().catch(() => {});
-    }, 3000);
-  }
-
-  startPolling() {
-    if (this.pollTimer) clearInterval(this.pollTimer);
-    this.pollTimer = setInterval(() => this.pollOnce(), this.pollMs);
-  }
-
-  // Promise wrapper around ReadArea
-  readArea(area, dbNum, start, len) {
-    return new Promise((resolve, reject) => {
-      this.client.ReadArea(area, dbNum, start, len, this.client.S7WLByte, (err, buf) => {
-        if (err) return reject(new Error(this.client.ErrorText(err)));
-        resolve(buf);
-      });
-    });
-  }
-
-  async pollOnce() {
-    if (!this.connected) return;
-    try {
-      const [ib, qb, mb0, mb100, db3, db4] = await Promise.all([
-        this.readArea(this.client.S7AreaPE, 0, READ_PLAN.I[0].start, READ_PLAN.I[0].len),
-        this.readArea(this.client.S7AreaPA, 0, READ_PLAN.Q[0].start, READ_PLAN.Q[0].len),
-        this.readArea(this.client.S7AreaMK, 0, READ_PLAN.M[0].start, READ_PLAN.M[0].len),
-        this.readArea(this.client.S7AreaMK, 0, READ_PLAN.M[1].start, READ_PLAN.M[1].len),
-        this.readArea(this.client.S7AreaDB, 3, READ_PLAN.DB3[0].start, READ_PLAN.DB3[0].len),
-        this.readArea(this.client.S7AreaDB, 4, READ_PLAN.DB4[0].start, READ_PLAN.DB4[0].len),
-      ]);
-
-      this.buffers = { I: ib, Q: qb, M0: mb0, M100: mb100, DB3: db3, DB4: db4 };
-
-      // Legacy fixed fields (kept for the existing UI panels)
-      const ib0 = ib[0], qb0 = qb[0], mb = mb0[0];
-      this.state.inputs = {
-        startForward: BIT(ib0, 0),
-        stop:         BIT(ib0, 1),
-        openLimit:    BIT(ib0, 2),
-        closeLimit:   BIT(ib0, 3),
-        startReverse: BIT(ib0, 4),
-      };
-      this.state.outputs = { forward: BIT(qb0, 0), reverse: BIT(qb0, 1) };
-      this.state.memory  = { forwardCmd: BIT(mb, 0), reverseCmd: BIT(mb, 1), stopCmd: BIT(mb, 2) };
-
-      // Decode every tag from the catalog
-      this.state.tags = this.decodeTags();
-      this.state.timestamp = Date.now();
-    } catch (e) {
-      this.handleIoError(e);
+  private tick() {
+    // Translate memory commands -> outputs, enforce interlock.
+    if (this.state.memory.stopCmd) {
+      this.state.outputs.forward = false;
+      this.state.outputs.reverse = false;
+      this.state.memory.forwardCmd = false;
+      this.state.memory.reverseCmd = false;
+      this.state.memory.stopCmd = false;
+    } else if (this.state.memory.forwardCmd && !this.state.memory.reverseCmd) {
+      this.state.outputs.forward = true;
+      this.state.outputs.reverse = false;
+    } else if (this.state.memory.reverseCmd && !this.state.memory.forwardCmd) {
+      this.state.outputs.reverse = true;
+      this.state.outputs.forward = false;
     }
-  }
 
-  // Pick the right buffer + offset for a parsed address.
-  bufferFor(p) {
-    if (p.area === "I") return { buf: this.buffers.I, off: p.byte };
-    if (p.area === "Q") return { buf: this.buffers.Q, off: p.byte };
-    if (p.area === "M") {
-      if (p.byte >= 100) return { buf: this.buffers.M100, off: p.byte - 100 };
-      return { buf: this.buffers.M0, off: p.byte };
+    // Simulate limit switches occasionally toggling
+    if (this.state.outputs.forward) {
+      this.state.inputs.closeLimit = false;
+      if (Math.random() < 0.02) this.state.inputs.openLimit = true;
     }
-    if (p.area === "DB" && p.db === 3) return { buf: this.buffers.DB3, off: p.byte };
-    if (p.area === "DB" && p.db === 4) return { buf: this.buffers.DB4, off: p.byte };
-    return { buf: null, off: 0 };
-  }
+    if (this.state.outputs.reverse) {
+      this.state.inputs.openLimit = false;
+      if (Math.random() < 0.02) this.state.inputs.closeLimit = true;
+    }
 
-  decodeTags() {
-    const out = {};
-    for (const tag of TAGS) {
-      try {
-        const p = parseAddress(tag.address);
-        const { buf, off } = this.bufferFor(p);
-        if (!buf) { out[tag.name] = null; continue; }
-        if (p.kind === "bit")   out[tag.name] = BIT(buf[off], p.bit);
-        else if (p.kind === "word")  out[tag.name] = buf.readInt16BE(off);
-        else if (p.kind === "dword") out[tag.name] = buf.readFloatBE(off);
-      } catch {
-        out[tag.name] = null;
+    // --- Animate axes + watch values for the Live Monitor ---
+    if (!this.state.tags) this.state.tags = {};
+
+    // Occasionally each axis picks a new target so motion repeats
+    for (const ax of Object.values(this.axes)) {
+      // Pick a new target only when the axis has reached the current one
+      const settled = Math.abs(ax.target - ax.actual) < 0.5;
+      if (settled && Math.random() < 0.02) {
+        ax.target = Math.round(Math.random() * 250 + 5);
       }
     }
-    return out;
-  }
 
-  handleIoError(err) {
-    this.lastError = err.message || String(err);
-    this.logger.warn(`[PLC] I/O error: ${this.lastError}`);
-    this.connected = false;
-    if (this.pollTimer) { clearInterval(this.pollTimer); this.pollTimer = null; }
-    try { this.client.Disconnect(); } catch (_) {}
-    this.scheduleReconnect();
-  }
-
-  writeMemoryBit(bit, value) {
-    return new Promise((resolve, reject) => {
-      if (!this.connected) return reject(new Error("PLC not connected"));
-      this.client.ReadArea(this.client.S7AreaMK, 0, 0, 1, this.client.S7WLByte, (err, buf) => {
-        if (err) return reject(new Error(this.client.ErrorText(err)));
-        const out = Buffer.from([SET_BIT(buf[0], bit, value)]);
-        this.client.WriteArea(this.client.S7AreaMK, 0, 0, 1, this.client.S7WLByte, out, (werr) => {
-          if (werr) return reject(new Error(this.client.ErrorText(werr)));
-          resolve(true);
-        });
-      });
-    });
-  }
-
-  writeOutputBit(bit, value) {
-    return new Promise((resolve, reject) => {
-      if (!this.connected) return reject(new Error("PLC not connected"));
-      this.client.ReadArea(this.client.S7AreaPA, 0, 0, 1, this.client.S7WLByte, (err, buf) => {
-        if (err) return reject(new Error(this.client.ErrorText(err)));
-        const out = Buffer.from([SET_BIT(buf[0], bit, value)]);
-        this.client.WriteArea(this.client.S7AreaPA, 0, 0, 1, this.client.S7WLByte, out, (werr) => {
-          if (werr) return reject(new Error(this.client.ErrorText(werr)));
-          resolve(true);
-        });
-      });
-    });
-  }
-
-  /**
-   * Generic write keyed by tag address. Routes by parsed kind:
-   *   bit   -> writeBitByAddr (I/Q/M)
-   *   word  -> writeWordByAddr (M, DB)  — Int16 BE
-   *   dword -> writeDWordByAddr (DB)    — Float32 BE
-   */
-  writeByAddr(addr, value) {
-    const p = parseAddress(addr);
-    if (!this.connected) return Promise.reject(new Error("PLC not connected"));
-    if (p.kind === "bit") return this.writeBitByAddr(addr, !!value);
-    if (p.kind === "word") return this.writeWordByAddr(p, Number(value));
-    if (p.kind === "dword") return this.writeDWordByAddr(p, Number(value));
-    return Promise.reject(new Error(`writeByAddr: unsupported kind ${p.kind}`));
-  }
-
-  writeWordByAddr(p, intValue) {
-    let area, dbNum = 0;
-    if (p.area === "M") area = this.client.S7AreaMK;
-    else if (p.area === "DB") { area = this.client.S7AreaDB; dbNum = p.db; }
-    else return Promise.reject(new Error(`writeWordByAddr: unsupported area ${p.area}`));
-    const v = Math.max(-32768, Math.min(32767, Math.round(intValue)));
-    const buf = Buffer.alloc(2);
-    buf.writeInt16BE(v, 0);
-    return new Promise((resolve, reject) => {
-      this.client.WriteArea(area, dbNum, p.byte, 2, this.client.S7WLByte, buf, (err) => {
-        if (err) return reject(new Error(this.client.ErrorText(err)));
-        resolve(true);
-      });
-    });
-  }
-
-  writeDWordByAddr(p, floatValue) {
-    if (p.area !== "DB") {
-      return Promise.reject(new Error(`writeDWordByAddr: unsupported area ${p.area}`));
-    }
-    const buf = Buffer.alloc(4);
-    buf.writeFloatBE(Number(floatValue), 0);
-    return new Promise((resolve, reject) => {
-      this.client.WriteArea(this.client.S7AreaDB, p.db, p.byte, 4, this.client.S7WLByte, buf, (err) => {
-        if (err) return reject(new Error(this.client.ErrorText(err)));
-        resolve(true);
-      });
-    });
-  }
-
-  /**
-   * Generic single-bit write to any I/Q/M address (e.g. "M0.0", "Q0.2").
-   * Used by the /write endpoint to drive force buttons from the UI.
-   */
-  writeBitByAddr(addr, value) {
-    const p = parseAddress(addr);
-    if (p.kind !== "bit") {
-      return Promise.reject(new Error(`writeBitByAddr: not a bit address: ${addr}`));
-    }
-    let area;
-    if (p.area === "Q") area = this.client.S7AreaPA;
-    else if (p.area === "M") area = this.client.S7AreaMK;
-    else if (p.area === "I") area = this.client.S7AreaPE;
-    else return Promise.reject(new Error(`writeBitByAddr: unsupported area ${p.area}`));
-
-    return new Promise((resolve, reject) => {
-      if (!this.connected) return reject(new Error("PLC not connected"));
-      this.client.ReadArea(area, 0, p.byte, 1, this.client.S7WLByte, (err, buf) => {
-        if (err) return reject(new Error(this.client.ErrorText(err)));
-        const out = Buffer.from([SET_BIT(buf[0], p.bit, !!value)]);
-        this.client.WriteArea(area, 0, p.byte, 1, this.client.S7WLByte, out, (werr) => {
-          if (werr) return reject(new Error(this.client.ErrorText(werr)));
-          resolve(true);
-        });
-      });
-    });
-  }
-
-  async commandForward() {
-    await this.writeOutputBit(0, true);
-    await this.writeMemoryBit(1, false);
-    await this.writeMemoryBit(2, false);
-    await this.writeMemoryBit(0, true);
-  }
-  async commandReverse() {
-    await this.writeOutputBit(0, true);
-    await this.writeMemoryBit(0, false);
-    await this.writeMemoryBit(2, false);
-    await this.writeMemoryBit(1, true);
-  }
-  async commandStop() {
-    await this.writeOutputBit(0, false);
-    await this.writeMemoryBit(0, false);
-    await this.writeMemoryBit(1, false);
-    await this.writeMemoryBit(2, true);
-  }
-
-  snapshot() {
-    return {
-      connected: this.connected,
-      ip: this.ip,
-      rack: this.rack,
-      slot: this.slot,
-      inputs: this.state.inputs,
-      outputs: this.state.outputs,
-      memory:  this.state.memory,
-      tags:    this.state.tags,
-      lastError: this.lastError || undefined,
-      simulated: false,
-      timestamp: this.state.timestamp,
+    // Each tick, move actual toward target at its own speed and
+    // populate direction Q-bits + in-position M10.x bits, exactly
+    // the way a real PLC would publish them while motors are moving.
+    const DIRECTION_BITS: Record<string, [string, string]> = {
+      Y: ["Y_Fwd", "Y_Rev"],
+      X: ["X_Fwd", "X_Rev"],
+      A: ["A_Fwd", "A_Rev"],
+      B: ["B_Fwd", "B_Rev"],
+      Z: ["Z_Up",  "Z_Down"],
     };
+
+    for (const [name, ax] of Object.entries(this.axes)) {
+      const delta = ax.target - ax.actual;
+      const moving = Math.abs(delta) > 0.5;
+
+      if (moving) {
+        const step = Math.sign(delta) * Math.min(Math.abs(delta), ax.speed);
+        ax.actual = ax.actual + step;
+      } else {
+        // Settled at target — tiny jitter to look alive
+        ax.actual = ax.target + (Math.random() - 0.5) * 0.4;
+      }
+
+      const [fwdBit, revBit] = DIRECTION_BITS[name];
+      this.state.tags[`${name}_Target`]    = ax.target;
+      this.state.tags[`${name}_ActualPos`] = ax.actual;
+      this.state.tags[fwdBit]              = moving && delta > 0;
+      this.state.tags[revBit]              = moving && delta < 0;
+      this.state.tags[`${name}_InPos`]     = !moving;
+    }
+
+    // Watch values: Step counts, CurrentStage cycles 1..5, Rack/Bin drift
+    this.watch.Step = (this.watch.Step + 1) % 1000;
+    if (this.watch.Step % 200 === 0) {
+      this.watch.CurrentStage = (this.watch.CurrentStage % 5) + 1;
+      this.watch.SelectedBin = Math.floor(Math.random() * 85) + 1;
+    }
+    if (Math.random() < 0.05) {
+      this.watch.RackNo = Math.floor(Math.random() * 20) + 1;
+      this.watch.RackBin = Math.floor(Math.random() * 12) + 1;
+    }
+    this.state.tags.Step = this.watch.Step;
+    this.state.tags.CurrentStage = this.watch.CurrentStage;
+    this.state.tags.SelectedBin = this.watch.SelectedBin;
+    this.state.tags.RackNo = this.watch.RackNo;
+    this.state.tags.RackBin = this.watch.RackBin;
+
+    this.state.timestamp = Date.now();
+  }
+
+  status(): PlcStatus {
+    // Always tick so the Live Monitor stays animated even before Connect.
+    this.tick();
+    return JSON.parse(JSON.stringify(this.state));
+  }
+
+  forward() {
+    this.state.memory.forwardCmd = true;
+    this.state.memory.reverseCmd = false;
+    this.state.memory.stopCmd = false;
+    return { ok: true };
+  }
+  reverse() {
+    this.state.memory.reverseCmd = true;
+    this.state.memory.forwardCmd = false;
+    this.state.memory.stopCmd = false;
+    return { ok: true };
+  }
+  stop() {
+    this.state.memory.stopCmd = true;
+    return { ok: true };
+  }
+
+  writeTag(tag: string, value: boolean | number) {
+    if (!this.state.tags) this.state.tags = {};
+    this.state.tags[tag] = value as boolean | number;
+    // Mirror well-known M0.x forces into the legacy memory/output fields
+    if (tag === "Start_PB") {
+      const b = Boolean(value);
+      this.state.memory.forwardCmd = b;
+      if (b) {
+        this.state.memory.reverseCmd = false;
+        this.state.memory.stopCmd = false;
+      }
+    } else if (tag === "Stop_PB") {
+      const b = Boolean(value);
+      this.state.memory.reverseCmd = b;
+      if (b) {
+        this.state.memory.forwardCmd = false;
+        this.state.memory.stopCmd = false;
+      }
+    } else if (tag === "Reset_PB") {
+      this.state.memory.stopCmd = Boolean(value);
+    }
+    return { ok: true };
   }
 }
 
-module.exports = { PlcService, TAGS };
+const sim = new Simulator();
+
+// ---------- Smart API with auto-fallback ----------
+let useSim = false;
+let probed = false;
+
+async function probe() {
+  if (probed) return;
+  probed = true;
+  try {
+    await realApi.status();
+    useSim = false;
+  } catch {
+    useSim = true;
+  }
+}
+
+export const hmiApi = {
+  isSimulated: () => useSim,
+  async connect(ip: string, rack = 0, slot = 1) {
+    await probe();
+    try {
+      const r = await realApi.connect(ip, rack, slot);
+      useSim = false;
+      return r;
+    } catch {
+      useSim = true;
+      return sim.connect(ip, rack, slot);
+    }
+  },
+  async disconnect() {
+    if (useSim) return sim.disconnect();
+    try {
+      const r = await realApi.disconnect();
+      return r;
+    } catch {
+      useSim = true;
+      return sim.disconnect();
+    }
+  },
+  async status(): Promise<PlcStatus> {
+    if (useSim) return sim.status();
+    try {
+      // Real PLC mode: pass the backend response through as-is so the
+      // Live Monitor shows actual motor positions from DB4 (Targets +
+      // Actuals) and the watch words from MW. No sim values are mixed
+      // in. Sim is only used when the backend itself is unreachable.
+      return await realApi.status();
+    } catch {
+      useSim = true;
+      return sim.status();
+    }
+  },
+  async forward() {
+    if (useSim) return sim.forward();
+    try { return await realApi.forward(); } catch { useSim = true; return sim.forward(); }
+  },
+  async reverse() {
+    if (useSim) return sim.reverse();
+    try { return await realApi.reverse(); } catch { useSim = true; return sim.reverse(); }
+  },
+  async stop() {
+    if (useSim) return sim.stop();
+    try { return await realApi.stop(); } catch { useSim = true; return sim.stop(); }
+  },
+  async writeTag(tag: string, value: boolean | number) {
+    if (useSim) return sim.writeTag(tag, value);
+    try { return await realApi.writeTag(tag, value); }
+    catch { useSim = true; return sim.writeTag(tag, value); }
+  },
+};
