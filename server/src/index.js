@@ -70,16 +70,18 @@ app.post("/stop", asyncH(async (_req, res) => {
   res.json({ ok: true });
 }));
 
-// Generic single-bit write keyed by tag name from the catalog.
-// Body: { tag: "Start_PB", value: true }
+// Generic write keyed by tag name from the catalog.
+// Supports bools (M/Q bits), ints (DB words), and reals (DB dwords).
+// Body: { tag: "Start_PB", value: true }   or   { tag: "Stage1_Bin", value: 12 }
 app.post("/write", asyncH(async (req, res) => {
   const { tag, value } = req.body || {};
   const def = TAG_BY_NAME.get(tag);
   if (!def) return res.status(404).json({ ok: false, error: `Unknown tag: ${tag}` });
-  if (def.type !== "bool") {
-    return res.status(400).json({ ok: false, error: `Tag ${tag} is not a bool` });
+  if (def.type === "bool") {
+    await plc.writeByAddr(def.address, Boolean(value));
+  } else {
+    await plc.writeByAddr(def.address, Number(value));
   }
-  await plc.writeBitByAddr(def.address, Boolean(value));
   res.json({ ok: true });
 }));
 
