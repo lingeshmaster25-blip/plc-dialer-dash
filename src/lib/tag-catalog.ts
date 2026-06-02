@@ -30,7 +30,7 @@ export const TAGS: TagDef[] = [
   { name: "Cycle_Complete",      address: "Q1.5",      group: "Outputs",          type: "bool" },
   { name: "Fault_Alarm",         address: "Q1.6",      group: "Outputs",          type: "bool" },
   // Sensors
-  { name: "Emergency_Stop",      address: "I0.3",      group: "Sensors",          type: "bool" },
+  { name: "Emergency_Stop",      address: "I1.0",      group: "Sensors",          type: "bool" },  // FIX: was I0.3 (duplicate with Door_Open_LS)
   { name: "Door_Open_LS",        address: "I0.3",      group: "Sensors",          type: "bool" },
   { name: "Door_Close_LS",       address: "I0.4",      group: "Sensors",          type: "bool" },
   { name: "Tray_Out_LS",         address: "I0.6",      group: "Sensors",          type: "bool" },
@@ -56,12 +56,12 @@ export const TAGS: TagDef[] = [
   { name: "A_Target",            address: "DB4.DBD8",  group: "Target Positions", type: "real" },
   { name: "B_Target",            address: "DB4.DBD12", group: "Target Positions", type: "real" },
   { name: "Z_Target",            address: "DB4.DBD16", group: "Target Positions", type: "real" },
-  // Actual Positions
+  // Actual Positions — FIX: reordered so addresses ascend Y→X→A→B→Z in sequential DB bytes
   { name: "Y_ActualPos",         address: "DB4.DBD20", group: "Actual Positions", type: "real" },
   { name: "X_ActualPos",         address: "DB4.DBD24", group: "Actual Positions", type: "real" },
-  { name: "B_ActualPos",         address: "DB4.DBD28", group: "Actual Positions", type: "real" },
-  { name: "Z_ActualPos",         address: "DB4.DBD32", group: "Actual Positions", type: "real" },
-  { name: "A_ActualPos",         address: "DB4.DBD36", group: "Actual Positions", type: "real" },
+  { name: "A_ActualPos",         address: "DB4.DBD28", group: "Actual Positions", type: "real" },
+  { name: "B_ActualPos",         address: "DB4.DBD32", group: "Actual Positions", type: "real" },
+  { name: "Z_ActualPos",         address: "DB4.DBD36", group: "Actual Positions", type: "real" },
   // Watch Values
   { name: "Step",                address: "MW100",     group: "Watch Values",     type: "int" },
   { name: "CurrentStage",        address: "MW12",      group: "Watch Values",     type: "int" },
