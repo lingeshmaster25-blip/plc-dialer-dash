@@ -82,47 +82,6 @@ function BigForceButton({
   );
 }
 
-/* ---------- Small aux toggle (M_Run, SideSelect) ---------- */
-
-function AuxToggle({
-  tag, label, live, disabled, onWrite,
-}: {
-  tag: string;
-  label: string;
-  live: boolean;
-  disabled?: boolean;
-  onWrite: (tag: string, value: boolean) => void;
-}) {
-  const def = TAG_BY_NAME.get(tag);
-  return (
-    <button
-      type="button"
-      disabled={disabled || !def}
-      onClick={() => onWrite(tag, !live)}
-      className={`relative select-none rounded-md ring-1 px-3 py-2.5 text-left transition-all
-        active:translate-y-px disabled:opacity-40 disabled:cursor-not-allowed
-        ${live
-          ? "bg-sky-500 text-white ring-sky-300"
-          : "bg-sky-900/30 hover:bg-sky-800/40 ring-sky-500/30 text-sky-100"}`}
-    >
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-[12px] font-semibold uppercase tracking-wide leading-tight">
-          {label}
-        </span>
-        <span
-          className={`h-2 w-2 rounded-full ${
-            live ? "bg-white shadow-[0_0_8px_2px_rgba(255,255,255,0.6)]" : "bg-white/20"
-          }`}
-        />
-      </div>
-      <div className="mt-1 flex items-center justify-between text-[10px] font-mono opacity-70">
-        <span>{def?.address ?? "—"}</span>
-        <span>{live ? "1" : "0"}</span>
-      </div>
-    </button>
-  );
-}
-
 /* ---------- Panel ---------- */
 
 export function ForcePanel({ tags, disabled, onWrite, onDisconnect }: Props) {
@@ -179,34 +138,6 @@ export function ForcePanel({ tags, disabled, onWrite, onDisconnect }: Props) {
           disabled={disabled}
           onWrite={onWrite}
         />
-      </div>
-
-      {/* Aux latched toggles */}
-      <div className="mt-6 pt-5 border-t border-white/10">
-        <div className="flex items-baseline justify-between mb-2">
-          <h3 className="text-[10px] uppercase tracking-widest text-primary/80">
-            Auxiliary
-          </h3>
-          <span className="text-[10px] font-mono text-muted-foreground">
-            M0.x · toggle
-          </span>
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          <AuxToggle
-            tag="M_Run"
-            label="M Run"
-            live={Boolean(tags?.M_Run)}
-            disabled={disabled}
-            onWrite={onWrite}
-          />
-          <AuxToggle
-            tag="SideSelect"
-            label="Side Select"
-            live={Boolean(tags?.SideSelect)}
-            disabled={disabled}
-            onWrite={onWrite}
-          />
-        </div>
       </div>
     </div>
   );
