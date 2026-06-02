@@ -20,11 +20,12 @@ interface Section {
 const SECTIONS: Section[] = [
   {
     title: "Door Commands",
-    hint: "Q0.0 / Q0.1",
-    cols: 2,
+    hint: "Q0.0 / Q0.1 / Q1.3",
+    cols: 3,
     items: [
       { tag: "Door_Open_CMD",  label: "Door Open",  tone: "green" },
       { tag: "Door_Close_CMD", label: "Door Close", tone: "red" },
+      { tag: "Z_Down",         label: "Z Down",     tone: "amber" },
     ],
   },
   {
