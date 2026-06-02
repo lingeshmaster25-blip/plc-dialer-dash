@@ -38,11 +38,11 @@ const GROUPS: Group[] = [
     tone: "green",
     cols: 5,
     items: [
-      { tag: "Y_ActualPos", label: "Y" },
-      { tag: "X_ActualPos", label: "X" },
-      { tag: "A_ActualPos", label: "A" },
-      { tag: "B_ActualPos", label: "B" },
-      { tag: "Z_ActualPos", label: "Z" },
+      { tag: "Y_ActualPos", label: "Y" }, // DBD20
+      { tag: "X_ActualPos", label: "X" }, // DBD24
+      { tag: "B_ActualPos", label: "B" }, // DBD28
+      { tag: "Z_ActualPos", label: "Z" }, // DBD32
+      { tag: "A_ActualPos", label: "A" }, // DBD36
     ],
   },
   {
@@ -74,7 +74,7 @@ const COLS: Record<NonNullable<Group["cols"]>, string> = {
 
 function formatValue(def: TagDef | undefined, raw: boolean | number | null | undefined) {
   if (raw === null || raw === undefined) return "—";
-  if (def?.type === "real") return Number(raw).toFixed(2);
+  if (def?.type === "real") return String(Math.round(Number(raw)));
   return String(raw);
 }
 
