@@ -90,12 +90,13 @@ class Simulator {
 
   // Internal sim state for axes + watch values so the Live Monitor
   // shows realistic moving numbers when no PLC is connected.
+  // Each axis has its own travel speed so they don't move in lockstep.
   private axes = {
-    Y: { target: 120.0, actual: 0 },
-    X: {  target: 80.5, actual: 0 },
-    A: {  target: 45.25, actual: 0 },
-    B: {  target: 60.0, actual: 0 },
-    Z: {  target: 30.0, actual: 0 },
+    Y: { target: 120, actual: 14,  speed: 2.4 },
+    X: { target: 80,  actual: 33,  speed: 1.7 },
+    A: { target: 45,  actual: 8,   speed: 0.6 },
+    B: { target: 60,  actual: 52,  speed: 1.1 },
+    Z: { target: 30,  actual: 90,  speed: 0.8 },
   };
   private watch = {
     Step: 0,
@@ -110,8 +111,9 @@ class Simulator {
     // (even before the user hits Connect).
     if (!this.state.tags) this.state.tags = {};
     for (const [name, ax] of Object.entries(this.axes)) {
-      this.state.tags[`${name}_Target`] = ax.target;
+      this.state.tags[`${name}_Target`]    = ax.target;
       this.state.tags[`${name}_ActualPos`] = ax.actual;
+      this.state.tags[`${name}_InPos`]     = false;
     }
     this.state.tags.Step = this.watch.Step;
     this.state.tags.CurrentStage = this.watch.CurrentStage;
@@ -165,20 +167,44 @@ class Simulator {
     // --- Animate axes + watch values for the Live Monitor ---
     if (!this.state.tags) this.state.tags = {};
 
-    // Occasionally pick new random targets so values keep moving
-    if (Math.random() < 0.008) {
-      for (const ax of Object.values(this.axes)) {
-        ax.target = Math.round((Math.random() * 250 + 5) * 100) / 100;
+    // Occasionally each axis picks a new target so motion repeats
+    for (const ax of Object.values(this.axes)) {
+      // Pick a new target only when the axis has reached the current one
+      const settled = Math.abs(ax.target - ax.actual) < 0.5;
+      if (settled && Math.random() < 0.02) {
+        ax.target = Math.round(Math.random() * 250 + 5);
       }
     }
 
-    // Each tick, move actual toward target (max step 1.5 units)
+    // Each tick, move actual toward target at its own speed and
+    // populate direction Q-bits + in-position M10.x bits, exactly
+    // the way a real PLC would publish them while motors are moving.
+    const DIRECTION_BITS: Record<string, [string, string]> = {
+      Y: ["Y_Fwd", "Y_Rev"],
+      X: ["X_Fwd", "X_Rev"],
+      A: ["A_Fwd", "A_Rev"],
+      B: ["B_Fwd", "B_Rev"],
+      Z: ["Z_Up",  "Z_Down"],
+    };
+
     for (const [name, ax] of Object.entries(this.axes)) {
       const delta = ax.target - ax.actual;
-      const step = Math.sign(delta) * Math.min(Math.abs(delta), 1.5);
-      ax.actual = Math.round((ax.actual + step) * 100) / 100;
-      this.state.tags[`${name}_Target`] = ax.target;
+      const moving = Math.abs(delta) > 0.5;
+
+      if (moving) {
+        const step = Math.sign(delta) * Math.min(Math.abs(delta), ax.speed);
+        ax.actual = ax.actual + step;
+      } else {
+        // Settled at target — tiny jitter to look alive
+        ax.actual = ax.target + (Math.random() - 0.5) * 0.4;
+      }
+
+      const [fwdBit, revBit] = DIRECTION_BITS[name];
+      this.state.tags[`${name}_Target`]    = ax.target;
       this.state.tags[`${name}_ActualPos`] = ax.actual;
+      this.state.tags[fwdBit]              = moving && delta > 0;
+      this.state.tags[revBit]              = moving && delta < 0;
+      this.state.tags[`${name}_InPos`]     = !moving;
     }
 
     // Watch values: Step counts, CurrentStage cycles 1..5, Rack/Bin drift
@@ -291,18 +317,11 @@ export const hmiApi = {
   async status(): Promise<PlcStatus> {
     if (useSim) return sim.status();
     try {
-      const s = await realApi.status();
-      // Backend is reachable but no PLC is hooked up (tags empty) —
-      // tick the simulator so the Live Monitor keeps moving instead of
-      // showing "—" everywhere. Real values, when present, take priority.
-      const simS = sim.status();
-      const realTags = s.tags ?? {};
-      const merged: Record<string, boolean | number | null> = { ...(simS.tags ?? {}) };
-      for (const [k, v] of Object.entries(realTags)) {
-        if (v !== null && v !== undefined) merged[k] = v;
-      }
-      s.tags = merged;
-      return s;
+      // Real PLC mode: pass the backend response through as-is so the
+      // Live Monitor shows actual motor positions from DB4 (Targets +
+      // Actuals) and the watch words from MW. No sim values are mixed
+      // in. Sim is only used when the backend itself is unreachable.
+      return await realApi.status();
     } catch {
       useSim = true;
       return sim.status();
