@@ -291,7 +291,18 @@ export const hmiApi = {
   async status(): Promise<PlcStatus> {
     if (useSim) return sim.status();
     try {
-      return await realApi.status();
+      const s = await realApi.status();
+      // Backend is reachable but no PLC is hooked up (tags empty) —
+      // tick the simulator so the Live Monitor keeps moving instead of
+      // showing "—" everywhere. Real values, when present, take priority.
+      const simS = sim.status();
+      const realTags = s.tags ?? {};
+      const merged: Record<string, boolean | number | null> = { ...(simS.tags ?? {}) };
+      for (const [k, v] of Object.entries(realTags)) {
+        if (v !== null && v !== undefined) merged[k] = v;
+      }
+      s.tags = merged;
+      return s;
     } catch {
       useSim = true;
       return sim.status();
