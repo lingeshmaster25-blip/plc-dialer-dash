@@ -88,6 +88,38 @@ class Simulator {
     timestamp: Date.now(),
   };
 
+  // Internal sim state for axes + watch values so the Live Monitor
+  // shows realistic moving numbers when no PLC is connected.
+  private axes = {
+    Y: { target: 120.0, actual: 0 },
+    X: {  target: 80.5, actual: 0 },
+    A: {  target: 45.25, actual: 0 },
+    B: {  target: 60.0, actual: 0 },
+    Z: {  target: 30.0, actual: 0 },
+  };
+  private watch = {
+    Step: 0,
+    CurrentStage: 1,
+    SelectedBin: 0,
+    RackNo: 0,
+    RackBin: 0,
+  };
+
+  constructor() {
+    // Seed tags so the Live Monitor shows numbers immediately
+    // (even before the user hits Connect).
+    if (!this.state.tags) this.state.tags = {};
+    for (const [name, ax] of Object.entries(this.axes)) {
+      this.state.tags[`${name}_Target`] = ax.target;
+      this.state.tags[`${name}_ActualPos`] = ax.actual;
+    }
+    this.state.tags.Step = this.watch.Step;
+    this.state.tags.CurrentStage = this.watch.CurrentStage;
+    this.state.tags.SelectedBin = this.watch.SelectedBin;
+    this.state.tags.RackNo = this.watch.RackNo;
+    this.state.tags.RackBin = this.watch.RackBin;
+  }
+
   connect(ip: string, rack = 0, slot = 1) {
     this.state.ip = ip;
     this.state.rack = rack;
@@ -129,11 +161,48 @@ class Simulator {
       this.state.inputs.openLimit = false;
       if (Math.random() < 0.02) this.state.inputs.closeLimit = true;
     }
+
+    // --- Animate axes + watch values for the Live Monitor ---
+    if (!this.state.tags) this.state.tags = {};
+
+    // Occasionally pick new random targets so values keep moving
+    if (Math.random() < 0.008) {
+      for (const ax of Object.values(this.axes)) {
+        ax.target = Math.round((Math.random() * 250 + 5) * 100) / 100;
+      }
+    }
+
+    // Each tick, move actual toward target (max step 1.5 units)
+    for (const [name, ax] of Object.entries(this.axes)) {
+      const delta = ax.target - ax.actual;
+      const step = Math.sign(delta) * Math.min(Math.abs(delta), 1.5);
+      ax.actual = Math.round((ax.actual + step) * 100) / 100;
+      this.state.tags[`${name}_Target`] = ax.target;
+      this.state.tags[`${name}_ActualPos`] = ax.actual;
+    }
+
+    // Watch values: Step counts, CurrentStage cycles 1..5, Rack/Bin drift
+    this.watch.Step = (this.watch.Step + 1) % 1000;
+    if (this.watch.Step % 200 === 0) {
+      this.watch.CurrentStage = (this.watch.CurrentStage % 5) + 1;
+      this.watch.SelectedBin = Math.floor(Math.random() * 85) + 1;
+    }
+    if (Math.random() < 0.05) {
+      this.watch.RackNo = Math.floor(Math.random() * 20) + 1;
+      this.watch.RackBin = Math.floor(Math.random() * 12) + 1;
+    }
+    this.state.tags.Step = this.watch.Step;
+    this.state.tags.CurrentStage = this.watch.CurrentStage;
+    this.state.tags.SelectedBin = this.watch.SelectedBin;
+    this.state.tags.RackNo = this.watch.RackNo;
+    this.state.tags.RackBin = this.watch.RackBin;
+
     this.state.timestamp = Date.now();
   }
 
   status(): PlcStatus {
-    if (this.state.connected) this.tick();
+    // Always tick so the Live Monitor stays animated even before Connect.
+    this.tick();
     return JSON.parse(JSON.stringify(this.state));
   }
 
