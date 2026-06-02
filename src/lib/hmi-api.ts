@@ -59,6 +59,11 @@ export const realApi = {
   forward: () => call<{ ok: boolean }>("/forward", { method: "POST" }),
   reverse: () => call<{ ok: boolean }>("/reverse", { method: "POST" }),
   stop: () => call<{ ok: boolean }>("/stop", { method: "POST" }),
+  writeTag: (tag: string, value: boolean) =>
+    call<{ ok: boolean }>("/write", {
+      method: "POST",
+      body: JSON.stringify({ tag, value }),
+    }),
 };
 
 // ---------- Simulation fallback ----------
@@ -148,6 +153,28 @@ class Simulator {
     this.state.memory.stopCmd = true;
     return { ok: true };
   }
+
+  writeTag(tag: string, value: boolean) {
+    if (!this.state.tags) this.state.tags = {};
+    this.state.tags[tag] = value;
+    // Mirror well-known M0.x forces into the legacy memory/output fields
+    if (tag === "Start_PB") {
+      this.state.memory.forwardCmd = value;
+      if (value) {
+        this.state.memory.reverseCmd = false;
+        this.state.memory.stopCmd = false;
+      }
+    } else if (tag === "Stop_PB") {
+      this.state.memory.reverseCmd = value;
+      if (value) {
+        this.state.memory.forwardCmd = false;
+        this.state.memory.stopCmd = false;
+      }
+    } else if (tag === "Reset_PB") {
+      this.state.memory.stopCmd = value;
+    }
+    return { ok: true };
+  }
 }
 
 const sim = new Simulator();
@@ -210,5 +237,10 @@ export const hmiApi = {
   async stop() {
     if (useSim) return sim.stop();
     try { return await realApi.stop(); } catch { useSim = true; return sim.stop(); }
+  },
+  async writeTag(tag: string, value: boolean) {
+    if (useSim) return sim.writeTag(tag, value);
+    try { return await realApi.writeTag(tag, value); }
+    catch { useSim = true; return sim.writeTag(tag, value); }
   },
 };
