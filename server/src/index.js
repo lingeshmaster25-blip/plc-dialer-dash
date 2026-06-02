@@ -12,6 +12,9 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const { PlcService } = require("./plcService");
+const { TAGS } = require("./tagCatalog");
+
+const TAG_BY_NAME = new Map(TAGS.map((t) => [t.name, t]));
 
 const PORT = Number(process.env.PORT || 4000);
 const PLC_IP = process.env.PLC_IP || "192.168.0.1";
@@ -64,6 +67,19 @@ app.post("/reverse", asyncH(async (_req, res) => {
 
 app.post("/stop", asyncH(async (_req, res) => {
   await plc.commandStop();
+  res.json({ ok: true });
+}));
+
+// Generic single-bit write keyed by tag name from the catalog.
+// Body: { tag: "Start_PB", value: true }
+app.post("/write", asyncH(async (req, res) => {
+  const { tag, value } = req.body || {};
+  const def = TAG_BY_NAME.get(tag);
+  if (!def) return res.status(404).json({ ok: false, error: `Unknown tag: ${tag}` });
+  if (def.type !== "bool") {
+    return res.status(400).json({ ok: false, error: `Tag ${tag} is not a bool` });
+  }
+  await plc.writeBitByAddr(def.address, Boolean(value));
   res.json({ ok: true });
 }));
 
