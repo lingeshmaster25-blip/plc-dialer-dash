@@ -217,6 +217,51 @@ class PlcService {
   }
 
   /**
+   * Generic write keyed by tag address. Routes by parsed kind:
+   *   bit   -> writeBitByAddr (I/Q/M)
+   *   word  -> writeWordByAddr (M, DB)  — Int16 BE
+   *   dword -> writeDWordByAddr (DB)    — Float32 BE
+   */
+  writeByAddr(addr, value) {
+    const p = parseAddress(addr);
+    if (!this.connected) return Promise.reject(new Error("PLC not connected"));
+    if (p.kind === "bit") return this.writeBitByAddr(addr, !!value);
+    if (p.kind === "word") return this.writeWordByAddr(p, Number(value));
+    if (p.kind === "dword") return this.writeDWordByAddr(p, Number(value));
+    return Promise.reject(new Error(`writeByAddr: unsupported kind ${p.kind}`));
+  }
+
+  writeWordByAddr(p, intValue) {
+    let area, dbNum = 0;
+    if (p.area === "M") area = this.client.S7AreaMK;
+    else if (p.area === "DB") { area = this.client.S7AreaDB; dbNum = p.db; }
+    else return Promise.reject(new Error(`writeWordByAddr: unsupported area ${p.area}`));
+    const v = Math.max(-32768, Math.min(32767, Math.round(intValue)));
+    const buf = Buffer.alloc(2);
+    buf.writeInt16BE(v, 0);
+    return new Promise((resolve, reject) => {
+      this.client.WriteArea(area, dbNum, p.byte, 2, this.client.S7WLByte, buf, (err) => {
+        if (err) return reject(new Error(this.client.ErrorText(err)));
+        resolve(true);
+      });
+    });
+  }
+
+  writeDWordByAddr(p, floatValue) {
+    if (p.area !== "DB") {
+      return Promise.reject(new Error(`writeDWordByAddr: unsupported area ${p.area}`));
+    }
+    const buf = Buffer.alloc(4);
+    buf.writeFloatBE(Number(floatValue), 0);
+    return new Promise((resolve, reject) => {
+      this.client.WriteArea(this.client.S7AreaDB, p.db, p.byte, 4, this.client.S7WLByte, buf, (err) => {
+        if (err) return reject(new Error(this.client.ErrorText(err)));
+        resolve(true);
+      });
+    });
+  }
+
+  /**
    * Generic single-bit write to any I/Q/M address (e.g. "M0.0", "Q0.2").
    * Used by the /write endpoint to drive force buttons from the UI.
    */
