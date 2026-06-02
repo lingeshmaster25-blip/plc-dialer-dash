@@ -78,6 +78,7 @@ class Simulator {
     },
     outputs: { forward: false, reverse: false },
     memory: { forwardCmd: false, reverseCmd: false, stopCmd: false },
+    tags: {},
     simulated: true,
     timestamp: Date.now(),
   };
