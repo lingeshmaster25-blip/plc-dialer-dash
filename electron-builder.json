@@ -1,24 +1,56 @@
 {
   "appId": "com.plcdialer.dash",
   "productName": "PLC Dialer Dash",
-  "directories": { "output": "dist-electron", "buildResources": "build-resources" },
-  "files": ["dist-spa/**/*", "electron/**/*", "node_modules/**/*", "package.json"],
-  "extraResources": [{ "from": "server", "to": "server", "filter": ["**/*", "!node_modules"] }],
+  "copyright": "Copyright © 2026",
+
+  "directories": {
+    "output": "dist-electron",
+    "buildResources": "build-resources"
+  },
+
+  "files": [
+    "dist-spa/**/*",
+    "electron/**/*",
+    "node_modules/**/*",
+    "package.json"
+  ],
+
+  "extraResources": [
+    {
+      "from": "server",
+      "to": "server",
+      "filter": ["**/*", "!node_modules"]
+    }
+  ],
+
   "win": {
     "target": [
-      { "target": "nsis", "arch": ["x64"] },
-      { "target": "portable", "arch": ["x64"] }
+      {
+        "target": "nsis",
+        "arch": ["x64"]
+      },
+      {
+        "target": "portable",
+        "arch": ["x64"]
+      }
     ],
     "icon": "build-resources/icon.ico"
   },
+
   "nsis": {
     "oneClick": false,
     "allowToChangeInstallationDirectory": true,
+    "installerIcon": "build-resources/icon.ico",
+    "uninstallerIcon": "build-resources/icon.ico",
     "createDesktopShortcut": true,
     "createStartMenuShortcut": true,
     "shortcutName": "PLC Dialer Dash",
     "include": "build-resources/installer.nsh"
   },
-  "extraMetadata": { "main": "electron/main.js" },
-  "afterPack": "scripts/afterPack.js"
+
+  "extraMetadata": {
+    "main": "electron/main.js"
+  },
+
+  "afterPack": "scripts/afterPack.cjs"
 }
