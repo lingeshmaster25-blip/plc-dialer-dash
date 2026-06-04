@@ -7,7 +7,10 @@ import path from "path";
 
 export default defineConfig({
   plugins: [
-    TanStackRouterVite({ target: "react-spa", autoCodeSplitting: true }),
+    TanStackRouterVite({
+      target: "react",
+      autoCodeSplitting: true,
+    }),
     react(),
     tailwindcss(),
     tsconfigPaths(),
@@ -22,7 +25,9 @@ export default defineConfig({
   build: {
     outDir: "dist-spa",
     emptyOutDir: true,
-    rollupOptions: { input: path.resolve(__dirname, "index.electron.html") },
+    rollupOptions: {
+      input: path.resolve(__dirname, "index.electron.html"),
+    },
   },
   base: "./",
 });
