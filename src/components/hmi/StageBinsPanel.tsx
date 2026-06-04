@@ -53,7 +53,7 @@ export function StageBinsPanel({ tags, disabled, onWrite }: Props) {
           Stage Bin Selection
         </h2>
         <span className="text-[10px] font-mono text-muted-foreground">
-          DB3.DBW0 – DBW8 · 1 to {MAX_BIN}
+          DB3.DBW10 – DBW18 · 1 to {MAX_BIN}
         </span>
       </div>
 
