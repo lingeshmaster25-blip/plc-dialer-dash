@@ -19,7 +19,7 @@
     {
       "from": "server",
       "to": "server",
-      "filter": ["**/*", "!node_modules"]
+      "filter": ["**/*"]
     }
   ],
 
