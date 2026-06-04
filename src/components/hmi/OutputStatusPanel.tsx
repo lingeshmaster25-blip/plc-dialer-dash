@@ -57,6 +57,8 @@ const SECTIONS: Section[] = [
       { tag: "Bin_over_Height",    label: "Bin Over Height",     tone: "amber" },
     ],
   },
+];
+
 
 const TONE: Record<Tone, { on: string; off: string }> = {
   green: {
