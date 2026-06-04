@@ -111,13 +111,21 @@ export function ForcePanel({ tags, disabled, onWrite, onDisconnect }: Props) {
         </div>
       </div>
 
-      {/* Big 3 — replaces the old Motor Control */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 items-center justify-items-center">
+      {/* Big 4 — Start / Home / Stop / Reset */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 items-center justify-items-center">
         <BigForceButton
           tag="Start_PB"
           label="Start"
           tone="green"
           live={start}
+          disabled={disabled}
+          onWrite={onWrite}
+        />
+        <BigForceButton
+          tag="Home_Button"
+          label="Home"
+          tone="blue"
+          live={Boolean(tags?.Home_Button)}
           disabled={disabled}
           onWrite={onWrite}
         />
