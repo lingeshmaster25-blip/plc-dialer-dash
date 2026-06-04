@@ -46,7 +46,5 @@
 
   "extraMetadata": {
     "main": "electron/main.js"
-  },
-
-  "afterPack": "scripts/afterPack.cjs"
+  }
 }
