@@ -92,5 +92,8 @@
     "concurrently": "^8.2.2",
     "wait-on": "^7.2.0"
   },
-  "main": "electron/main.cjs"
+  "main": "electron/main.cjs",
+  "version": "1.0.0",
+  "description": "Web HMI dashboard for Siemens S7-1200 PLC control and real-time monitoring over Ethernet.",
+  "author": "lingeshmaster25-blip"
 }
