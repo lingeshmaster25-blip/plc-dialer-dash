@@ -16,6 +16,13 @@ const TAGS = [
   { name: "Reset_PB",            address: "M0.2",      group: "Force Buttons",   type: "bool" },
   { name: "M_Run",               address: "M0.5",      group: "Force Buttons",   type: "bool" },
   { name: "SideSelect",          address: "M0.6",      group: "Force Buttons",   type: "bool" },
+  { name: "Home_Button",         address: "M6.0",      group: "Force Buttons",   type: "bool" },
+  { name: "H_run",               address: "M6.1",      group: "System",          type: "bool" },
+  { name: "Over_load",           address: "M8.0",      group: "System",          type: "bool" },
+  { name: "Bin_over_Height",     address: "M8.1",      group: "System",          type: "bool" },
+  { name: "Bin_store_complete",  address: "M8.2",      group: "System",          type: "bool" },
+  { name: "Bin_spa_Left",        address: "I0.0",      group: "Sensors",         type: "bool" },
+  { name: "Bin_spa_Right",       address: "I0.1",      group: "Sensors",         type: "bool" },
 
   // --- Motor In-Position flags (M10.x) ---
   { name: "Y_InPos",             address: "M10.0",     group: "Motor Status",    type: "bool" },
