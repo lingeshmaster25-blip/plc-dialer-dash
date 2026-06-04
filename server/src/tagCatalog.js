@@ -16,6 +16,13 @@ const TAGS = [
   { name: "Reset_PB",            address: "M0.2",      group: "Force Buttons",   type: "bool" },
   { name: "M_Run",               address: "M0.5",      group: "Force Buttons",   type: "bool" },
   { name: "SideSelect",          address: "M0.6",      group: "Force Buttons",   type: "bool" },
+  { name: "Home_Button",         address: "M6.0",      group: "Force Buttons",   type: "bool" },
+  { name: "H_run",               address: "M6.1",      group: "System",          type: "bool" },
+  { name: "Over_load",           address: "M8.0",      group: "System",          type: "bool" },
+  { name: "Bin_over_Height",     address: "M8.1",      group: "System",          type: "bool" },
+  { name: "Bin_store_complete",  address: "M8.2",      group: "System",          type: "bool" },
+  { name: "Bin_spa_Left",        address: "I0.0",      group: "Sensors",         type: "bool" },
+  { name: "Bin_spa_Right",       address: "I0.1",      group: "Sensors",         type: "bool" },
 
   // --- Motor In-Position flags (M10.x) ---
   { name: "Y_InPos",             address: "M10.0",     group: "Motor Status",    type: "bool" },
@@ -57,11 +64,12 @@ const TAGS = [
   { name: "Tray_Misalignment",   address: "M2.3",      group: "Sensors",         type: "bool" },
 
   // --- Stage bins (DB3 words) ---
-  { name: "Stage1_Bin",          address: "DB3.DBW0",  group: "Stage Bins",      type: "int" },
-  { name: "Stage2_Bin",          address: "DB3.DBW2",  group: "Stage Bins",      type: "int" },
-  { name: "Stage3_Bin",          address: "DB3.DBW4",  group: "Stage Bins",      type: "int" },
-  { name: "Stage4_Bin",          address: "DB3.DBW6",  group: "Stage Bins",      type: "int" },
-  { name: "Stage5_Bin",          address: "DB3.DBW8",  group: "Stage Bins",      type: "int" },
+  // --- Stage bins (DB3 words) ---
+  { name: "DB_Input_BIN1",       address: "DB3.DBW10", group: "Stage Bins",      type: "int" },
+  { name: "DB_Input_BIN2",       address: "DB3.DBW12", group: "Stage Bins",      type: "int" },
+  { name: "DB_Input_BIN3",       address: "DB3.DBW14", group: "Stage Bins",      type: "int" },
+  { name: "DB_Input_BIN4",       address: "DB3.DBW16", group: "Stage Bins",      type: "int" },
+  { name: "DB_Input_BIN5",       address: "DB3.DBW18", group: "Stage Bins",      type: "int" },
 
   // --- Target positions (DB4 REALs) ---
   { name: "Y_Target",            address: "DB4.DBD0",  group: "Target Positions", type: "real" },

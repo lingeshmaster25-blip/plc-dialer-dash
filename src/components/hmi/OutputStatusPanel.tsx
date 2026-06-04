@@ -46,14 +46,19 @@ const SECTIONS: Section[] = [
   },
   {
     title: "System",
-    hint: "Q1.5 / Q1.6",
+    hint: "Q1.5 / Q1.6 · M6.1 · M8.0–M8.2",
     cols: 2,
     items: [
-      { tag: "Cycle_Complete", label: "Cycle Complete", tone: "green" },
-      { tag: "Fault_Alarm",    label: "Fault Alarm",    tone: "red" },
+      { tag: "Cycle_Complete",     label: "Cycle Complete",      tone: "green" },
+      { tag: "Fault_Alarm",        label: "Fault Alarm",         tone: "red" },
+      { tag: "H_run",              label: "H Run",               tone: "green" },
+      { tag: "Bin_store_complete", label: "Bin Store Complete",  tone: "green" },
+      { tag: "Over_load",          label: "Over Load",           tone: "red" },
+      { tag: "Bin_over_Height",    label: "Bin Over Height",     tone: "amber" },
     ],
   },
 ];
+
 
 const TONE: Record<Tone, { on: string; off: string }> = {
   green: {
