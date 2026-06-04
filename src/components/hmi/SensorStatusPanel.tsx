@@ -48,9 +48,11 @@ const SECTIONS: Section[] = [
   },
   {
     title: "Load / Bin",
-    hint: "I1.1 · I1.2 · I1.5",
+    hint: "I0.0 · I0.1 · I1.1 · I1.2 · I1.5",
     cols: 3,
     items: [
+      { tag: "Bin_spa_Left",       label: "Bin Spa Left",   tone: "blue" },
+      { tag: "Bin_spa_Right",      label: "Bin Spa Right",  tone: "blue" },
       { tag: "Load_Cell_Overload", label: "Load Overload",  tone: "red", alarm: true },
       { tag: "Light_Grid_BinMax",  label: "Light Grid Max", tone: "amber" },
       { tag: "Bin_Confirm_Sensor", label: "Bin Confirm",    tone: "green" },
