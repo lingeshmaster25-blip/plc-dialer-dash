@@ -46,11 +46,11 @@ export const TAGS: TagDef[] = [
   { name: "Ext_Aisle_Area_S4",   address: "I1.7",      group: "Sensors",          type: "bool" },
   { name: "Tray_Misalignment",   address: "M2.3",      group: "Sensors",          type: "bool" },
   // Stage Bins
-  { name: "Stage1_Bin",          address: "DB3.DBW0",  group: "Stage Bins",       type: "int" },
-  { name: "Stage2_Bin",          address: "DB3.DBW2",  group: "Stage Bins",       type: "int" },
-  { name: "Stage3_Bin",          address: "DB3.DBW4",  group: "Stage Bins",       type: "int" },
-  { name: "Stage4_Bin",          address: "DB3.DBW6",  group: "Stage Bins",       type: "int" },
-  { name: "Stage5_Bin",          address: "DB3.DBW8",  group: "Stage Bins",       type: "int" },
+  { name: "DB_Input_BIN1",       address: "DB3.DBW10", group: "Stage Bins",       type: "int" },
+  { name: "DB_Input_BIN2",       address: "DB3.DBW12", group: "Stage Bins",       type: "int" },
+  { name: "DB_Input_BIN3",       address: "DB3.DBW14", group: "Stage Bins",       type: "int" },
+  { name: "DB_Input_BIN4",       address: "DB3.DBW16", group: "Stage Bins",       type: "int" },
+  { name: "DB_Input_BIN5",       address: "DB3.DBW18", group: "Stage Bins",       type: "int" },
   // Target Positions
   { name: "Y_Target",            address: "DB4.DBD0",  group: "Target Positions", type: "real" },
   { name: "X_Target",            address: "DB4.DBD4",  group: "Target Positions", type: "real" },
