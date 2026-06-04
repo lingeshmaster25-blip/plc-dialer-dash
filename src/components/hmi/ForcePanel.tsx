@@ -89,6 +89,14 @@ export function ForcePanel({ tags, disabled, onWrite, onDisconnect }: Props) {
   const stop = Boolean(tags?.Stop_PB);
   const reset = Boolean(tags?.Reset_PB);
 
+  // Bin inputs drive Home/Start enablement:
+  // any bin > 0  → Home disabled (Start enabled)
+  // all bins = 0 → Home enabled, Start disabled
+  const binValues = [1, 2, 3, 4, 5].map((i) => Number(tags?.[`DB_Input_BIN${i}`] ?? 0));
+  const anyInput = binValues.some((v) => v > 0);
+  const homeDisabled = disabled || anyInput;
+  const startDisabled = disabled || !anyInput;
+
   return (
     <div className="panel-bevel rounded-md p-6">
       <div className="flex items-center justify-between mb-5">
@@ -118,7 +126,7 @@ export function ForcePanel({ tags, disabled, onWrite, onDisconnect }: Props) {
           label="Start"
           tone="green"
           live={start}
-          disabled={disabled}
+          disabled={startDisabled}
           onWrite={onWrite}
         />
         <BigForceButton
@@ -126,9 +134,10 @@ export function ForcePanel({ tags, disabled, onWrite, onDisconnect }: Props) {
           label="Home"
           tone="blue"
           live={Boolean(tags?.Home_Button)}
-          disabled={disabled}
+          disabled={homeDisabled}
           onWrite={onWrite}
         />
+
         <BigForceButton
           tag="Stop_PB"
           label="Stop"
