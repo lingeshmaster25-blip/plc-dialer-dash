@@ -42,9 +42,18 @@ jobs:
       - name: Install dependencies (root)
         run: npm install
 
-      - name: Install server dependencies
-        run: npm install
+      - name: Install server dependencies (production only)
+        run: npm install --omit=dev
         working-directory: server
+
+      - name: Verify server node_modules
+        shell: pwsh
+        run: |
+          if (-Not (Test-Path "server\node_modules\express")) { throw "server/node_modules/express MISSING" }
+          if (-Not (Test-Path "server\node_modules\cors"))    { throw "server/node_modules/cors MISSING" }
+          if (-Not (Test-Path "server\node_modules\node-snap7")) { throw "server/node_modules/node-snap7 MISSING" }
+          Write-Host "OK - server deps present:"
+          Get-ChildItem server\node_modules -Directory | Select-Object -First 30 -ExpandProperty Name
 
       - name: Rebuild node-snap7 for Electron
         # Run from project root so Electron headers (root node_modules) are
