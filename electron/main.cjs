@@ -168,9 +168,8 @@ function createWindow() {
       log("[window] loadFile failed:", err.message);
       try { mainWindow.webContents.openDevTools({ mode: "detach" }); } catch (_) {}
     });
-    // TEMP: open DevTools in packaged builds so we can diagnose the
-    // blank-window issue. Remove or gate behind an env var later.
-    try { mainWindow.webContents.openDevTools({ mode: "detach" }); } catch (_) {}
+    // TEMP: open DevTools docked to the bottom (more reliable than detach).
+    try { mainWindow.webContents.openDevTools({ mode: "bottom" }); } catch (_) {}
   } else {
     mainWindow.loadURL("http://localhost:5173");
     mainWindow.webContents.openDevTools();
