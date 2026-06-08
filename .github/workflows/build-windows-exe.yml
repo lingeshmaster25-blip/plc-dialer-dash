@@ -8,8 +8,11 @@ on:
       - "package.json"
       - "electron/**"
       - "src/**"
+      - "server/**"
       - "vite.config.electron.ts"
       - "index.electron.html"
+      - "electron-builder.json"
+      - ".github/workflows/build-windows-exe.yml"
 
 permissions:
   contents: write
@@ -27,17 +30,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-
-      # Cache Electron + electron-builder downloads so app-builder
-      # doesn't hit the network mid-pack (the main source of
-      # ERR_ELECTRON_BUILDER_CANNOT_EXECUTE).
-      - name: Cache Electron + builder downloads
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~\AppData\Local\electron\Cache
-            ~\AppData\Local\electron-builder\Cache
-          key: ${{ runner.os }}-electron-32.2.7-builder-26.0.12
 
       - name: Install dependencies (root)
         run: npm install
@@ -62,15 +54,14 @@ jobs:
         env:
           npm_config_arch: x64
           npm_config_target_arch: x64
+          npm_config_runtime: electron
+          npm_config_disturl: https://electronjs.org/headers
+          npm_config_build_from_source: "true"
 
       - name: Build Windows installer
         run: npm run electron:build:win
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
-          ELECTRON_CACHE: ${{ github.workspace }}\.cache\electron
-          ELECTRON_BUILDER_CACHE: ${{ github.workspace }}\.cache\electron-builder
-          DEBUG: "electron-builder"
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload installer artifact
         uses: actions/upload-artifact@v4
