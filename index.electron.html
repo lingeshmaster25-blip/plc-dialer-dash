@@ -4,26 +4,22 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>PLC Dialer Dash</title>
-    <!--
-      CSP for the packaged app.
-      Loaded over file:// so 'self' is the file scheme.
-      Allows inline styles (Tailwind injection), eval-less workers,
-      and fetch to the local backend at :4000.
-    -->
-    <meta
-      http-equiv="Content-Security-Policy"
-      content="
-        default-src 'self' 'unsafe-inline' data: blob: file:;
-        script-src  'self' 'unsafe-inline' file:;
-        style-src   'self' 'unsafe-inline' file:;
-        connect-src 'self' http://localhost:4000 http://127.0.0.1:4000 ws://localhost:5173 file:;
-        img-src     'self' data: blob: file:;
-        worker-src  'self' blob:;
-      "
-    />
+    <!-- CSP intentionally omitted: the packaged app loads from file://,
+         we control every script, and CSP under file:// blocks Vite's
+         module chunks in some Electron versions. -->
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      // Surface any uncaught renderer error in the main-process log
+      // (visible via DevTools console + ../logs/main.log).
+      window.addEventListener("error", (e) => {
+        console.error("[window.error]", e.message, e.error && e.error.stack);
+      });
+      window.addEventListener("unhandledrejection", (e) => {
+        console.error("[unhandledrejection]", e.reason && e.reason.stack || e.reason);
+      });
+    </script>
     <script type="module" src="/src/main-spa.tsx"></script>
   </body>
 </html>
