@@ -71,36 +71,47 @@ function killPort4000() {
   } catch (_) { /* nothing on port — fine */ }
 }
 
+function getNodeBin() {
+  // We ship a real Node.js binary inside the installer because
+  // Electron 27's Node mode has V8's pointer sandbox compiled in,
+  // which FATAL-crashes node-snap7. The bundled Node has no such
+  // restriction.
+  if (app.isPackaged) {
+    return path.join(process.resourcesPath, "bundled-node", "node.exe");
+  }
+  // Dev fallback: use whichever node is on PATH.
+  return process.platform === "win32" ? "node.exe" : "node";
+}
+
 function startBackend() {
   const serverEntry = getBackendPath();
+  const nodeBin = getNodeBin();
   log("[backend] starting:", serverEntry);
+  log("[backend] using node:", nodeBin, "exists?", fs.existsSync(nodeBin));
   if (!fs.existsSync(serverEntry)) {
     log("[backend] entry NOT FOUND");
     backendStderr = `Backend entry not found at:\n${serverEntry}`;
     return;
   }
+  if (app.isPackaged && !fs.existsSync(nodeBin)) {
+    log("[backend] bundled node.exe NOT FOUND");
+    backendStderr = `Bundled Node runtime not found at:\n${nodeBin}`;
+    return;
+  }
 
   killPort4000();
 
-  // Use Electron's own executable in node-mode so the rebuilt
-  // node-snap7 binary (compiled against Electron's Node ABI) loads.
-  // --no-experimental-sandbox disables V8's pointer sandbox so
-  // node-snap7's older ArrayBuffer allocations don't FATAL-crash
-  // the moment PLC data arrives. NODE_OPTIONS rejects this flag
-  // (strict allowlist), so we pass it only on the command line.
-  const env = { ...process.env, PORT: "4000", ELECTRON_RUN_AS_NODE: "1" };
-  delete env.NODE_OPTIONS; // belt-and-suspenders: ignore any inherited NODE_OPTIONS
+  const env = { ...process.env, PORT: "4000" };
+  // Strip any inherited Electron variables — we want a clean Node.
+  delete env.ELECTRON_RUN_AS_NODE;
+  delete env.NODE_OPTIONS;
 
-  backendProcess = spawn(
-    process.execPath,
-    ["--no-experimental-sandbox", serverEntry],
-    {
-      cwd: path.dirname(serverEntry),
-      env,
-      stdio: ["ignore", "pipe", "pipe"],
-      windowsHide: true,
-    },
-  );
+  backendProcess = spawn(nodeBin, [serverEntry], {
+    cwd: path.dirname(serverEntry),
+    env,
+    stdio: ["ignore", "pipe", "pipe"],
+    windowsHide: true,
+  });
 
   const sink = fs.createWriteStream(BACKEND_LOG, { flags: "a" });
   sink.write(`\n\n===== backend start ${new Date().toISOString()} =====\n`);
