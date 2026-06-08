@@ -8,17 +8,23 @@
          we control every script, and CSP under file:// blocks Vite's
          module chunks in some Electron versions. -->
   </head>
-  <body>
-    <div id="root"></div>
+  <body style="background:#0f1117;color:#e5e7eb;font-family:system-ui,sans-serif;margin:0">
+    <div id="root">
+      <div id="boot-banner" style="padding:2rem;font-size:14px">
+        <div style="font-weight:600;letter-spacing:.2em;text-transform:uppercase;opacity:.7">PLC Dialer Dash</div>
+        <div style="margin-top:.5rem;opacity:.6">Booting renderer…</div>
+        <pre id="boot-error" style="margin-top:1rem;color:#f87171;white-space:pre-wrap"></pre>
+      </div>
+    </div>
     <script>
-      // Surface any uncaught renderer error in the main-process log
-      // (visible via DevTools console + ../logs/main.log).
-      window.addEventListener("error", (e) => {
-        console.error("[window.error]", e.message, e.error && e.error.stack);
-      });
-      window.addEventListener("unhandledrejection", (e) => {
-        console.error("[unhandledrejection]", e.reason && e.reason.stack || e.reason);
-      });
+      // Surface any uncaught renderer error both in the DOM and in the log.
+      function showBootError(label, err) {
+        var el = document.getElementById("boot-error");
+        if (el) el.textContent += "\n[" + label + "] " + (err && (err.stack || err.message || err) || err);
+        console.error("[" + label + "]", err);
+      }
+      window.addEventListener("error", (e) => showBootError("window.error", e.error || e.message));
+      window.addEventListener("unhandledrejection", (e) => showBootError("unhandledrejection", e.reason));
     </script>
     <script type="module" src="/src/main-spa.tsx"></script>
   </body>
