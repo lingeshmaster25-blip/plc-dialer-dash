@@ -31,6 +31,14 @@ jobs:
         with:
           node-version: 20
 
+      # node-gyp v9 (used by node-snap7) imports `distutils`, which was
+      # removed from Python's stdlib in 3.12. Pin Python 3.11 so the
+      # native rebuild step doesn't fail with ModuleNotFoundError.
+      - name: Setup Python 3.11 (for node-gyp)
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
       - name: Install dependencies (root)
         run: npm install
 
