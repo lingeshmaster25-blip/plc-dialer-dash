@@ -14,7 +14,7 @@
     "electron:build:spa": "vite build --config vite.config.electron.ts",
     "electron:clean": "node scripts/clean.cjs",
     "electron:rebuild:snap7": "npx electron-rebuild -f -w node-snap7 --module-dir server",
-    "electron:build:win": "npm run electron:clean && npm run electron:build:spa && electron-builder --win --config electron-builder.json"
+    "electron:build:win": "npm run electron:clean && npm run electron:build:spa && electron-builder --win --config electron-builder.json --publish never"
   },
   "dependencies": {
     "@cloudflare/vite-plugin": "^1.25.5",
