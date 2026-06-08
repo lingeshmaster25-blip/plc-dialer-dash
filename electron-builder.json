@@ -19,20 +19,30 @@
     {
       "from": "server",
       "to": "server",
+      "filter": [
+        "**/*",
+        "!node_modules/**",
+        "!.gitignore",
+        "!.env",
+        "!.env.example",
+        "!README.md"
+      ]
+    },
+    {
+      "from": "server/node_modules",
+      "to": "server/node_modules",
       "filter": ["**/*"]
     }
   ],
 
+  "asarUnpack": ["**/*.node"],
+
+  "npmRebuild": false,
+
   "win": {
     "target": [
-      {
-        "target": "nsis",
-        "arch": ["x64"]
-      },
-      {
-        "target": "portable",
-        "arch": ["x64"]
-      }
+      { "target": "nsis", "arch": ["x64"] },
+      { "target": "portable", "arch": ["x64"] }
     ]
   },
 
