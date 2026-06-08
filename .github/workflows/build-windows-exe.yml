@@ -28,6 +28,17 @@ jobs:
         with:
           node-version: 20
 
+      # Cache Electron + electron-builder downloads so app-builder
+      # doesn't hit the network mid-pack (the main source of
+      # ERR_ELECTRON_BUILDER_CANNOT_EXECUTE).
+      - name: Cache Electron + builder downloads
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~\AppData\Local\electron\Cache
+            ~\AppData\Local\electron-builder\Cache
+          key: ${{ runner.os }}-electron-32.2.7-builder-26.0.12
+
       - name: Install dependencies (root)
         run: npm install
 
@@ -35,12 +46,9 @@ jobs:
         run: npm install
         working-directory: server
 
-      - name: Install @electron/rebuild
-        run: npm install --no-save @electron/rebuild
-
       - name: Rebuild node-snap7 for Electron
-        # Run from project root so Electron headers (root node_modules) are found,
-        # and target the server/ module dir where node-snap7 actually lives.
+        # Run from project root so Electron headers (root node_modules) are
+        # found, and target the server/ module dir where node-snap7 lives.
         run: npx --yes @electron/rebuild -f -w node-snap7 --module-dir server
         env:
           npm_config_arch: x64
@@ -50,6 +58,9 @@ jobs:
         run: npm run electron:build:win
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
+          ELECTRON_CACHE: ${{ github.workspace }}\.cache\electron
+          ELECTRON_BUILDER_CACHE: ${{ github.workspace }}\.cache\electron-builder
+          DEBUG: "electron-builder"
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload installer artifact
