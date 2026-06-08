@@ -8,7 +8,10 @@
  *   POST /stop
  */
 
-require("dotenv").config();
+// dotenv is a dev convenience for loading .env locally.
+// In production (packaged Electron) env vars come from the parent process,
+// so we don't want a missing dotenv to crash the backend.
+try { require("dotenv").config(); } catch (_) { /* optional */ }
 const express = require("express");
 const cors = require("cors");
 const { PlcService } = require("./plcService");
