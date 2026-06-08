@@ -86,18 +86,17 @@ function startBackend() {
   // node-snap7 binary (compiled against Electron's Node ABI) loads.
   // --no-experimental-sandbox disables V8's pointer sandbox so
   // node-snap7's older ArrayBuffer allocations don't FATAL-crash
-  // the moment PLC data arrives.
+  // the moment PLC data arrives. NODE_OPTIONS rejects this flag
+  // (strict allowlist), so we pass it only on the command line.
+  const env = { ...process.env, PORT: "4000", ELECTRON_RUN_AS_NODE: "1" };
+  delete env.NODE_OPTIONS; // belt-and-suspenders: ignore any inherited NODE_OPTIONS
+
   backendProcess = spawn(
     process.execPath,
     ["--no-experimental-sandbox", serverEntry],
     {
       cwd: path.dirname(serverEntry),
-      env: {
-        ...process.env,
-        PORT: "4000",
-        ELECTRON_RUN_AS_NODE: "1",
-        NODE_OPTIONS: "--no-experimental-sandbox",
-      },
+      env,
       stdio: ["ignore", "pipe", "pipe"],
       windowsHide: true,
     },
@@ -195,10 +194,9 @@ function createWindow() {
     }
     mainWindow.loadFile(indexPath).catch((err) => {
       log("[window] loadFile failed:", err.message);
+      // Only show DevTools if the page actually failed to load.
       try { mainWindow.webContents.openDevTools({ mode: "detach" }); } catch (_) {}
     });
-    // TEMP: open DevTools docked to the bottom (more reliable than detach).
-    try { mainWindow.webContents.openDevTools({ mode: "bottom" }); } catch (_) {}
   } else {
     mainWindow.loadURL("http://localhost:5173");
     mainWindow.webContents.openDevTools();
