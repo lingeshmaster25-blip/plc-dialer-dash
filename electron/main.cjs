@@ -52,6 +52,25 @@ function getBackendPath() {
   return path.join(__dirname, "..", "server", "src", "index.js");
 }
 
+function killPort4000() {
+  if (process.platform !== "win32") return;
+  // Best-effort: kill any process still listening on 4000 (zombie from
+  // a previous crashed backend). Failures are silent.
+  try {
+    const { execSync } = require("child_process");
+    const out = execSync('netstat -ano -p tcp | findstr ":4000"', { stdio: ["ignore", "pipe", "ignore"] })
+      .toString();
+    const pids = new Set();
+    for (const line of out.split(/\r?\n/)) {
+      const m = line.trim().match(/\s(\d+)$/);
+      if (m) pids.add(m[1]);
+    }
+    for (const pid of pids) {
+      try { execSync(`taskkill /F /PID ${pid}`, { stdio: "ignore" }); log("[backend] freed port 4000 (killed pid", pid, ")"); } catch (_) {}
+    }
+  } catch (_) { /* nothing on port — fine */ }
+}
+
 function startBackend() {
   const serverEntry = getBackendPath();
   log("[backend] starting:", serverEntry);
@@ -61,18 +80,28 @@ function startBackend() {
     return;
   }
 
+  killPort4000();
+
   // Use Electron's own executable in node-mode so the rebuilt
   // node-snap7 binary (compiled against Electron's Node ABI) loads.
-  backendProcess = spawn(process.execPath, [serverEntry], {
-    cwd: path.dirname(serverEntry),
-    env: {
-      ...process.env,
-      PORT: "4000",
-      ELECTRON_RUN_AS_NODE: "1",
+  // --no-experimental-sandbox disables V8's pointer sandbox so
+  // node-snap7's older ArrayBuffer allocations don't FATAL-crash
+  // the moment PLC data arrives.
+  backendProcess = spawn(
+    process.execPath,
+    ["--no-experimental-sandbox", serverEntry],
+    {
+      cwd: path.dirname(serverEntry),
+      env: {
+        ...process.env,
+        PORT: "4000",
+        ELECTRON_RUN_AS_NODE: "1",
+        NODE_OPTIONS: "--no-experimental-sandbox",
+      },
+      stdio: ["ignore", "pipe", "pipe"],
+      windowsHide: true,
     },
-    stdio: ["ignore", "pipe", "pipe"],
-    windowsHide: true,
-  });
+  );
 
   const sink = fs.createWriteStream(BACKEND_LOG, { flags: "a" });
   sink.write(`\n\n===== backend start ${new Date().toISOString()} =====\n`);
