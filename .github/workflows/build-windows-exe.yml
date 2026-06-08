@@ -71,6 +71,16 @@ jobs:
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
 
+      - name: Verify built installer contains server deps
+        shell: pwsh
+        run: |
+          $u = "dist-electron\win-unpacked\resources\server\node_modules"
+          if (-Not (Test-Path "$u\express"))   { throw "PACKED: $u\express missing" }
+          if (-Not (Test-Path "$u\cors"))      { throw "PACKED: $u\cors missing" }
+          if (-Not (Test-Path "$u\node-snap7")){ throw "PACKED: $u\node-snap7 missing" }
+          Write-Host "OK - packed server deps:"
+          Get-ChildItem $u -Directory | Select-Object -First 30 -ExpandProperty Name
+
       - name: Upload installer artifact
         uses: actions/upload-artifact@v4
         with:
