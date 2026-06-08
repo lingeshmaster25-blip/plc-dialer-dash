@@ -12,7 +12,9 @@
     "format": "prettier --write .",
     "electron:dev": "concurrently \"vite --config vite.config.electron.ts\" \"wait-on http://localhost:5173 && electron .\"",
     "electron:build:spa": "vite build --config vite.config.electron.ts",
-    "electron:build:win": "npm run electron:build:spa && electron-builder --win --config electron-builder.json"
+    "electron:clean": "node -e \"const fs=require('fs');for(const d of ['dist-spa','dist-electron']){try{fs.rmSync(d,{recursive:true,force:true})}catch(e){}}\"",
+    "electron:rebuild:snap7": "cd server && npx electron-rebuild -f -w node-snap7 --module-dir .",
+    "electron:build:win": "npm run electron:clean && npm run electron:build:spa && electron-builder --win --config electron-builder.json"
   },
   "dependencies": {
     "@cloudflare/vite-plugin": "^1.25.5",
