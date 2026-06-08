@@ -123,7 +123,11 @@ function waitForBackend(port = 4000, timeout = 20000) {
 // ─── Window ─────────────────────────────────────────────────────────────────
 
 function indexHtmlPath() {
-  return path.join(__dirname, "..", "dist-spa", "index.html");
+  // Vite outputs the bundled HTML using the source filename — our entry
+  // is index.electron.html, so the built file keeps that name.
+  const electronHtml = path.join(__dirname, "..", "dist-spa", "index.electron.html");
+  const plainHtml    = path.join(__dirname, "..", "dist-spa", "index.html");
+  return fs.existsSync(electronHtml) ? electronHtml : plainHtml;
 }
 
 function createWindow() {
