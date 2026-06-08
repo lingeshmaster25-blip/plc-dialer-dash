@@ -32,6 +32,11 @@
       "from": "server/node_modules",
       "to": "server/node_modules",
       "filter": ["**/*"]
+    },
+    {
+      "from": "bundled-node",
+      "to": "bundled-node",
+      "filter": ["**/*"]
     }
   ],
 
