@@ -55,31 +55,44 @@ jobs:
           Write-Host "OK - server deps present:"
           Get-ChildItem server\node_modules -Directory | Select-Object -First 30 -ExpandProperty Name
 
-      - name: Rebuild node-snap7 for Electron
-        # Run from project root so Electron headers (root node_modules) are
-        # found, and target the server/ module dir where node-snap7 lives.
-        run: npx --yes @electron/rebuild -f -w node-snap7 --module-dir server
-        env:
-          npm_config_arch: x64
-          npm_config_target_arch: x64
-          npm_config_runtime: electron
-          npm_config_disturl: https://electronjs.org/headers
-          npm_config_build_from_source: "true"
+      # Download a real Node.js binary to ship inside the installer.
+      # node-snap7's old C++ binding FATAL-crashes inside Electron's
+      # Node mode because Electron 27 has V8's sandbox compiled in.
+      # A plain Node binary doesn't, so we run the backend with that.
+      # The npm install above compiled node-snap7 against Node 20's ABI,
+      # so the binding matches this exact runtime — no electron-rebuild
+      # needed.
+      - name: Download bundled Node.js runtime
+        shell: pwsh
+        run: |
+          $version = "20.18.0"
+          $url = "https://nodejs.org/dist/v$version/node-v$version-win-x64.zip"
+          Invoke-WebRequest -Uri $url -OutFile "node.zip"
+          Expand-Archive -Path "node.zip" -DestinationPath "tmp-node" -Force
+          New-Item -ItemType Directory -Force -Path "bundled-node" | Out-Null
+          Copy-Item "tmp-node\node-v$version-win-x64\node.exe" "bundled-node\node.exe"
+          Remove-Item -Recurse -Force "tmp-node","node.zip"
+          Write-Host "Bundled Node:"
+          & "bundled-node\node.exe" --version
 
       - name: Build Windows installer
         run: npm run electron:build:win
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
 
-      - name: Verify built installer contains server deps
+      - name: Verify built installer contains server deps + node.exe
         shell: pwsh
         run: |
           $u = "dist-electron\win-unpacked\resources\server\node_modules"
           if (-Not (Test-Path "$u\express"))   { throw "PACKED: $u\express missing" }
           if (-Not (Test-Path "$u\cors"))      { throw "PACKED: $u\cors missing" }
           if (-Not (Test-Path "$u\node-snap7")){ throw "PACKED: $u\node-snap7 missing" }
+          $node = "dist-electron\win-unpacked\resources\bundled-node\node.exe"
+          if (-Not (Test-Path $node))          { throw "PACKED: $node missing" }
           Write-Host "OK - packed server deps:"
           Get-ChildItem $u -Directory | Select-Object -First 30 -ExpandProperty Name
+          Write-Host "OK - bundled node:"
+          & $node --version
 
       - name: Upload installer artifact
         uses: actions/upload-artifact@v4
