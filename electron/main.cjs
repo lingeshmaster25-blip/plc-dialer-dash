@@ -1,84 +1,130 @@
 /**
  * Electron main process for PLC Dialer Dash
- * - Spawns the Express/node-snap7 backend on port 4000
+ * - Spawns the Express + node-snap7 backend on port 4000
  * - Opens a BrowserWindow loading the built React frontend
+ *
+ * Robustness:
+ *  • Captures backend stdout/stderr to %APPDATA%\PLC Dialer Dash\logs\backend.log
+ *  • If the backend fails, the dialog shows the real error
+ *  • DevTools opens automatically when the frontend fails to load
+ *  • Works both in dev (vite on :5173) and packaged (asar)
  */
 
-const { app, BrowserWindow, ipcMain, dialog } = require("electron");
-const path = require("path");
+const { app, BrowserWindow, dialog } = require("electron");
+const path  = require("path");
+const fs    = require("fs");
 const { spawn } = require("child_process");
-const http = require("http");
+const http  = require("http");
 
 let mainWindow = null;
 let backendProcess = null;
+let backendStderr = ""; // last few KB of backend stderr for error dialog
+
+// ─── Logging ────────────────────────────────────────────────────────────────
+
+const LOG_DIR = path.join(app.getPath("userData"), "logs");
+try { fs.mkdirSync(LOG_DIR, { recursive: true }); } catch (_) {}
+const LOG_FILE = path.join(LOG_DIR, "main.log");
+const BACKEND_LOG = path.join(LOG_DIR, "backend.log");
+
+function log(...args) {
+  const line = `[${new Date().toISOString()}] ${args.map(String).join(" ")}\n`;
+  try { fs.appendFileSync(LOG_FILE, line); } catch (_) {}
+  // also echo to stdout in dev
+  // eslint-disable-next-line no-console
+  console.log(...args);
+}
+
+process.on("uncaughtException", (e) => {
+  log("uncaughtException:", e && e.stack ? e.stack : e);
+  try {
+    dialog.showErrorBox("PLC Dialer Dash — crash", String(e && e.stack ? e.stack : e));
+  } catch (_) {}
+});
 
 // ─── Backend ────────────────────────────────────────────────────────────────
 
 function getBackendPath() {
   if (app.isPackaged) {
-    // In production the server folder is bundled under resources/server
+    // extraResources copies server/ -> resources/server/
     return path.join(process.resourcesPath, "server", "src", "index.js");
   }
   return path.join(__dirname, "..", "server", "src", "index.js");
 }
 
-function getNodeBin() {
-  // electron ships its own Node; use that only as a fallback.
-  // node-snap7 needs a compatible native Node, so prefer the system one.
-  return process.execPath; // electron's node — good enough for snap7 on Windows
-}
-
 function startBackend() {
   const serverEntry = getBackendPath();
-  console.log("[electron] starting backend:", serverEntry);
+  log("[backend] starting:", serverEntry);
+  if (!fs.existsSync(serverEntry)) {
+    log("[backend] entry NOT FOUND");
+    backendStderr = `Backend entry not found at:\n${serverEntry}`;
+    return;
+  }
 
+  // Use Electron's own executable in node-mode so the rebuilt
+  // node-snap7 binary (compiled against Electron's Node ABI) loads.
   backendProcess = spawn(process.execPath, [serverEntry], {
+    cwd: path.dirname(serverEntry),
     env: {
       ...process.env,
       PORT: "4000",
       ELECTRON_RUN_AS_NODE: "1",
     },
     stdio: ["ignore", "pipe", "pipe"],
+    windowsHide: true,
   });
 
-  backendProcess.stdout.on("data", (d) =>
-    console.log("[backend]", d.toString().trim())
-  );
-  backendProcess.stderr.on("data", (d) =>
-    console.error("[backend]", d.toString().trim())
-  );
-  backendProcess.on("exit", (code) => {
-    console.warn("[backend] exited with code", code);
+  const sink = fs.createWriteStream(BACKEND_LOG, { flags: "a" });
+  sink.write(`\n\n===== backend start ${new Date().toISOString()} =====\n`);
+  backendProcess.stdout.on("data", (d) => sink.write(d));
+  backendProcess.stderr.on("data", (d) => {
+    sink.write(d);
+    backendStderr = (backendStderr + d.toString()).slice(-4000);
+  });
+  backendProcess.on("exit", (code, sig) => {
+    log("[backend] exited code=", code, "sig=", sig);
+    sink.write(`\n===== backend exit code=${code} sig=${sig} =====\n`);
+    sink.end();
+  });
+  backendProcess.on("error", (err) => {
+    log("[backend] spawn error:", err.message);
+    backendStderr = (backendStderr + "\nspawn error: " + err.message).slice(-4000);
   });
 }
 
 function stopBackend() {
-  if (backendProcess) {
-    backendProcess.kill();
+  if (backendProcess && !backendProcess.killed) {
+    try { backendProcess.kill(); } catch (_) {}
     backendProcess = null;
   }
 }
 
-// Poll until the backend is accepting connections, then resolve.
-function waitForBackend(port = 4000, timeout = 15000) {
+// Poll until the backend is accepting connections.
+function waitForBackend(port = 4000, timeout = 20000) {
   return new Promise((resolve, reject) => {
     const deadline = Date.now() + timeout;
     const check = () => {
-      const req = http.get(`http://localhost:${port}/status`, (res) => {
+      const req = http.get(`http://127.0.0.1:${port}/status`, (res) => {
         res.resume();
         resolve();
       });
       req.on("error", () => {
-        if (Date.now() > deadline) return reject(new Error("Backend timeout"));
-        setTimeout(check, 300);
+        if (Date.now() > deadline) {
+          return reject(new Error("Backend did not respond on port " + port));
+        }
+        setTimeout(check, 400);
       });
-      req.end();
+      req.setTimeout(2000, () => req.destroy());
     };
     check();
   });
 }
 
 // ─── Window ─────────────────────────────────────────────────────────────────
+
+function indexHtmlPath() {
+  return path.join(__dirname, "..", "dist-spa", "index.html");
+}
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -96,33 +142,55 @@ function createWindow() {
     autoHideMenuBar: true,
   });
 
+  // Surface renderer failures in our log + open DevTools so the user can see
+  mainWindow.webContents.on("did-fail-load", (_e, errCode, errDesc, url) => {
+    log("[renderer] did-fail-load:", errCode, errDesc, url);
+    try { mainWindow.webContents.openDevTools({ mode: "detach" }); } catch (_) {}
+  });
+  mainWindow.webContents.on("render-process-gone", (_e, details) => {
+    log("[renderer] render-process-gone:", JSON.stringify(details));
+  });
+
   if (app.isPackaged) {
-    mainWindow.loadFile(path.join(__dirname, "..", "dist-spa", "index.html"));
+    const indexPath = indexHtmlPath();
+    log("[window] loading file:", indexPath, "exists?", fs.existsSync(indexPath));
+    if (!fs.existsSync(indexPath)) {
+      dialog.showErrorBox(
+        "Frontend missing",
+        `Could not find:\n${indexPath}\n\nThe SPA build (dist-spa) was not bundled.`,
+      );
+    }
+    mainWindow.loadFile(indexPath).catch((err) => {
+      log("[window] loadFile failed:", err.message);
+      try { mainWindow.webContents.openDevTools({ mode: "detach" }); } catch (_) {}
+    });
   } else {
-    // Dev: vite dev server
     mainWindow.loadURL("http://localhost:5173");
     mainWindow.webContents.openDevTools();
   }
 
-  mainWindow.on("closed", () => {
-    mainWindow = null;
-  });
+  mainWindow.on("closed", () => { mainWindow = null; });
 }
 
-// ─── App lifecycle ───────────────────────────────────────────────────────────
+// ─── App lifecycle ──────────────────────────────────────────────────────────
 
 app.whenReady().then(async () => {
+  log("app ready, isPackaged=", app.isPackaged, "userData=", app.getPath("userData"));
+
   startBackend();
 
   try {
     await waitForBackend();
-    console.log("[electron] backend ready");
+    log("[backend] ready on :4000");
   } catch (e) {
-    console.error("[electron] backend did not start in time:", e.message);
-    dialog.showErrorBox(
-      "Backend failed to start",
-      "The PLC backend server could not be started. Check that Node.js is installed and node-snap7 is built for your platform."
-    );
+    log("[backend] timeout:", e.message);
+    const detail =
+      "The PLC backend server could not be started.\n\n" +
+      "Logs:  " + BACKEND_LOG + "\n\n" +
+      "Last backend output:\n" + (backendStderr || "(no output captured)");
+    dialog.showErrorBox("Backend failed to start", detail);
+    // Continue and open the window anyway — the UI will fall back to the
+    // built-in simulator so the operator at least sees something.
   }
 
   createWindow();
@@ -137,6 +205,4 @@ app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();
 });
 
-app.on("before-quit", () => {
-  stopBackend();
-});
+app.on("before-quit", () => { stopBackend(); });
