@@ -187,14 +187,13 @@ function HmiDashboard() {
       </header>
 
       {/* ── BODY: main area + right panel ── */}
-      <div style={{ display: "flex", flex: 1, overflow: "hidden", gap: 0 }}>
+      <div style={{ display: "flex", flex: 1, overflow: "hidden", gap: 10, padding: "10px 10px 0 10px" }}>
 
         {/* ── LEFT: Logo canvas ── */}
         <div
           style={{
             flex: 1,
             background: "#fff",
-            margin: "12px 0 0 12px",
             borderRadius: "8px 8px 0 0",
             display: "flex",
             alignItems: "center",
@@ -214,12 +213,11 @@ function HmiDashboard() {
         {/* ── RIGHT PANEL ── */}
         <div
           style={{
-            width: 340,
+            width: 330,
             flexShrink: 0,
             display: "flex",
             flexDirection: "column",
             gap: 10,
-            padding: "12px 12px 0 12px",
             overflowY: "auto",
           }}
         >
@@ -326,8 +324,8 @@ function HmiDashboard() {
           flexShrink: 0,
           height: 100,
           background: "#f0f2f5",
-          borderTop: "1px solid #e2e8f0",
-          gap: 0,
+          padding: "8px 10px",
+          gap: 8,
         }}
       >
         {NAV_BUTTONS.map(({ label, sub, Icon }) => (
@@ -339,6 +337,7 @@ function HmiDashboard() {
             flex: 1,
             background: "#dc2626",
             border: "none",
+            borderRadius: 8,
             cursor: "pointer",
             display: "flex",
             flexDirection: "column",
@@ -415,6 +414,7 @@ function NavButton({
         background: "#f8fafc",
         border: "none",
         borderRight: "1px solid #e2e8f0",
+        borderRadius: 8,
         cursor: "pointer",
         display: "flex",
         flexDirection: "column",
