@@ -78,9 +78,9 @@ function HmiDashboard() {
       {/* ── NAVBAR ── */}
       <header style={{
         display: "flex", alignItems: "center", justifyContent: "space-between",
-        background: "#0f1729", padding: "0 20px", height: 108, flexShrink: 0,
+        background: "#0f1729", padding: "0 20px", height: 56, flexShrink: 0, overflow: "visible",
       }}>
-        <img src="/trilo-logo.png" alt="Trilo" style={{ height: 100, objectFit: "contain" }} />
+        <img src="/trilo-logo.png" alt="Trilo" style={{ height: 100, objectFit: "contain", position: "relative", zIndex: 10 }} />
 
         <div style={{
           background: isRunning ? "#14532d" : "#7f1d1d",
