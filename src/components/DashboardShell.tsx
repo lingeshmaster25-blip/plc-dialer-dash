@@ -1,4 +1,4 @@
-import { useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { hmiApi, type PlcStatus } from "@/lib/hmi-api";
 import {
@@ -217,14 +217,15 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         height: 150, padding: "10px",
       }}>
         {NAV_BUTTONS.map(({ label, sub, Icon, to }) => (
-          <button key={label}
-            onClick={() => navigate({ to })}
+          <Link key={label}
+            to={to}
             style={{
               flex: 1, background: "#fff", borderRadius: 10,
               border: "1px solid #edeff2", boxShadow: CARD_SHADOW,
               cursor: "pointer", display: "flex", flexDirection: "column",
               alignItems: "center", justifyContent: "center", gap: 9,
               padding: "10px 6px", transition: "box-shadow .15s, transform .05s",
+              textDecoration: "none",
             }}
             onMouseEnter={(e) => { e.currentTarget.style.boxShadow = "0 4px 12px rgba(16,24,40,0.14)"; }}
             onMouseLeave={(e) => { e.currentTarget.style.boxShadow = CARD_SHADOW; }}
@@ -239,7 +240,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
               {label}
             </span>
             <span style={{ fontSize: 12, color: "#6b7280", whiteSpace: "nowrap" }}>{sub}</span>
-          </button>
+          </Link>
         ))}
 
         {/* E-STOP */}
