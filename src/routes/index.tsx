@@ -116,7 +116,7 @@ function HmiDashboard() {
       </header>
 
       {/* ── BODY ── */}
-      <div style={{ display: "flex", flex: 1, overflow: "hidden", padding: "10px", gap: "10px" }}>
+      <div style={{ display: "flex", flex: 1, overflow: "hidden", padding: "10px 10px 0 10px", gap: "10px" }}>
 
         {/* Left canvas */}
         <div style={{
@@ -133,6 +133,7 @@ function HmiDashboard() {
         <div style={{
           width: 320, flexShrink: 0,
           display: "flex", flexDirection: "column", gap: 10, overflowY: "auto",
+          paddingBottom: 10,
         }}>
           {/* Stat cards */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
@@ -167,13 +168,13 @@ function HmiDashboard() {
           </div>
 
           {/* Recent Activity */}
-          <div style={{ background: "#fff", borderRadius: 8, padding: "14px 16px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+          <div style={{ background: "#fff", borderRadius: 8, padding: "16px 16px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
               <span style={{ fontWeight: 700, fontSize: 12, color: "#111827", letterSpacing: "0.5px" }}>RECENT ACTIVITY</span>
               <span style={{ color: "#3b82f6", fontSize: 11, cursor: "pointer", fontWeight: 500 }}>View all activity</span>
             </div>
             {RECENT_ACTIVITY.map((item, i) => (
-              <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 6, marginBottom: 7 }}>
+              <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 6, marginBottom: 10 }}>
                 <CheckCircle2 size={13} color="#22c55e" style={{ marginTop: 1, flexShrink: 0 }} />
                 <span style={{ fontSize: 10, color: "#6b7280", width: 56, flexShrink: 0 }}>{item.time}</span>
                 <span style={{ fontSize: 10, fontWeight: 700, color: "#111827", width: 110, flexShrink: 0 }}>{item.action}</span>
@@ -183,8 +184,8 @@ function HmiDashboard() {
           </div>
 
           {/* Inventory Overview */}
-          <div style={{ background: "#fff", borderRadius: 8, padding: "14px 16px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+          <div style={{ background: "#fff", borderRadius: 8, padding: "16px 16px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
               <span style={{ fontWeight: 700, fontSize: 12, color: "#111827", letterSpacing: "0.5px" }}>INVENTORY OVERVIEW</span>
               <span style={{ color: "#3b82f6", fontSize: 11, cursor: "pointer", fontWeight: 500 }}>View all</span>
             </div>
@@ -197,7 +198,7 @@ function HmiDashboard() {
                   { label: "Total Bins", val: 36 },
                   { label: "SKUs", val: 7 },
                 ].map((r) => (
-                  <div key={r.label} style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                  <div key={r.label} style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
                     <span style={{ fontSize: 12, color: "#6b7280" }}>{r.label}</span>
                     <span style={{ fontSize: 13, fontWeight: 700, color: "#111827" }}>{r.val}</span>
                   </div>
