@@ -8,13 +8,13 @@ export const Route = createFileRoute("/putaway")({
 });
 
 const LABEL: React.CSSProperties = {
-  display: "block", fontSize: 16, fontWeight: 700,
-  color: "#111827", marginBottom: 7,
+  display: "block", fontSize: 14, fontWeight: 700,
+  color: "#111827", marginBottom: 5,
 };
 
 const FIELD: React.CSSProperties = {
   width: "100%", background: "#e8eaec", border: "1px solid #e2e4e7",
-  borderRadius: 8, padding: "12px 16px", fontSize: 15, color: "#111827",
+  borderRadius: 8, padding: "9px 14px", fontSize: 14, color: "#111827",
   outline: "none", boxSizing: "border-box",
 };
 
@@ -23,7 +23,7 @@ function Toggle({ label, active, onClick }: { label: string; active: boolean; on
     <button
       onClick={onClick}
       style={{
-        flex: 1, padding: "12px 16px", fontSize: 17, fontWeight: 500,
+        flex: 1, padding: "9px 16px", fontSize: 15, fontWeight: 500,
         borderRadius: 8, cursor: "pointer",
         background: active ? "#eafaf0" : "#fff",
         border: active ? "1.5px solid #15803d" : "1px solid #d0d4da",
@@ -43,25 +43,25 @@ function PutawayPage() {
 
   return (
     <DashboardShell>
-      <div style={{ flex: 1, minWidth: 0, overflow: "hidden", padding: "22px 36px", display: "flex", flexDirection: "column" }}>
+      <div style={{ flex: 1, minWidth: 0, overflow: "hidden", padding: "18px 32px", display: "flex", flexDirection: "column" }}>
 
         {/* Header */}
-        <h1 style={{ fontSize: 36, fontWeight: 800, color: "#1a1a1a", margin: 0, letterSpacing: "-0.5px" }}>
+        <h1 style={{ fontSize: 30, fontWeight: 800, color: "#1a1a1a", margin: 0, letterSpacing: "-0.5px" }}>
           Putaway Overview
         </h1>
-        <p style={{ fontSize: 17, color: "#6b7280", margin: "5px 0 0" }}>
+        <p style={{ fontSize: 15, color: "#6b7280", margin: "4px 0 0" }}>
           Store Items into the module
         </p>
-        <div style={{ height: 1, background: "#e5e7eb", margin: "16px 0 20px", flexShrink: 0 }} />
+        <div style={{ height: 1, background: "#e5e7eb", margin: "12px 0 16px", flexShrink: 0 }} />
 
         {/* Two columns: form | preview */}
-        <div style={{ display: "flex", gap: 36, alignItems: "stretch", flex: 1, minHeight: 0 }}>
+        <div style={{ display: "flex", gap: 32, alignItems: "stretch", flex: 1, minHeight: 0 }}>
 
           {/* ── FORM ── */}
-          <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 16 }}>
+          <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 12 }}>
 
             {/* SKUs + Quantity */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
               <div>
                 <label style={LABEL}>SKUs</label>
                 <input style={FIELD} placeholder="Enter SKU or Scan SKU" />
@@ -98,7 +98,7 @@ function PutawayPage() {
             {/* Choose Storing Type */}
             <div>
               <label style={LABEL}>Choose Storing Type</label>
-              <div style={{ display: "flex", gap: 24 }}>
+              <div style={{ display: "flex", gap: 20 }}>
                 <Toggle label="Tray" active={storingType === "Tray"} onClick={() => setStoringType("Tray")} />
                 <Toggle label="Bin" active={storingType === "Bin"} onClick={() => setStoringType("Bin")} />
               </div>
@@ -107,14 +107,14 @@ function PutawayPage() {
             {/* Partition Type */}
             <div>
               <label style={LABEL}>Partition Type</label>
-              <div style={{ display: "flex", gap: 24 }}>
+              <div style={{ display: "flex", gap: 20 }}>
                 <Toggle label="Single" active={partition === "Single"} onClick={() => setPartition("Single")} />
                 <Toggle label="Multi" active={partition === "Multi"} onClick={() => setPartition("Multi")} />
               </div>
             </div>
 
             {/* BIN ID + TRAY ID */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
               <div>
                 <label style={LABEL}>BIN ID</label>
                 <input style={FIELD} placeholder="Enter or Scan BIN ID" />
@@ -128,9 +128,9 @@ function PutawayPage() {
             {/* KEEP */}
             <div style={{ display: "flex", justifyContent: "center", marginTop: "auto", paddingTop: 8 }}>
               <button style={{
-                background: "#15803d", color: "#fff", fontWeight: 700, fontSize: 19,
+                background: "#15803d", color: "#fff", fontWeight: 700, fontSize: 17,
                 letterSpacing: "1px", border: "none", borderRadius: 8,
-                padding: "14px 0", width: 300, cursor: "pointer",
+                padding: "11px 0", width: 280, cursor: "pointer",
                 boxShadow: "0 2px 6px rgba(21,128,61,0.3)", transition: "background .15s",
               }}
                 onMouseEnter={(e) => { e.currentTarget.style.background = "#13702f"; }}
@@ -144,11 +144,11 @@ function PutawayPage() {
           {/* ── STORAGE PREVIEW ── */}
           <div style={{
             flex: 1, minWidth: 0, border: "1px solid #d0d4da", borderRadius: 10,
-            padding: "22px 26px", display: "flex", flexDirection: "column",
+            padding: "18px 22px", display: "flex", flexDirection: "column",
           }}>
-            <span style={{ fontSize: 22, fontWeight: 600, color: "#1a1a1a" }}>Storage Preview</span>
+            <span style={{ fontSize: 19, fontWeight: 600, color: "#1a1a1a" }}>Storage Preview</span>
             <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", minHeight: 0 }}>
-              <span style={{ fontSize: 30, color: "#6b7280" }}>No Preview Selected</span>
+              <span style={{ fontSize: 26, color: "#6b7280" }}>No Preview Selected</span>
             </div>
           </div>
 
