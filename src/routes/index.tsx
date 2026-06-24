@@ -100,7 +100,7 @@ function HmiDashboard() {
         background: "#021135", padding: "0 26px",
         height: 64, flexShrink: 0, zIndex: 10, position: "relative",
       }}>
-        <img src="/trilo-logo-white.png" alt="Trilo Automation" style={{ height: 42, objectFit: "contain" }} />
+        <img src="/trilo-logo.png" alt="Trilo Automation" style={{ height: 42, objectFit: "contain" }} />
 
         {/* Status pill — absolutely centered */}
         <div style={{
