@@ -126,7 +126,7 @@ function HmiDashboard() {
       >
         {/* Logo */}
         <div style={{ display: "flex", alignItems: "center" }}>
-          <img src="/trilo-logo.png" alt="Trilo Automation" style={{ height: 100, objectFit: "contain" }} />
+          <img src="/trilo-logo.png" alt="Trilo Automation" style={{ height: 40, objectFit: "contain" }} />
         </div>
 
         {/* Status pill */}
