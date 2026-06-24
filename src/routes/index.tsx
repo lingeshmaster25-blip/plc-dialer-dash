@@ -154,9 +154,9 @@ function HmiDashboard() {
 
         {/* Right column */}
         <div style={{
-          width: 332, flexShrink: 0,
+          width: 332, flexShrink: 0, minWidth: 0,
           display: "flex", flexDirection: "column",
-          gap: 10, overflowY: "auto",
+          gap: 10, overflow: "hidden",
         }}>
 
           {/* 2×2 stat cards */}
@@ -175,11 +175,11 @@ function HmiDashboard() {
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>
               {RECENT_ACTIVITY.map((item, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
                   <CheckCircle2 size={15} color="#fff" fill="#22c55e" style={{ flexShrink: 0 }} />
-                  <span style={{ fontSize: 11.5, color: "#6b7280", width: 58, flexShrink: 0 }}>{item.time}</span>
-                  <span style={{ fontSize: 11.5, fontWeight: 700, color: "#111827", width: 118, flexShrink: 0 }}>{item.action}</span>
-                  <span style={{ fontSize: 11.5, color: "#9ca3af" }}>{item.detail}</span>
+                  <span style={{ fontSize: 11, color: "#6b7280", width: 52, flexShrink: 0 }}>{item.time}</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: "#111827", width: 108, flexShrink: 0 }}>{item.action}</span>
+                  <span style={{ fontSize: 11, color: "#9ca3af", flex: 1, minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{item.detail}</span>
                 </div>
               ))}
             </div>
