@@ -211,7 +211,7 @@ function HmiDashboard() {
 
       {/* ── BOTTOM NAV ── */}
       <div style={{
-        display: "flex", flexShrink: 0, height: 96,
+        display: "flex", flexShrink: 0, height: 120,
         padding: "8px 10px", gap: 8, background: "#e8eaed",
       }}>
         {NAV_BUTTONS.map(({ label, sub, Icon }) => (
