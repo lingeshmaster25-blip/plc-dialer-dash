@@ -326,6 +326,7 @@ function HmiDashboard() {
           background: "#f0f2f5",
           padding: "8px 10px",
           gap: 8,
+          overflowX: "auto",
         }}
       >
         {NAV_BUTTONS.map(({ label, sub, Icon }) => (
@@ -334,7 +335,8 @@ function HmiDashboard() {
         {/* E-STOP */}
         <button
           style={{
-            flex: 1,
+            flex: "0 0 auto",
+            minWidth: 130,
             background: "#dc2626",
             border: "none",
             borderRadius: 8,
@@ -410,10 +412,10 @@ function NavButton({
   return (
     <button
       style={{
-        flex: 1,
+        flex: "0 0 auto",
+        minWidth: 110,
         background: "#f8fafc",
         border: "none",
-        borderRight: "1px solid #e2e8f0",
         borderRadius: 8,
         cursor: "pointer",
         display: "flex",
@@ -421,7 +423,7 @@ function NavButton({
         alignItems: "center",
         justifyContent: "center",
         gap: 4,
-        padding: "10px 4px",
+        padding: "10px 12px",
         transition: "background 0.15s",
       }}
       onMouseEnter={(e) => (e.currentTarget.style.background = "#e2e8f0")}
