@@ -125,22 +125,8 @@ function HmiDashboard() {
         }}
       >
         {/* Logo */}
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          {/* Trilo Y-logo mark */}
-          <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-            <path d="M16 4 L8 14 L16 11 L24 14 Z" fill="#7c3aed" />
-            <path d="M16 11 L16 28" stroke="#7c3aed" strokeWidth="3.5" strokeLinecap="round" />
-            <path d="M8 14 L16 11" stroke="#6366f1" strokeWidth="2.5" />
-            <path d="M24 14 L16 11" stroke="#ec4899" strokeWidth="2.5" />
-          </svg>
-          <div>
-            <div style={{ color: "#fff", fontWeight: 800, fontSize: 15, lineHeight: 1.1, letterSpacing: "-0.3px" }}>
-              trilo
-            </div>
-            <div style={{ color: "#94a3b8", fontSize: 8, letterSpacing: "2px", textTransform: "uppercase" }}>
-              Automation
-            </div>
-          </div>
+        <div style={{ display: "flex", alignItems: "center" }}>
+          <img src="/trilo-logo.png" alt="Trilo Automation" style={{ height: 36, objectFit: "contain" }} />
         </div>
 
         {/* Status pill */}
