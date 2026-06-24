@@ -120,13 +120,13 @@ function HmiDashboard() {
           justifyContent: "space-between",
           background: "#0f1729",
           padding: "0 24px",
-          height: 64,
+          height: 56,
           flexShrink: 0,
         }}
       >
         {/* Logo */}
         <div style={{ display: "flex", alignItems: "center" }}>
-          <img src="/trilo-logo.png" alt="Trilo Automation" style={{ height: 52, objectFit: "contain" }} />
+          <img src="/trilo-logo.png" alt="Trilo Automation" style={{ height: 48, objectFit: "contain" }} />
         </div>
 
         {/* Status pill */}
