@@ -31,17 +31,17 @@ const NAV_BUTTONS = [
 ];
 
 function DonutChart({ pct }: { pct: number }) {
-  const r = 54;
+  const r = 52;
   const circ = 2 * Math.PI * r;
   const offset = circ * (1 - pct / 100);
   return (
-    <svg width="130" height="130" viewBox="0 0 140 140" style={{ flexShrink: 0 }}>
-      <circle cx="70" cy="70" r={r} fill="none" stroke="#e5e7eb" strokeWidth="14" />
-      <circle cx="70" cy="70" r={r} fill="none" stroke="#22c55e" strokeWidth="14"
+    <svg width="130" height="130" viewBox="0 0 130 130" style={{ flexShrink: 0 }}>
+      <circle cx="65" cy="65" r={r} fill="none" stroke="#e5e7eb" strokeWidth="13" />
+      <circle cx="65" cy="65" r={r} fill="none" stroke="#22c55e" strokeWidth="13"
         strokeDasharray={circ} strokeDashoffset={offset}
-        strokeLinecap="round" transform="rotate(-90 70 70)" />
-      <text x="70" y="66" textAnchor="middle" fontSize="18" fontWeight="700" fill="#111827">{pct}%</text>
-      <text x="70" y="82" textAnchor="middle" fontSize="9" fill="#6b7280" letterSpacing="1">AVAILABLE</text>
+        strokeLinecap="round" transform="rotate(-90 65 65)" />
+      <text x="65" y="61" textAnchor="middle" fontSize="17" fontWeight="700" fill="#111827">{pct}%</text>
+      <text x="65" y="76" textAnchor="middle" fontSize="8" fill="#6b7280" letterSpacing="1">AVAILABLE</text>
     </svg>
   );
 }
@@ -72,35 +72,37 @@ function HmiDashboard() {
     <div style={{
       display: "flex", flexDirection: "column",
       height: "100vh", width: "100vw", overflow: "hidden",
-      fontFamily: "'Inter','Segoe UI',sans-serif", background: "#e8eaed",
+      fontFamily: "'Inter','Segoe UI',sans-serif",
+      background: "#d1d5db",
     }}>
 
-      {/* ── NAVBAR ── */}
+      {/* ── NAVBAR: 56px, dark ── */}
       <header style={{
         display: "flex", alignItems: "center", justifyContent: "space-between",
-        background: "#0f1729", padding: "0 20px", height: 56, flexShrink: 0, overflow: "visible",
+        background: "#0f1729", padding: "0 20px",
+        height: 56, flexShrink: 0, zIndex: 10,
       }}>
-        <img src="/trilo-logo.png" alt="Trilo" style={{ height: 100, objectFit: "contain", position: "relative", zIndex: 10 }} />
+        <img src="/trilo-logo.png" alt="Trilo" style={{ height: 44, objectFit: "contain" }} />
 
+        {/* Status pill */}
         <div style={{
           background: isRunning ? "#14532d" : "#7f1d1d",
           border: `1.5px solid ${isRunning ? "#22c55e" : "#ef4444"}`,
-          borderRadius: 999, padding: "7px 32px",
+          borderRadius: 999, padding: "6px 32px",
           display: "flex", alignItems: "center", gap: 8,
         }}>
           <span style={{
             width: 8, height: 8, borderRadius: "50%",
             background: isRunning ? "#22c55e" : "#ef4444",
             boxShadow: isRunning ? "0 0 6px #22c55e" : "0 0 6px #ef4444",
+            display: "inline-block",
           }} />
-          <span style={{
-            color: isRunning ? "#22c55e" : "#ef4444",
-            fontWeight: 700, fontSize: 13, letterSpacing: "2px",
-          }}>
+          <span style={{ color: isRunning ? "#22c55e" : "#ef4444", fontWeight: 700, fontSize: 13, letterSpacing: "2px" }}>
             {isRunning ? "RUNNING" : "STOPPED"}
           </span>
         </div>
 
+        {/* Icons */}
         <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
           <Bell size={18} color="#94a3b8" style={{ cursor: "pointer" }} />
           <Clock size={18} color="#94a3b8" style={{ cursor: "pointer" }} />
@@ -116,89 +118,102 @@ function HmiDashboard() {
       </header>
 
       {/* ── BODY ── */}
-      <div style={{ display: "flex", flex: 1, overflow: "hidden", padding: "10px 10px 0 10px", gap: "10px" }}>
+      {/* gap between header and body = 8px via background showing through */}
+      <div style={{
+        display: "flex", flex: 1, overflow: "hidden",
+        gap: 8, padding: "8px 8px 0 8px",
+      }}>
 
-        {/* Left canvas */}
+        {/* Left white canvas */}
         <div style={{
-          flex: 1, background: "#fff", borderRadius: 8,
-          display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden",
+          flex: 1, background: "#fff",
+          borderRadius: "6px 6px 0 0",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          overflow: "hidden",
         }}>
-          <img src="/trilo-logo.png" alt="Trilo watermark" style={{
-            width: "55%", maxWidth: 500, opacity: 0.1,
+          <img src="/trilo-logo.png" alt="" style={{
+            width: "52%", maxWidth: 480, opacity: 0.1,
             objectFit: "contain", userSelect: "none", pointerEvents: "none",
           }} />
         </div>
 
-        {/* Right panel */}
+        {/* Right panel — white cards, no outer bg */}
         <div style={{
-          width: 320, flexShrink: 0,
-          display: "flex", flexDirection: "column", gap: 10, overflowY: "auto",
-          paddingBottom: 10,
+          width: 330, flexShrink: 0,
+          display: "flex", flexDirection: "column",
+          gap: 8, overflowY: "auto",
         }}>
-          {/* Stat cards */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-            <div style={{ background: "#fff", borderRadius: 8, padding: "14px 16px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+
+          {/* Stat cards 2x2 */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+            {/* Uptime */}
+            <div style={{ background: "#fff", borderRadius: 6, padding: "14px 16px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
                 <Timer size={18} color="#22c55e" />
-                <span style={{ fontSize: 11, color: "#6b7280" }}>Uptime</span>
+                <span style={{ fontSize: 11, color: "#6b7280", fontWeight: 500 }}>Uptime</span>
               </div>
-              <span style={{ fontSize: 24, fontWeight: 800, color: "#111827" }}>10h 25m</span>
+              <div style={{ fontSize: 26, fontWeight: 800, color: "#111827", lineHeight: 1 }}>10h 25m</div>
             </div>
-            <div style={{ background: "#fff", borderRadius: 8, padding: "14px 16px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+            {/* Orders */}
+            <div style={{ background: "#fff", borderRadius: 6, padding: "14px 16px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
                 <ShoppingCart size={18} color="#f97316" />
-                <span style={{ fontSize: 11, color: "#6b7280" }}>Orders</span>
+                <span style={{ fontSize: 11, color: "#6b7280", fontWeight: 500 }}>Orders</span>
               </div>
-              <span style={{ fontSize: 24, fontWeight: 800, color: "#111827" }}>32</span>
+              <div style={{ fontSize: 26, fontWeight: 800, color: "#111827", lineHeight: 1 }}>32</div>
             </div>
-            <div style={{ background: "#fff", borderRadius: 8, padding: "14px 16px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+            {/* Active Order */}
+            <div style={{ background: "#fff", borderRadius: 6, padding: "14px 16px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
                 <Truck size={18} color="#3b82f6" />
-                <span style={{ fontSize: 11, color: "#6b7280" }}>Active Order</span>
+                <span style={{ fontSize: 11, color: "#6b7280", fontWeight: 500 }}>Active Order</span>
               </div>
-              <span style={{ fontSize: 22, fontWeight: 800, color: "#111827" }}>#534</span>
+              <div style={{ fontSize: 24, fontWeight: 800, color: "#111827", lineHeight: 1 }}>#534</div>
             </div>
-            <div style={{ background: "#fff", borderRadius: 8, padding: "14px 16px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+            {/* Queue */}
+            <div style={{ background: "#fff", borderRadius: 6, padding: "14px 16px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
                 <ClipboardList size={18} color="#a855f7" />
-                <span style={{ fontSize: 11, color: "#6b7280" }}>Queue</span>
+                <span style={{ fontSize: 11, color: "#6b7280", fontWeight: 500 }}>Queue</span>
               </div>
-              <span style={{ fontSize: 24, fontWeight: 800, color: "#111827" }}>125</span>
+              <div style={{ fontSize: 26, fontWeight: 800, color: "#111827", lineHeight: 1 }}>125</div>
             </div>
           </div>
 
           {/* Recent Activity */}
-          <div style={{ background: "#fff", borderRadius: 8, padding: "16px 16px" }}>
+          <div style={{ background: "#fff", borderRadius: 6, padding: "16px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-              <span style={{ fontWeight: 700, fontSize: 12, color: "#111827", letterSpacing: "0.5px" }}>RECENT ACTIVITY</span>
+              <span style={{ fontWeight: 700, fontSize: 11, color: "#111827", letterSpacing: "0.8px" }}>RECENT ACTIVITY</span>
               <span style={{ color: "#3b82f6", fontSize: 11, cursor: "pointer", fontWeight: 500 }}>View all activity</span>
             </div>
-            {RECENT_ACTIVITY.map((item, i) => (
-              <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 6, marginBottom: 10 }}>
-                <CheckCircle2 size={13} color="#22c55e" style={{ marginTop: 1, flexShrink: 0 }} />
-                <span style={{ fontSize: 10, color: "#6b7280", width: 56, flexShrink: 0 }}>{item.time}</span>
-                <span style={{ fontSize: 10, fontWeight: 700, color: "#111827", width: 110, flexShrink: 0 }}>{item.action}</span>
-                <span style={{ fontSize: 10, color: "#6b7280" }}>{item.detail}</span>
-              </div>
-            ))}
+            <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
+              {RECENT_ACTIVITY.map((item, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <CheckCircle2 size={13} color="#22c55e" style={{ flexShrink: 0 }} />
+                  <span style={{ fontSize: 10, color: "#6b7280", width: 54, flexShrink: 0 }}>{item.time}</span>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: "#111827", width: 112, flexShrink: 0 }}>{item.action}</span>
+                  <span style={{ fontSize: 10, color: "#6b7280" }}>{item.detail}</span>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* Inventory Overview */}
-          <div style={{ background: "#fff", borderRadius: 8, padding: "16px 16px" }}>
+          <div style={{ background: "#fff", borderRadius: 6, padding: "16px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-              <span style={{ fontWeight: 700, fontSize: 12, color: "#111827", letterSpacing: "0.5px" }}>INVENTORY OVERVIEW</span>
+              <span style={{ fontWeight: 700, fontSize: 11, color: "#111827", letterSpacing: "0.8px" }}>INVENTORY OVERVIEW</span>
               <span style={{ color: "#3b82f6", fontSize: 11, cursor: "pointer", fontWeight: 500 }}>View all</span>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <DonutChart pct={68.7} />
-              <div style={{ flex: 1 }}>
+              <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 10 }}>
                 {[
                   { label: "Total Trays", val: 17 },
                   { label: "Available", val: 11 },
                   { label: "Total Bins", val: 36 },
                   { label: "SKUs", val: 7 },
                 ].map((r) => (
-                  <div key={r.label} style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
+                  <div key={r.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <span style={{ fontSize: 12, color: "#6b7280" }}>{r.label}</span>
                     <span style={{ fontSize: 13, fontWeight: 700, color: "#111827" }}>{r.val}</span>
                   </div>
@@ -206,46 +221,49 @@ function HmiDashboard() {
               </div>
             </div>
           </div>
+
         </div>
       </div>
 
-      {/* ── BOTTOM NAV ── */}
+      {/* ── BOTTOM NAV: full width, no gaps, dividers between buttons ── */}
       <div style={{
-        display: "flex", flexShrink: 0, height: 120,
-        padding: "8px 10px", gap: 8, background: "#e8eaed",
+        display: "flex", flexShrink: 0,
+        height: 100, background: "#d1d5db",
+        paddingTop: 8,
       }}>
-        {NAV_BUTTONS.map(({ label, sub, Icon }) => (
+        {NAV_BUTTONS.map(({ label, sub, Icon }, i) => (
           <button key={label}
             style={{
-              flex: 1, minWidth: 0, background: "#f8fafc", border: "none",
-              borderRadius: 8, cursor: "pointer", display: "flex",
-              flexDirection: "column", alignItems: "center", justifyContent: "center",
-              gap: 3, padding: "8px 4px", transition: "background 0.15s",
+              flex: 1, background: "#f9fafb", border: "none",
+              borderLeft: i === 0 ? "none" : "1px solid #e5e7eb",
+              cursor: "pointer", display: "flex", flexDirection: "column",
+              alignItems: "center", justifyContent: "center", gap: 4,
+              padding: "10px 6px", transition: "background 0.15s",
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = "#e2e8f0")}
-            onMouseLeave={(e) => (e.currentTarget.style.background = "#f8fafc")}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "#f1f5f9")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "#f9fafb")}
           >
             <div style={{
-              width: 38, height: 38, borderRadius: "50%", background: "#e5e7eb",
+              width: 42, height: 42, borderRadius: "50%", background: "#e5e7eb",
               display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
             }}>
-              <Icon size={17} color="#374151" />
+              <Icon size={18} color="#374151" />
             </div>
-            <span style={{ fontWeight: 700, fontSize: 10, color: "#111827", letterSpacing: "0.4px", whiteSpace: "nowrap" }}>
+            <span style={{ fontWeight: 700, fontSize: 11, color: "#111827", letterSpacing: "0.4px", whiteSpace: "nowrap" }}>
               {label}
             </span>
-            <span style={{ fontSize: 9, color: "#9ca3af", whiteSpace: "nowrap" }}>{sub}</span>
+            <span style={{ fontSize: 10, color: "#9ca3af", whiteSpace: "nowrap" }}>{sub}</span>
           </button>
         ))}
 
         {/* E-STOP */}
         <button style={{
-          flex: 1, minWidth: 0, background: "#dc2626", border: "none",
-          borderRadius: 8, cursor: "pointer", display: "flex",
-          flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4,
+          flex: 1, background: "#dc2626", border: "none",
+          cursor: "pointer", display: "flex",
+          flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 6,
         }}>
-          <AlertTriangle size={26} color="#fff" strokeWidth={2.5} />
-          <span style={{ color: "#fff", fontWeight: 900, fontSize: 14, letterSpacing: "1px" }}>E-STOP</span>
+          <AlertTriangle size={30} color="#fff" strokeWidth={2.5} />
+          <span style={{ color: "#fff", fontWeight: 900, fontSize: 15, letterSpacing: "1px" }}>E-STOP</span>
         </button>
       </div>
 
