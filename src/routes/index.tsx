@@ -120,13 +120,13 @@ function HmiDashboard() {
           justifyContent: "space-between",
           background: "#0f1729",
           padding: "0 24px",
-          height: 56,
+          height: 64,
           flexShrink: 0,
         }}
       >
         {/* Logo */}
         <div style={{ display: "flex", alignItems: "center" }}>
-          <img src="/trilo-logo.png" alt="Trilo Automation" style={{ height: 36, objectFit: "contain" }} />
+          <img src="/trilo-logo.png" alt="Trilo Automation" style={{ height: 52, objectFit: "contain" }} />
         </div>
 
         {/* Status pill */}
@@ -204,52 +204,11 @@ function HmiDashboard() {
           }}
         >
           {/* Large watermark Trilo logo */}
-          <svg
-            width="520"
-            height="480"
-            viewBox="0 0 520 480"
-            fill="none"
-            style={{ opacity: 0.12 }}
-          >
-            {/* Left wing */}
-            <path
-              d="M260 60 C200 80 120 160 80 240 C120 200 180 180 260 200"
-              stroke="url(#wing-l)"
-              strokeWidth="52"
-              strokeLinecap="round"
-              fill="none"
-            />
-            {/* Right wing */}
-            <path
-              d="M260 60 C320 80 400 160 440 240 C400 200 340 180 260 200"
-              stroke="url(#wing-r)"
-              strokeWidth="52"
-              strokeLinecap="round"
-              fill="none"
-            />
-            {/* Body stem */}
-            <path
-              d="M260 200 C260 290 265 370 260 430"
-              stroke="url(#body-g)"
-              strokeWidth="52"
-              strokeLinecap="round"
-              fill="none"
-            />
-            <defs>
-              <linearGradient id="wing-l" x1="80" y1="240" x2="260" y2="60" gradientUnits="userSpaceOnUse">
-                <stop stopColor="#6366f1" />
-                <stop offset="1" stopColor="#a5b4fc" />
-              </linearGradient>
-              <linearGradient id="wing-r" x1="440" y1="240" x2="260" y2="60" gradientUnits="userSpaceOnUse">
-                <stop stopColor="#ec4899" />
-                <stop offset="1" stopColor="#f9a8d4" />
-              </linearGradient>
-              <linearGradient id="body-g" x1="260" y1="200" x2="260" y2="430" gradientUnits="userSpaceOnUse">
-                <stop stopColor="#818cf8" />
-                <stop offset="1" stopColor="#c084fc" stopOpacity="0.3" />
-              </linearGradient>
-            </defs>
-          </svg>
+          <img
+            src="/trilo-logo.png"
+            alt="Trilo"
+            style={{ width: 420, opacity: 0.12, objectFit: "contain", userSelect: "none", pointerEvents: "none" }}
+          />
         </div>
 
         {/* ── RIGHT PANEL ── */}
