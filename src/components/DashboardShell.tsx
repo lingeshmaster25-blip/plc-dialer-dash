@@ -73,19 +73,21 @@ function EStopModal({ onConfirm, onCancel }: { onConfirm: () => void; onCancel: 
             display: "flex", flexDirection: "column", gap: 6,
           }}>
             <span style={{ fontSize: 14.5, fontWeight: 700, color: "#991b1b" }}>
-              ⚠&nbsp; All machines will stop immediately
+              ⚠&nbsp; VLM will stop immediately
             </span>
             <span style={{ fontSize: 13, color: "#6b7280", lineHeight: 1.65 }}>
-              Triggering an E-Stop will halt all conveyor belts, robotic arms,
-              and automated systems. Active orders will be suspended and any
-              in-progress operations will be interrupted. A manual restart will
-              be required to resume operations.
+              Triggering an E-Stop will immediately halt the Vertical Lift Module —
+              the lifting platform, tray carrier, and insertion/extraction mechanism
+              will lock in place. Any tray currently in transit will be held mid-cycle.
+              Active picks and putaways will be suspended. A manual inspection and
+              controlled restart via the operator panel will be required before
+              resuming operations.
             </span>
           </div>
 
           {/* Affected systems */}
           <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
-            {["Conveyor Belt", "Robotic Arm", "Tray Dispenser", "All Actuators"].map((sys) => (
+            {["Lift Platform", "Tray Carrier", "Extraction Arm", "Tray Inserter", "Drive Motor"].map((sys) => (
               <span key={sys} style={{
                 padding: "5px 12px", borderRadius: 20,
                 background: "#fee2e2", color: "#991b1b",
