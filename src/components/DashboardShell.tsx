@@ -21,7 +21,7 @@ const RECENT_ACTIVITY = [
 const NAV_BUTTONS = [
   { label: "PUTAWAY", sub: "Store Items", Icon: Upload, to: "/putaway" },
   { label: "PICKLIST", sub: "Retrieve Items", Icon: Download, to: "/" },
-  { label: "ORDERS", sub: "Manage Orders", Icon: Package, to: "/" },
+  { label: "ORDERS", sub: "Manage Orders", Icon: Package, to: "/orders" },
   { label: "SEARCH", sub: "Find Items", Icon: Search, to: "/" },
   { label: "MAINTENANCE", sub: "Check Status", Icon: Clock, to: "/" },
   { label: "TROUBLESHOOT", sub: "Manage Alerts", Icon: AlertCircle, to: "/" },
