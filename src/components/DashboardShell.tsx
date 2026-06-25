@@ -125,7 +125,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         </div>
 
         {/* Right icons */}
-        <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 26 }}>
           <Home size={19} color="#c7cdd8" strokeWidth={2} style={{ cursor: "pointer" }}
             onClick={() => navigate({ to: "/" })} />
           <Bell size={19} color="#c7cdd8" strokeWidth={2} style={{ cursor: "pointer" }} />
