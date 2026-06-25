@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Square } from "lucide-react";
 import { DashboardShell } from "@/components/DashboardShell";
 
 export const Route = createFileRoute("/troubleshoot")({
@@ -27,10 +27,56 @@ const FIELD: React.CSSProperties = {
   outline: "none", boxSizing: "border-box",
 };
 
+const MASTER_USER = "Trilo";
+const MASTER_KEY = "trilo@2026";
+
+function ControlTile({ icon, label }: { icon: React.ReactNode; label: string }) {
+  return (
+    <button style={{
+      width: "100%", height: "100%", background: "#fff", border: "1px solid #d0d4da",
+      borderRadius: 12, cursor: "pointer", display: "flex", flexDirection: "column",
+      alignItems: "center", justifyContent: "center", gap: 12, transition: "background .12s",
+    }}
+      onMouseEnter={(e) => { e.currentTarget.style.background = "#f5f6f8"; }}
+      onMouseLeave={(e) => { e.currentTarget.style.background = "#fff"; }}
+    >
+      <span style={{
+        width: 50, height: 50, borderRadius: "50%", border: "2px solid #111827",
+        display: "flex", alignItems: "center", justifyContent: "center",
+      }}>
+        {icon}
+      </span>
+      <span style={{ fontSize: 18, fontWeight: 600, color: "#1a1a1a" }}>{label}</span>
+    </button>
+  );
+}
+
 function TroubleshootPage() {
   const [alerts, setAlerts] = useState<Alert[]>(INITIAL_ALERTS);
+  const [userId, setUserId] = useState("");
+  const [passkey, setPasskey] = useState("");
+  const [unlocked, setUnlocked] = useState(false);
+  const [error, setError] = useState(false);
 
   const acknowledge = (id: number) => setAlerts((prev) => prev.filter((a) => a.id !== id));
+
+  const grantAccess = () => {
+    const idOk = userId.trim().toLowerCase() === MASTER_USER.toLowerCase();
+    const keyOk = passkey.trim() === MASTER_KEY;
+    if (idOk && keyOk) {
+      setUnlocked(true);
+      setError(false);
+    } else {
+      setError(true);
+    }
+  };
+
+  const quitManualMode = () => {
+    setUnlocked(false);
+    setUserId("");
+    setPasskey("");
+    setError(false);
+  };
 
   return (
     <DashboardShell>
@@ -101,27 +147,96 @@ function TroubleshootPage() {
               <span style={{ fontSize: 26, fontWeight: 800, color: "#1a1a1a" }}>Manual Control</span>
               <div style={{ height: 1, background: "#eceef1", margin: "16px 0 18px" }} />
 
-              <p style={{ fontSize: 17, color: "#374151", margin: "0 0 22px" }}>Enter Master Access to use manual mode</p>
+              {!unlocked ? (
+                <>
+                  <p style={{ fontSize: 17, color: "#374151", margin: "0 0 22px" }}>Enter Master Access to use manual mode</p>
 
-              <label style={{ fontSize: 20, fontWeight: 600, color: "#1a1a1a", marginBottom: 10 }}>User ID</label>
-              <input style={{ ...FIELD, marginBottom: 22 }} placeholder="Enter user ID" />
+                  <label style={{ fontSize: 20, fontWeight: 600, color: "#1a1a1a", marginBottom: 10 }}>User ID</label>
+                  <input
+                    style={{ ...FIELD, marginBottom: 22 }}
+                    placeholder="Enter user ID"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    value={userId}
+                    onChange={(e) => { setUserId(e.target.value); setError(false); }}
+                  />
 
-              <label style={{ fontSize: 20, fontWeight: 600, color: "#1a1a1a", marginBottom: 10 }}>Passkey</label>
-              <input style={FIELD} type="password" placeholder="Enter passkey" />
+                  <label style={{ fontSize: 20, fontWeight: 600, color: "#1a1a1a", marginBottom: 10 }}>Passkey</label>
+                  <input
+                    style={FIELD}
+                    type="password"
+                    placeholder="Enter passkey"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    value={passkey}
+                    onChange={(e) => { setPasskey(e.target.value); setError(false); }}
+                    onKeyDown={(e) => { if (e.key === "Enter") grantAccess(); }}
+                  />
 
-              <div style={{ flex: 1 }} />
+                  {error && (
+                    <span style={{ color: "#db0000", fontSize: 14, marginTop: 12 }}>
+                      Invalid User ID or Passkey.
+                    </span>
+                  )}
 
-              <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                <button style={{
-                  background: "#28954b", color: "#fff", fontSize: 18, fontWeight: 600,
-                  border: "none", borderRadius: 8, padding: "14px 34px", cursor: "pointer", transition: "background .15s",
-                }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = "#21813f"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = "#28954b"; }}
-                >
-                  Grant Access
-                </button>
-              </div>
+                  <div style={{ flex: 1 }} />
+
+                  <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                    <button
+                      onClick={grantAccess}
+                      style={{
+                        background: "#28954b", color: "#fff", fontSize: 18, fontWeight: 600,
+                        border: "none", borderRadius: 8, padding: "14px 34px", cursor: "pointer", transition: "background .15s",
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = "#21813f"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = "#28954b"; }}
+                    >
+                      Grant Access
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div style={{
+                    flex: 1, minHeight: 0, display: "grid",
+                    gridTemplateColumns: "1fr 1fr 1fr", gridTemplateRows: "1fr 1fr 1fr", gap: 16,
+                  }}>
+                    <div />
+                    <ControlTile icon={<ArrowUp size={24} color="#111827" strokeWidth={2.4} />} label="Lift Up" />
+                    <div />
+                    <ControlTile icon={<ArrowLeft size={24} color="#111827" strokeWidth={2.4} />} label="Extract" />
+                    <ControlTile icon={<Square size={18} color="#111827" fill="#111827" />} label="Stop" />
+                    <ControlTile icon={<ArrowRight size={24} color="#111827" strokeWidth={2.4} />} label="Retract" />
+                    <div />
+                    <ControlTile icon={<ArrowDown size={24} color="#111827" strokeWidth={2.4} />} label="Lift Down" />
+                    <div />
+                  </div>
+
+                  <div style={{ height: 1, background: "#eceef1", margin: "16px 0 14px" }} />
+
+                  <div style={{ display: "flex", gap: 16 }}>
+                    <button style={{
+                      flex: 1, background: "#fff", color: "#1a1a1a", fontSize: 17, fontWeight: 600,
+                      border: "1px solid #d0d4da", borderRadius: 8, padding: "14px 0", cursor: "pointer",
+                    }}>
+                      Send to Home
+                    </button>
+                    <button
+                      onClick={quitManualMode}
+                      style={{
+                        flex: 1, background: "#db0000", color: "#fff", fontSize: 17, fontWeight: 600,
+                        border: "none", borderRadius: 8, padding: "14px 0", cursor: "pointer", transition: "background .15s",
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = "#b80000"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = "#db0000"; }}
+                    >
+                      Quit Manual Mode
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
