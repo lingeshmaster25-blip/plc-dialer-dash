@@ -35,18 +35,18 @@ function ControlTile({ icon, label }: { icon: React.ReactNode; label: string }) 
     <button style={{
       width: "100%", height: "100%", background: "#fff", border: "1px solid #d0d4da",
       borderRadius: 12, cursor: "pointer", display: "flex", flexDirection: "column",
-      alignItems: "center", justifyContent: "center", gap: 12, transition: "background .12s",
+      alignItems: "center", justifyContent: "center", gap: 7, transition: "background .12s",
     }}
       onMouseEnter={(e) => { e.currentTarget.style.background = "#f5f6f8"; }}
       onMouseLeave={(e) => { e.currentTarget.style.background = "#fff"; }}
     >
       <span style={{
-        width: 50, height: 50, borderRadius: "50%", border: "2px solid #111827",
+        width: 40, height: 40, borderRadius: "50%", border: "2px solid #111827",
         display: "flex", alignItems: "center", justifyContent: "center",
       }}>
         {icon}
       </span>
-      <span style={{ fontSize: 18, fontWeight: 600, color: "#1a1a1a" }}>{label}</span>
+      <span style={{ fontSize: 16, fontWeight: 600, color: "#1a1a1a" }}>{label}</span>
     </button>
   );
 }
@@ -201,33 +201,33 @@ function TroubleshootPage() {
                 <>
                   <div style={{
                     flex: 1, minHeight: 0, display: "grid",
-                    gridTemplateColumns: "1fr 1fr 1fr", gridTemplateRows: "1fr 1fr 1fr", gap: 16,
+                    gridTemplateColumns: "1fr 1fr 1fr", gridTemplateRows: "1fr 1fr 1fr", gap: 12,
                   }}>
                     <div />
-                    <ControlTile icon={<ArrowUp size={24} color="#111827" strokeWidth={2.4} />} label="Lift Up" />
+                    <ControlTile icon={<ArrowUp size={20} color="#111827" strokeWidth={2.4} />} label="Lift Up" />
                     <div />
-                    <ControlTile icon={<ArrowLeft size={24} color="#111827" strokeWidth={2.4} />} label="Extract" />
-                    <ControlTile icon={<Square size={18} color="#111827" fill="#111827" />} label="Stop" />
-                    <ControlTile icon={<ArrowRight size={24} color="#111827" strokeWidth={2.4} />} label="Retract" />
+                    <ControlTile icon={<ArrowLeft size={20} color="#111827" strokeWidth={2.4} />} label="Extract" />
+                    <ControlTile icon={<Square size={15} color="#111827" fill="#111827" />} label="Stop" />
+                    <ControlTile icon={<ArrowRight size={20} color="#111827" strokeWidth={2.4} />} label="Retract" />
                     <div />
-                    <ControlTile icon={<ArrowDown size={24} color="#111827" strokeWidth={2.4} />} label="Lift Down" />
+                    <ControlTile icon={<ArrowDown size={20} color="#111827" strokeWidth={2.4} />} label="Lift Down" />
                     <div />
                   </div>
 
-                  <div style={{ height: 1, background: "#eceef1", margin: "16px 0 14px" }} />
+                  <div style={{ height: 1, background: "#eceef1", margin: "12px 0 12px" }} />
 
                   <div style={{ display: "flex", gap: 16 }}>
                     <button style={{
-                      flex: 1, background: "#fff", color: "#1a1a1a", fontSize: 17, fontWeight: 600,
-                      border: "1px solid #d0d4da", borderRadius: 8, padding: "14px 0", cursor: "pointer",
+                      flex: 1, background: "#fff", color: "#1a1a1a", fontSize: 16, fontWeight: 600,
+                      border: "1px solid #d0d4da", borderRadius: 8, padding: "12px 0", cursor: "pointer",
                     }}>
                       Send to Home
                     </button>
                     <button
                       onClick={quitManualMode}
                       style={{
-                        flex: 1, background: "#db0000", color: "#fff", fontSize: 17, fontWeight: 600,
-                        border: "none", borderRadius: 8, padding: "14px 0", cursor: "pointer", transition: "background .15s",
+                        flex: 1, background: "#db0000", color: "#fff", fontSize: 16, fontWeight: 600,
+                        border: "none", borderRadius: 8, padding: "12px 0", cursor: "pointer", transition: "background .15s",
                       }}
                       onMouseEnter={(e) => { e.currentTarget.style.background = "#b80000"; }}
                       onMouseLeave={(e) => { e.currentTarget.style.background = "#db0000"; }}
