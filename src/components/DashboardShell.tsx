@@ -24,7 +24,7 @@ const NAV_BUTTONS = [
   { label: "ORDERS", sub: "Manage Orders", Icon: Package, to: "/orders" },
   { label: "SEARCH", sub: "Find Items", Icon: Search, to: "/" },
   { label: "MAINTENANCE", sub: "Check Status", Icon: Clock, to: "/" },
-  { label: "TROUBLESHOOT", sub: "Manage Alerts", Icon: AlertCircle, to: "/" },
+  { label: "TROUBLESHOOT", sub: "Manage Alerts", Icon: AlertCircle, to: "/troubleshoot" },
   { label: "SETTINGS", sub: "System Config", Icon: Settings, to: "/" },
 ] as const;
 
