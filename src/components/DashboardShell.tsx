@@ -30,12 +30,12 @@ const NAV_BUTTONS = [
 
 export const CARD_SHADOW = "0 1px 3px rgba(16,24,40,0.08)";
 
-function DonutChart({ pct }: { pct: number }) {
+function DonutChart({ pct, size = 128 }: { pct: number; size?: number }) {
   const r = 52;
   const circ = 2 * Math.PI * r;
   const offset = circ * (1 - pct / 100);
   return (
-    <svg width="128" height="128" viewBox="0 0 130 130" style={{ flexShrink: 0 }}>
+    <svg width={size} height={size} viewBox="0 0 130 130" style={{ flexShrink: 0 }}>
       <circle cx="65" cy="65" r={r} fill="none" stroke="#e5e7eb" strokeWidth="14" />
       <circle cx="65" cy="65" r={r} fill="none" stroke="#22c55e" strokeWidth="14"
         strokeDasharray={circ} strokeDashoffset={offset}
@@ -199,14 +199,16 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           </div>
 
           {/* Inventory Overview */}
-          <div style={{ background: "#fff", borderRadius: 10, padding: "16px 18px", border: "1px solid #edeff2", boxShadow: CARD_SHADOW }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+          <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", background: "#fff", borderRadius: 10, padding: "16px 18px", border: "1px solid #edeff2", boxShadow: CARD_SHADOW }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10, flexShrink: 0 }}>
               <span style={{ fontWeight: 700, fontSize: 13, color: "#111827", letterSpacing: "0.6px" }}>INVENTORY OVERVIEW</span>
               <span style={{ color: "#2563eb", fontSize: 12.5, cursor: "pointer", fontWeight: 600 }}>View all</span>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-              <DonutChart pct={68.7} />
-              <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 13 }}>
+            <div style={{ flex: 1, minHeight: 0, display: "flex", alignItems: "center", gap: 16 }}>
+              <div style={{ display: "flex", alignItems: "center", flexShrink: 0 }}>
+                <DonutChart pct={68.7} size={150} />
+              </div>
+              <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-evenly", alignSelf: "stretch", paddingTop: 4, paddingBottom: 4 }}>
                 {[
                   { label: "Total Trays", val: 17 },
                   { label: "Available", val: 11 },
