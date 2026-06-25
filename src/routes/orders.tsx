@@ -2,36 +2,11 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { DashboardShell } from "@/components/DashboardShell";
+import { ORDERS, type Priority, type Status } from "@/lib/orders-store";
 
 export const Route = createFileRoute("/orders")({
   component: OrdersPage,
 });
-
-type Priority = "High" | "Medium" | "Low";
-type Status = "Picking" | "Queued" | "Completed";
-type Order = {
-  id: string;
-  emp: string;
-  priority: Priority;
-  status: Status;
-  items: { sku: string; item: string; qty: number }[];
-};
-
-const AUTO = [{ sku: "SKU-007", item: "Automotive Part", qty: 24 }, { sku: "SKU-053", item: "Screws", qty: 10 }];
-
-const ORDERS: Order[] = [
-  { id: "#534", emp: "Deepak", priority: "High", status: "Picking", items: AUTO },
-  { id: "#532", emp: "Mohan", priority: "High", status: "Queued", items: AUTO },
-  { id: "#530", emp: "Guru", priority: "Medium", status: "Queued", items: [{ sku: "SKU-012", item: "Bolts", qty: 50 }, { sku: "SKU-031", item: "Washers", qty: 120 }] },
-  { id: "#528", emp: "Deepak", priority: "Medium", status: "Completed", items: [{ sku: "SKU-101", item: "Brake Pads", qty: 8 }] },
-  { id: "#526", emp: "Mohan", priority: "Low", status: "Queued", items: [{ sku: "SKU-204", item: "Filters", qty: 16 }] },
-  { id: "#524", emp: "Guru", priority: "Low", status: "Completed", items: [{ sku: "SKU-077", item: "Gaskets", qty: 30 }] },
-  { id: "#534", emp: "Deepak", priority: "Medium", status: "Picking", items: AUTO },
-  { id: "#532", emp: "Mohan", priority: "High", status: "Queued", items: [{ sku: "SKU-019", item: "Bearings", qty: 12 }] },
-  { id: "#530", emp: "Guru", priority: "Medium", status: "Queued", items: [{ sku: "SKU-088", item: "Seals", qty: 40 }] },
-  { id: "#528", emp: "Deepak", priority: "Low", status: "Completed", items: [{ sku: "SKU-101", item: "Brake Pads", qty: 8 }] },
-  { id: "#526", emp: "Mohan", priority: "High", status: "Queued", items: [{ sku: "SKU-204", item: "Filters", qty: 16 }] },
-];
 
 const PRIORITY_STYLE: Record<Priority, { bg: string; color: string }> = {
   High: { bg: "#facccc", color: "#d11f1f" },
