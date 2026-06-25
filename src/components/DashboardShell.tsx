@@ -2,7 +2,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { hmiApi, type PlcStatus } from "@/lib/hmi-api";
 import {
-  Bell, Clock, Wifi, User, Upload, Download, Package,
+  Bell, Clock, Wifi, User, Home, Upload, Download, Package,
   Search, AlertTriangle, Settings, CheckCircle2,
   Truck, ClipboardList, AlertCircle,
 } from "lucide-react";
@@ -70,6 +70,12 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const [status, setStatus] = useState<PlcStatus | null>(null);
   const prevRef = useRef<PlcStatus | null>(null);
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -119,9 +125,17 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         </div>
 
         {/* Right icons */}
-        <div style={{ display: "flex", alignItems: "center", gap: 22 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+          <Home size={19} color="#c7cdd8" strokeWidth={2} style={{ cursor: "pointer" }}
+            onClick={() => navigate({ to: "/" })} />
           <Bell size={19} color="#c7cdd8" strokeWidth={2} style={{ cursor: "pointer" }} />
-          <Clock size={19} color="#c7cdd8" strokeWidth={2} style={{ cursor: "pointer" }} />
+          <span style={{
+            color: "#dbe0ea", fontSize: 14, fontWeight: 600,
+            fontVariantNumeric: "tabular-nums", letterSpacing: "0.5px",
+            minWidth: 96, textAlign: "center",
+          }}>
+            {now.toLocaleTimeString()}
+          </span>
           <Wifi size={19} color="#c7cdd8" strokeWidth={2} style={{ cursor: "pointer" }} />
           <div style={{ width: 1, height: 26, background: "#2a3a5c" }} />
           <div style={{
