@@ -25,14 +25,34 @@ function Toggle({ label, active, onClick }: { label: string; active: boolean; on
       style={{
         flex: 1, padding: "9px 16px", fontSize: 15, fontWeight: 500,
         borderRadius: 8, cursor: "pointer",
-        background: active ? "#eafaf0" : "#fff",
-        border: active ? "1.5px solid #15803d" : "1px solid #d0d4da",
-        color: active ? "#15803d" : "#111827",
+        background: active ? "#3f3f3f" : "#fff",
+        border: active ? "1.5px solid #3f3f3f" : "1px solid #d0d4da",
+        color: active ? "#fff" : "#111827",
         transition: "all .12s",
       }}
     >
       {label}
     </button>
+  );
+}
+
+function BinGrid({ rows, cols, label }: { rows: number; cols: number; label: string }) {
+  const cells = Array.from({ length: rows * cols });
+  return (
+    <div style={{
+      flex: 1, marginTop: 14, minHeight: 0,
+      display: "grid",
+      gridTemplateColumns: `repeat(${cols}, 1fr)`,
+      gridTemplateRows: `repeat(${rows}, 1fr)`,
+      gap: 1.5, background: "#4f6138",
+      border: "1.5px solid #4f6138", borderRadius: 8, overflow: "hidden",
+    }}>
+      {cells.map((_, i) => (
+        <div key={i} style={{ background: "#b5f09c", padding: "12px 14px" }}>
+          <span style={{ fontSize: 20, fontWeight: 600, color: "#1f2937" }}>{label}</span>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -147,9 +167,15 @@ function PutawayPage() {
             padding: "18px 22px", display: "flex", flexDirection: "column",
           }}>
             <span style={{ fontSize: 19, fontWeight: 600, color: "#1a1a1a" }}>Storage Preview</span>
-            <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", minHeight: 0 }}>
-              <span style={{ fontSize: 26, color: "#6b7280" }}>No Preview Selected</span>
-            </div>
+            {storingType === "Bin" && partition === "Multi" ? (
+              <BinGrid rows={2} cols={2} label="B1" />
+            ) : storingType === "Bin" && partition === "Single" ? (
+              <BinGrid rows={1} cols={1} label="B1" />
+            ) : (
+              <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", minHeight: 0 }}>
+                <span style={{ fontSize: 26, color: "#6b7280" }}>No Preview Selected</span>
+              </div>
+            )}
           </div>
 
         </div>
