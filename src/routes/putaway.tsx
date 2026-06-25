@@ -135,6 +135,18 @@ function PutawayPage() {
     setShowModal(true);
   };
 
+  const handleOkay = () => {
+    setShowModal(false);
+    setSku("");
+    setQty(0);
+    setSkuDesc("");
+    setStoringType(null);
+    setPartition(null);
+    setBinId("");
+    setTrayId("");
+    setError(false);
+  };
+
   return (
     <DashboardShell>
       <div style={{ flex: 1, minWidth: 0, overflow: "hidden", padding: "18px 32px", display: "flex", flexDirection: "column", position: "relative" }}>
@@ -300,7 +312,7 @@ function PutawayPage() {
                 The Items have been allocated in the designated bin/tray
               </span>
               <button
-                onClick={() => setShowModal(false)}
+                onClick={handleOkay}
                 style={{
                   background: "#0058f1", color: "#fff", fontSize: 24, fontWeight: 600,
                   border: "none", borderRadius: 12, padding: "15px 64px", cursor: "pointer",
