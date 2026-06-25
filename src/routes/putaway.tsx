@@ -36,6 +36,43 @@ function Toggle({ label, active, onClick }: { label: string; active: boolean; on
   );
 }
 
+function BinCell({ green }: { green: boolean }) {
+  return (
+    <div style={{
+      flex: 1, minWidth: 0, minHeight: 0,
+      background: green ? "#b5f09c" : "#c5c5c5",
+      border: "1px solid rgba(0,0,0,0.12)", borderRadius: 10,
+      boxShadow: "0 2px 4px rgba(0,0,0,0.18)",
+      padding: "12px 14px",
+    }}>
+      <span style={{ fontSize: 19, fontWeight: 600, color: "#1f2937" }}>B1</span>
+    </div>
+  );
+}
+
+function BinTrays({ trays, binsPerTray }: { trays: { name: string; greenIndex: number }[]; binsPerTray: number }) {
+  return (
+    <div style={{ flex: 1, minHeight: 0, marginTop: 14, display: "flex", flexDirection: "column", gap: 14 }}>
+      {trays.map((tray) => (
+        <div key={tray.name} style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
+          <span style={{ fontSize: 22, fontWeight: 500, color: "#1f2937", marginBottom: 8, flexShrink: 0 }}>
+            {tray.name}
+          </span>
+          <div style={{
+            flex: 1, minHeight: 0, display: "flex", gap: 14, alignItems: "stretch",
+            background: "#fff", border: "1px solid #d0d4da", borderRadius: 12,
+            padding: 14, boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
+          }}>
+            {Array.from({ length: binsPerTray }).map((_, i) => (
+              <BinCell key={i} green={i === tray.greenIndex} />
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function BinGrid({ rows, cols, label }: { rows: number; cols: number; label: string }) {
   const cells = Array.from({ length: rows * cols });
   return (
@@ -170,7 +207,13 @@ function PutawayPage() {
             {storingType === "Bin" && partition === "Multi" ? (
               <BinGrid rows={2} cols={2} label="B1" />
             ) : storingType === "Bin" && partition === "Single" ? (
-              <BinGrid rows={1} cols={1} label="B1" />
+              <BinTrays
+                binsPerTray={4}
+                trays={[
+                  { name: "Tray1", greenIndex: 1 },
+                  { name: "Tray2", greenIndex: 3 },
+                ]}
+              />
             ) : (
               <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", minHeight: 0 }}>
                 <span style={{ fontSize: 26, color: "#6b7280" }}>No Preview Selected</span>
