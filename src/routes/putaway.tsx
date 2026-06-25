@@ -288,12 +288,13 @@ function PutawayPage() {
             borderRadius: 10,
           }}>
             <div style={{
-              background: "rgba(255,255,255,0.72)",
-              backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)",
-              borderRadius: 24, boxShadow: "0 24px 70px rgba(0,0,0,0.22)",
-              border: "1px solid rgba(255,255,255,0.6)",
-              padding: "44px 56px", width: "min(560px, 80%)",
-              display: "flex", flexDirection: "column", alignItems: "center", gap: 30,
+              background: "rgba(255,255,255,0.42)",
+              backdropFilter: "blur(11px)", WebkitBackdropFilter: "blur(11px)",
+              borderRadius: 26, boxShadow: "0 24px 70px rgba(0,0,0,0.20)",
+              border: "1px solid rgba(255,255,255,0.65)",
+              padding: 44, boxSizing: "border-box",
+              width: "min(640px, 84%)", aspectRatio: "1.4 / 1", maxHeight: "88%",
+              display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 34,
             }}>
               <span style={{ fontSize: 30, fontWeight: 600, color: "#1a1a1a", textAlign: "center", lineHeight: 1.35 }}>
                 The Items have been allocated in the designated bin/tray
@@ -301,8 +302,8 @@ function PutawayPage() {
               <button
                 onClick={() => setShowModal(false)}
                 style={{
-                  background: "#0058f1", color: "#fff", fontSize: 22, fontWeight: 600,
-                  border: "none", borderRadius: 12, padding: "13px 56px", cursor: "pointer",
+                  background: "#0058f1", color: "#fff", fontSize: 24, fontWeight: 600,
+                  border: "none", borderRadius: 12, padding: "15px 64px", cursor: "pointer",
                   boxShadow: "0 4px 14px rgba(0,88,241,0.35)", transition: "background .15s",
                 }}
                 onMouseEnter={(e) => { e.currentTarget.style.background = "#0049cc"; }}
