@@ -20,7 +20,7 @@ const RECENT_ACTIVITY = [
 // exist today — extend these as new module pages are added.
 const NAV_BUTTONS = [
   { label: "PUTAWAY", sub: "Store Items", Icon: Upload, to: "/putaway" },
-  { label: "PICKLIST", sub: "Retrieve Items", Icon: Download, to: "/" },
+  { label: "PICKLIST", sub: "Retrieve Items", Icon: Download, to: "/picklist" },
   { label: "ORDERS", sub: "Manage Orders", Icon: Package, to: "/orders" },
   { label: "SEARCH", sub: "Find Items", Icon: Search, to: "/" },
   { label: "MAINTENANCE", sub: "Check Status", Icon: Clock, to: "/" },
@@ -35,7 +35,7 @@ function DonutChart({ pct }: { pct: number }) {
   const circ = 2 * Math.PI * r;
   const offset = circ * (1 - pct / 100);
   return (
-    <svg width="110" height="110" viewBox="0 0 130 130" style={{ flexShrink: 0 }}>
+    <svg width="128" height="128" viewBox="0 0 130 130" style={{ flexShrink: 0 }}>
       <circle cx="65" cy="65" r={r} fill="none" stroke="#e5e7eb" strokeWidth="14" />
       <circle cx="65" cy="65" r={r} fill="none" stroke="#22c55e" strokeWidth="14"
         strokeDasharray={circ} strokeDashoffset={offset}
@@ -56,7 +56,7 @@ function StatCard({ Icon, color, label, value }: { Icon: typeof Clock; color: st
       <Icon size={30} color={color} strokeWidth={2} style={{ flexShrink: 0 }} />
       <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
         <span style={{ fontSize: 13, color: "#6b7280", fontWeight: 400 }}>{label}</span>
-        <span style={{ fontSize: 18, fontWeight: 800, color: "#111827", lineHeight: 1.05, whiteSpace: "nowrap" }}>{value}</span>
+        <span style={{ fontSize: 23, fontWeight: 800, color: "#111827", lineHeight: 1.05 }}>{value}</span>
       </div>
     </div>
   );
@@ -199,14 +199,14 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           </div>
 
           {/* Inventory Overview */}
-          <div style={{ background: "#fff", borderRadius: 10, padding: "16px 18px", border: "1px solid #edeff2", boxShadow: CARD_SHADOW, flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
+          <div style={{ background: "#fff", borderRadius: 10, padding: "16px 18px", border: "1px solid #edeff2", boxShadow: CARD_SHADOW }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-              <span style={{ fontWeight: 700, fontSize: 14, color: "#111827", letterSpacing: "0.6px" }}>INVENTORY OVERVIEW</span>
+              <span style={{ fontWeight: 700, fontSize: 13, color: "#111827", letterSpacing: "0.6px" }}>INVENTORY OVERVIEW</span>
               <span style={{ color: "#2563eb", fontSize: 12.5, cursor: "pointer", fontWeight: 600 }}>View all</span>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 16, flex: 1, minHeight: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
               <DonutChart pct={68.7} />
-              <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 18 }}>
+              <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 13 }}>
                 {[
                   { label: "Total Trays", val: 17 },
                   { label: "Available", val: 11 },
@@ -214,8 +214,8 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                   { label: "SKUs", val: 7 },
                 ].map((r) => (
                   <div key={r.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <span style={{ fontSize: 14, color: "#6b7280" }}>{r.label}</span>
-                    <span style={{ fontSize: 17, fontWeight: 700, color: "#111827" }}>{r.val}</span>
+                    <span style={{ fontSize: 12.5, color: "#6b7280" }}>{r.label}</span>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: "#111827" }}>{r.val}</span>
                   </div>
                 ))}
               </div>
