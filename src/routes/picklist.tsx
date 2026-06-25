@@ -67,28 +67,27 @@ function PicklistPage() {
           Order Picking
         </h2>
 
-        {/* Main row */}
+        {/* ONE shared card containing both bin grid and order panel */}
         <div style={{
           flex: 1,
           minHeight: 0,
+          border: "1px solid #d0d4da",
+          borderRadius: 10,
+          background: "#fff",
           display: "flex",
-          gap: 14,
-          alignItems: "stretch",
+          overflow: "hidden",
         }}>
 
-          {/* Bin Grid Card */}
+          {/* Bin Grid — fills left, no own border */}
           <div style={{
             flex: 1,
             minWidth: 0,
             minHeight: 0,
-            border: "1px solid #d0d4da",
-            borderRadius: 10,
-            background: "#fff",
-            padding: "12px",
+            padding: "14px",
             display: "grid",
             gridTemplateRows: "repeat(4, 1fr)",
             gridTemplateColumns: "repeat(6, 1fr)",
-            gap: 8,
+            gap: 10,
             boxSizing: "border-box",
           }}>
             {bins.map((row, r) =>
@@ -118,15 +117,15 @@ function PicklistPage() {
             )}
           </div>
 
-          {/* Order Panel */}
+          {/* Divider */}
+          <div style={{ width: 1, background: "#e5e7eb", flexShrink: 0 }} />
+
+          {/* Order Panel — fixed width, right side of the same card */}
           <div style={{
-            width: 228,
+            width: 230,
             flexShrink: 0,
             display: "flex",
             flexDirection: "column",
-            border: "1px solid #d0d4da",
-            borderRadius: 10,
-            background: "#fff",
             overflow: "hidden",
             boxSizing: "border-box",
           }}>
@@ -141,7 +140,7 @@ function PicklistPage() {
             {/* Column headers */}
             <div style={{
               display: "grid",
-              gridTemplateColumns: "76px 1fr 36px",
+              gridTemplateColumns: "80px 1fr 36px",
               padding: "5px 16px",
               borderTop: "1px solid #e5e7eb",
               borderBottom: "1px solid #e5e7eb",
@@ -162,7 +161,7 @@ function PicklistPage() {
                   onClick={() => toggleCheck(idx)}
                   style={{
                     display: "grid",
-                    gridTemplateColumns: "76px 1fr 36px",
+                    gridTemplateColumns: "80px 1fr 36px",
                     alignItems: "center",
                     padding: "10px 16px",
                     borderBottom: "1px solid #f0f0f0",
@@ -198,7 +197,7 @@ function PicklistPage() {
 
             {/* Action buttons */}
             <div style={{
-              padding: "10px 12px 12px",
+              padding: "10px 12px 14px",
               display: "flex",
               flexDirection: "column",
               gap: 8,
