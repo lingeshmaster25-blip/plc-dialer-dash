@@ -7,7 +7,6 @@ export const Route = createFileRoute("/picklist")({
   component: PicklistPage,
 });
 
-// ── Static order data ────────────────────────────────────────────────────────
 const ORDER = {
   id: "532",
   items: [
@@ -16,8 +15,6 @@ const ORDER = {
   ],
 };
 
-// 4 rows × 6 cols of bins. Green = picked, Yellow = current, Gray = pending.
-// Row 0, Col 1 = green; Row 1, Col 1–2 = yellow; rest = gray
 type BinState = "green" | "yellow" | "gray";
 
 const INITIAL_BINS: BinState[][] = Array.from({ length: 4 }, (_, r) =>
@@ -47,38 +44,52 @@ function PicklistPage() {
   return (
     <DashboardShell>
       <div style={{
-        flex: 1, minWidth: 0, overflow: "hidden",
-        padding: "18px 24px", display: "flex", flexDirection: "column",
+        flex: 1,
+        minWidth: 0,
+        overflow: "hidden",
+        padding: "20px 22px 16px 22px",
+        display: "flex",
+        flexDirection: "column",
         fontFamily: "'Inter','Segoe UI',sans-serif",
+        boxSizing: "border-box",
       }}>
 
-        {/* ── Header ── */}
-        <h1 style={{ fontSize: 32, fontWeight: 800, color: "#1a1a1a", margin: 0, letterSpacing: "-0.5px" }}>
+        {/* Page heading */}
+        <h1 style={{ fontSize: 30, fontWeight: 800, color: "#1a1a1a", margin: 0, letterSpacing: "-0.5px", lineHeight: 1.1 }}>
           Picklist Overview
         </h1>
-        <p style={{ fontSize: 15, color: "#6b7280", margin: "4px 0 0" }}>
+        <p style={{ fontSize: 14, color: "#6b7280", margin: "2px 0 0", lineHeight: 1 }}>
           Retrieve items
         </p>
 
-        <div style={{ height: 1, background: "#e5e7eb", margin: "14px 0 12px", flexShrink: 0 }} />
-
-        <h2 style={{ fontSize: 26, fontWeight: 800, color: "#1a1a1a", margin: "0 0 12px" }}>
+        {/* Section heading */}
+        <h2 style={{ fontSize: 22, fontWeight: 800, color: "#1a1a1a", margin: "12px 0 8px", lineHeight: 1 }}>
           Order Picking
         </h2>
 
-        {/* ── Body: bin grid + order panel ── */}
-        <div style={{ flex: 1, minHeight: 0, display: "flex", gap: 20 }}>
+        {/* Main row */}
+        <div style={{
+          flex: 1,
+          minHeight: 0,
+          display: "flex",
+          gap: 14,
+          alignItems: "stretch",
+        }}>
 
-          {/* Bin Grid */}
+          {/* Bin Grid Card */}
           <div style={{
-            flex: 1, minWidth: 0, minHeight: 0,
-            border: "1px solid #d0d4da", borderRadius: 12,
-            background: "#f8f8f8",
-            padding: 16,
+            flex: 1,
+            minWidth: 0,
+            minHeight: 0,
+            border: "1px solid #d0d4da",
+            borderRadius: 10,
+            background: "#fff",
+            padding: "12px",
             display: "grid",
             gridTemplateRows: "repeat(4, 1fr)",
             gridTemplateColumns: "repeat(6, 1fr)",
-            gap: 12,
+            gap: 8,
+            boxSizing: "border-box",
           }}>
             {bins.map((row, r) =>
               row.map((state, c) => (
@@ -86,17 +97,18 @@ function PicklistPage() {
                   key={`${r}-${c}`}
                   style={{
                     background: BIN_COLOR[state],
-                    borderRadius: 8,
-                    display: "flex", alignItems: "flex-start", justifyContent: "flex-start",
-                    padding: "10px 12px",
+                    borderRadius: 6,
+                    display: "flex",
+                    alignItems: "flex-start",
+                    justifyContent: "flex-start",
+                    padding: "8px 10px",
                     minHeight: 0,
-                    transition: "background .2s",
-                    cursor: "default",
-                    boxShadow: state !== "gray" ? "0 2px 8px rgba(0,0,0,0.10)" : "none",
+                    boxShadow: state !== "gray" ? "0 2px 6px rgba(0,0,0,0.10)" : "none",
                   }}
                 >
                   <span style={{
-                    fontSize: 14, fontWeight: 700,
+                    fontSize: 13,
+                    fontWeight: 700,
                     color: state === "gray" ? "#555" : "#1a1a1a",
                   }}>
                     B1
@@ -108,104 +120,147 @@ function PicklistPage() {
 
           {/* Order Panel */}
           <div style={{
-            width: 240, flexShrink: 0, display: "flex", flexDirection: "column", gap: 0,
-            border: "1px solid #d0d4da", borderRadius: 12, background: "#fff",
+            width: 228,
+            flexShrink: 0,
+            display: "flex",
+            flexDirection: "column",
+            border: "1px solid #d0d4da",
+            borderRadius: 10,
+            background: "#fff",
             overflow: "hidden",
+            boxSizing: "border-box",
           }}>
 
             {/* Order title */}
-            <div style={{ padding: "16px 18px 10px", borderBottom: "1px solid #e5e7eb" }}>
-              <span style={{ fontSize: 20, fontWeight: 700, color: "#1a1a1a" }}>
+            <div style={{ padding: "14px 16px 10px", flexShrink: 0 }}>
+              <span style={{ fontSize: 18, fontWeight: 700, color: "#1a1a1a" }}>
                 Order #{ORDER.id}
               </span>
             </div>
 
-            {/* SKU table header */}
+            {/* Column headers */}
             <div style={{
-              display: "grid", gridTemplateColumns: "1fr 1.6fr 0.7fr",
-              padding: "8px 18px",
+              display: "grid",
+              gridTemplateColumns: "76px 1fr 36px",
+              padding: "5px 16px",
+              borderTop: "1px solid #e5e7eb",
               borderBottom: "1px solid #e5e7eb",
+              flexShrink: 0,
             }}>
               {["SKU", "ITEMS", "QTY"].map((h) => (
-                <span key={h} style={{ fontSize: 11, fontWeight: 700, color: "#9098a3", letterSpacing: "0.7px" }}>
+                <span key={h} style={{ fontSize: 10.5, fontWeight: 700, color: "#9098a3", letterSpacing: "0.6px" }}>
                   {h}
                 </span>
               ))}
             </div>
 
             {/* SKU rows */}
-            <div style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
+            <div style={{ overflowY: "auto", flexShrink: 0 }}>
               {ORDER.items.map((item, idx) => (
                 <div
                   key={item.sku}
                   onClick={() => toggleCheck(idx)}
                   style={{
-                    display: "grid", gridTemplateColumns: "1fr 1.6fr 0.7fr",
+                    display: "grid",
+                    gridTemplateColumns: "76px 1fr 36px",
                     alignItems: "center",
-                    padding: "10px 18px",
+                    padding: "10px 16px",
                     borderBottom: "1px solid #f0f0f0",
                     cursor: "pointer",
                     background: checkedItems[idx] ? "#f0fff4" : "#fff",
                     transition: "background .12s",
                   }}
                 >
-                  {/* Checkbox + SKU */}
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                     <div style={{
-                      width: 16, height: 16, borderRadius: 3, flexShrink: 0,
+                      width: 15,
+                      height: 15,
+                      borderRadius: 3,
+                      flexShrink: 0,
                       border: checkedItems[idx] ? "none" : "1.5px solid #c0c4cc",
                       background: checkedItems[idx] ? "#22c55e" : "#fff",
-                      display: "flex", alignItems: "center", justifyContent: "center",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
                     }}>
-                      {checkedItems[idx] && <Check size={11} color="#fff" strokeWidth={3} />}
+                      {checkedItems[idx] && <Check size={10} color="#fff" strokeWidth={3} />}
                     </div>
-                    <span style={{ fontSize: 12, fontWeight: 600, color: "#1a1a1a" }}>{item.sku}</span>
+                    <span style={{ fontSize: 11.5, fontWeight: 600, color: "#1a1a1a" }}>{item.sku}</span>
                   </div>
-                  <span style={{ fontSize: 12, color: "#374151" }}>{item.name}</span>
+                  <span style={{ fontSize: 11.5, color: "#374151" }}>{item.name}</span>
                   <span style={{ fontSize: 13, fontWeight: 700, color: "#1a1a1a" }}>{item.qty}</span>
                 </div>
               ))}
             </div>
 
+            {/* Push buttons to bottom */}
+            <div style={{ flex: 1 }} />
+
             {/* Action buttons */}
-            <div style={{ padding: "14px 14px 16px", display: "flex", flexDirection: "column", gap: 10, borderTop: "1px solid #e5e7eb" }}>
-              {/* Retrieve Next Tray */}
-              <button style={{
-                background: "#1068ff", color: "#fff",
-                border: "none", borderRadius: 8,
-                padding: "12px 0", fontSize: 14, fontWeight: 600,
-                cursor: "pointer", width: "100%",
-                transition: "background .15s",
-              }}
+            <div style={{
+              padding: "10px 12px 12px",
+              display: "flex",
+              flexDirection: "column",
+              gap: 8,
+              borderTop: "1px solid #e5e7eb",
+              flexShrink: 0,
+            }}>
+              <button
+                style={{
+                  background: "#1068ff",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: 7,
+                  padding: "12px 0",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  width: "100%",
+                  transition: "background .15s",
+                }}
                 onMouseEnter={(e) => { e.currentTarget.style.background = "#0049cc"; }}
                 onMouseLeave={(e) => { e.currentTarget.style.background = "#1068ff"; }}
               >
                 Retrieve Next Tray
               </button>
 
-              {/* Confirm Pick + Find */}
               <div style={{ display: "flex", gap: 8 }}>
-                <button style={{
-                  flex: 1, background: "#28954b", color: "#fff",
-                  border: "none", borderRadius: 8,
-                  padding: "11px 0", fontSize: 13, fontWeight: 600,
-                  cursor: "pointer", display: "flex", alignItems: "center",
-                  justifyContent: "center", gap: 5,
-                  transition: "background .15s",
-                }}
+                <button
+                  style={{
+                    flex: 1,
+                    background: "#28954b",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: 7,
+                    padding: "10px 0",
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 4,
+                    transition: "background .15s",
+                  }}
                   onMouseEnter={(e) => { e.currentTarget.style.background = "#21813f"; }}
                   onMouseLeave={(e) => { e.currentTarget.style.background = "#28954b"; }}
                 >
-                  <Check size={14} strokeWidth={2.5} />
+                  <Check size={13} strokeWidth={2.5} />
                   Confirm Pick
                 </button>
-                <button style={{
-                  flex: 1, background: "#fff", color: "#1a1a1a",
-                  border: "1.5px solid #d0d4da", borderRadius: 8,
-                  padding: "11px 0", fontSize: 13, fontWeight: 600,
-                  cursor: "pointer",
-                  transition: "background .15s",
-                }}
+                <button
+                  style={{
+                    flex: 1,
+                    background: "#fff",
+                    color: "#1a1a1a",
+                    border: "1.5px solid #d0d4da",
+                    borderRadius: 7,
+                    padding: "10px 0",
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    transition: "background .15s",
+                  }}
                   onMouseEnter={(e) => { e.currentTarget.style.background = "#f3f4f6"; }}
                   onMouseLeave={(e) => { e.currentTarget.style.background = "#fff"; }}
                 >
@@ -213,6 +268,7 @@ function PicklistPage() {
                 </button>
               </div>
             </div>
+
           </div>
         </div>
 
