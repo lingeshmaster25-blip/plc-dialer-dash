@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ChevronUp, ChevronDown } from "lucide-react";
 import { DashboardShell } from "@/components/DashboardShell";
+import { addPutaway } from "@/lib/inventory-store";
 
 export const Route = createFileRoute("/putaway")({
   component: PutawayPage,
@@ -176,6 +177,11 @@ function PutawayPage() {
   const handleKeep = () => {
     if (!isComplete) { setError(true); return; }
     setError(false);
+    addPutaway({
+      sku, description: skuDesc, qty,
+      storingType: storingType!, partition: partition!,
+      binId, trayId, bins: [...selected],
+    });
     setShowModal(true);
   };
 
