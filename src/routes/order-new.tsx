@@ -39,20 +39,39 @@ function Field({ label, value, sub }: { label: string; value: string | number; s
   );
 }
 
+// Sequential order numbers for newly confirmed orders.
+let orderCounter = 534;
+
 function OrderNewPage() {
   const [employee, setEmployee] = useState("");
   const [priority, setPriority] = useState("");
   const [sku, setSku] = useState("");
   const [desc, setDesc] = useState("");
   const [qty, setQty] = useState(0);
+  const [orderNo, setOrderNo] = useState<number | null>(null);
 
   usePutawayRecords(); // re-render when putaway inventory changes
   const avail = lookupBySku(sku);
   const previewReady = !!avail && qty > 0 && employee.trim() !== "" && priority !== "";
 
+  const handleConfirm = () => {
+    if (!previewReady) return;
+    setOrderNo(orderCounter);
+    orderCounter += 2;
+  };
+
+  const handleOkay = () => {
+    setOrderNo(null);
+    setEmployee("");
+    setPriority("");
+    setSku("");
+    setDesc("");
+    setQty(0);
+  };
+
   return (
     <DashboardShell>
-      <div style={{ flex: 1, minWidth: 0, overflow: "hidden", padding: "18px 32px", display: "flex", flexDirection: "column" }}>
+      <div style={{ flex: 1, minWidth: 0, overflow: "hidden", padding: "18px 32px", display: "flex", flexDirection: "column", position: "relative" }}>
 
         {/* Header */}
         <h1 style={{ fontSize: 30, fontWeight: 800, color: "#1a1a1a", margin: 0, letterSpacing: "-0.5px" }}>
@@ -180,12 +199,16 @@ function OrderNewPage() {
             {/* confirm */}
             <div style={{ flex: 0.58, minWidth: 0, display: "flex", flexDirection: "column", minHeight: 0 }}>
               <label style={{ ...SECTION, fontWeight: 500, fontSize: 22, visibility: "hidden" }}>Confirm</label>
-              <button style={{
-                flex: 1, minHeight: 0, background: "#28954b", color: "#fff",
-                fontSize: 22, fontWeight: 700, letterSpacing: "0.5px",
-                border: "none", borderRadius: 10, cursor: "pointer", transition: "background .15s",
-              }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = "#21813f"; }}
+              <button
+                onClick={handleConfirm}
+                style={{
+                  flex: 1, minHeight: 0, background: "#28954b", color: "#fff",
+                  fontSize: 22, fontWeight: 700, letterSpacing: "0.5px",
+                  border: "none", borderRadius: 10, transition: "background .15s, opacity .15s",
+                  cursor: previewReady ? "pointer" : "not-allowed",
+                  opacity: previewReady ? 1 : 0.55,
+                }}
+                onMouseEnter={(e) => { if (previewReady) e.currentTarget.style.background = "#21813f"; }}
                 onMouseLeave={(e) => { e.currentTarget.style.background = "#28954b"; }}
               >
                 CONFIRM
@@ -194,6 +217,44 @@ function OrderNewPage() {
           </div>
 
         </div>
+
+        {/* ── CONFIRMATION MODAL ── */}
+        {orderNo !== null && (
+          <div style={{
+            position: "absolute", inset: 0, zIndex: 50,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            background: "rgba(255,255,255,0.35)",
+            backdropFilter: "blur(7px)", WebkitBackdropFilter: "blur(7px)",
+            borderRadius: 10,
+          }}>
+            <div style={{
+              background: "rgba(255,255,255,0.42)",
+              backdropFilter: "blur(11px)", WebkitBackdropFilter: "blur(11px)",
+              borderRadius: 26, boxShadow: "0 24px 70px rgba(0,0,0,0.20)",
+              border: "1px solid rgba(255,255,255,0.65)",
+              padding: 44, boxSizing: "border-box",
+              width: "min(780px, 90%)", height: 460, maxHeight: "88%",
+              display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 34,
+            }}>
+              <span style={{ fontSize: 30, fontWeight: 600, color: "#1a1a1a", textAlign: "center", lineHeight: 1.35 }}>
+                Your Order #{orderNo} has been added to the Picklist Queue
+              </span>
+              <button
+                onClick={handleOkay}
+                style={{
+                  background: "#0058f1", color: "#fff", fontSize: 24, fontWeight: 600,
+                  border: "none", borderRadius: 12, padding: "15px 64px", cursor: "pointer",
+                  boxShadow: "0 4px 14px rgba(0,88,241,0.35)", transition: "background .15s",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "#0049cc"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "#0058f1"; }}
+              >
+                Okay
+              </button>
+            </div>
+          </div>
+        )}
+
       </div>
     </DashboardShell>
   );
