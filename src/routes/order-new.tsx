@@ -19,6 +19,7 @@ const SECTION: React.CSSProperties = {
 
 const BOX: React.CSSProperties = {
   flex: 1, minHeight: 0, border: "1px solid #d0d4da", borderRadius: 10, background: "#fff",
+  boxShadow: "inset 0 2px 8px rgba(16,24,40,0.14)",
 };
 
 const RECENT_ORDERS = ["Order #532", "Order #530", "Order #528", "Order #526", "Order #524", "Order #522"];
