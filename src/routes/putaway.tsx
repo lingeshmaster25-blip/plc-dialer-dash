@@ -17,7 +17,8 @@ const FIELD: React.CSSProperties = {
   width: "100%", background: "#e8eaec", border: "1px solid #e2e4e7",
   borderRadius: 8, padding: "9px 14px", fontSize: 14, color: "#111827",
   outline: "none", boxSizing: "border-box",
-};
+  MozAppearance: "textfield",
+} as React.CSSProperties;
 
 function Toggle({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
   return (
@@ -229,10 +230,11 @@ function PutawayPage() {
                 <div style={{ position: "relative" }}>
                   <input
                     style={FIELD}
-                    type="number"
+                    type="text"
+                    inputMode="numeric"
                     placeholder="Qty"
                     value={qty === 0 ? "" : qty}
-                    onChange={(e) => setQty(Number(e.target.value) || 0)}
+                    onChange={(e) => { const v = e.target.value.replace(/[^0-9]/g, ""); setQty(v === "" ? 0 : parseInt(v, 10)); }}
                   />
                   <div style={{
                     position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)",
