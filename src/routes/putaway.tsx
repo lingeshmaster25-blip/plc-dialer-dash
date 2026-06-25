@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ChevronUp, ChevronDown } from "lucide-react";
 import { DashboardShell } from "@/components/DashboardShell";
 
@@ -36,41 +36,60 @@ function Toggle({ label, active, onClick }: { label: string; active: boolean; on
   );
 }
 
-function TrayBlocks({ trays }: { trays: { name: string; filled: boolean }[] }) {
+function TrayBlocks({ trays, selected, onToggle }: {
+  trays: { name: string }[];
+  selected: Set<string>;
+  onToggle: (id: string) => void;
+}) {
   return (
     <div style={{ flex: 1, minHeight: 0, marginTop: 14, display: "flex", flexDirection: "column", gap: 14 }}>
-      {trays.map((tray) => (
-        <div key={tray.name} style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
-          <span style={{ fontSize: 22, fontWeight: 500, color: "#1f2937", marginBottom: 8, flexShrink: 0 }}>
-            {tray.name}
-          </span>
-          <div style={{
-            flex: 1, minHeight: 0, borderRadius: 12,
-            background: tray.filled ? "#b5f09c" : "#fff",
-            border: tray.filled ? "1px solid rgba(0,0,0,0.08)" : "1px solid #d0d4da",
-            boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
-          }} />
-        </div>
-      ))}
+      {trays.map((tray) => {
+        const id = `tray-${tray.name}`;
+        const green = selected.has(id);
+        return (
+          <div key={tray.name} style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
+            <span style={{ fontSize: 22, fontWeight: 500, color: "#1f2937", marginBottom: 8, flexShrink: 0 }}>
+              {tray.name}
+            </span>
+            <div
+              onClick={() => onToggle(id)}
+              style={{
+                flex: 1, minHeight: 0, borderRadius: 12, cursor: "pointer",
+                background: green ? "#b5f09c" : "#fff",
+                border: green ? "1px solid rgba(0,0,0,0.08)" : "1px solid #d0d4da",
+                boxShadow: "0 2px 6px rgba(0,0,0,0.08)", transition: "background .12s",
+              }}
+            />
+          </div>
+        );
+      })}
     </div>
   );
 }
 
-function BinCell({ green }: { green: boolean }) {
+function BinCell({ green, onClick }: { green: boolean; onClick: () => void }) {
   return (
-    <div style={{
-      flex: 1, minWidth: 0, minHeight: 0,
-      background: green ? "#b5f09c" : "#c5c5c5",
-      border: "1px solid rgba(0,0,0,0.12)", borderRadius: 10,
-      boxShadow: "0 2px 4px rgba(0,0,0,0.18)",
-      padding: "12px 14px",
-    }}>
+    <div
+      onClick={onClick}
+      style={{
+        flex: 1, minWidth: 0, minHeight: 0, cursor: "pointer",
+        background: green ? "#b5f09c" : "#c5c5c5",
+        border: "1px solid rgba(0,0,0,0.12)", borderRadius: 10,
+        boxShadow: "0 2px 4px rgba(0,0,0,0.18)",
+        padding: "12px 14px", transition: "background .12s",
+      }}
+    >
       <span style={{ fontSize: 19, fontWeight: 600, color: "#1f2937" }}>B1</span>
     </div>
   );
 }
 
-function BinTrays({ trays, binsPerTray }: { trays: { name: string; greenIndex: number }[]; binsPerTray: number }) {
+function BinTrays({ trays, binsPerTray, selected, onToggle }: {
+  trays: { name: string }[];
+  binsPerTray: number;
+  selected: Set<string>;
+  onToggle: (id: string) => void;
+}) {
   return (
     <div style={{ flex: 1, minHeight: 0, marginTop: 14, display: "flex", flexDirection: "column", gap: 14 }}>
       {trays.map((tray) => (
@@ -83,9 +102,10 @@ function BinTrays({ trays, binsPerTray }: { trays: { name: string; greenIndex: n
             background: "#fff", border: "1px solid #d0d4da", borderRadius: 12,
             padding: 14, boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
           }}>
-            {Array.from({ length: binsPerTray }).map((_, i) => (
-              <BinCell key={i} green={i === tray.greenIndex} />
-            ))}
+            {Array.from({ length: binsPerTray }).map((_, i) => {
+              const id = `${tray.name}-bin-${i}`;
+              return <BinCell key={i} green={selected.has(id)} onClick={() => onToggle(id)} />;
+            })}
           </div>
         </div>
       ))}
@@ -93,7 +113,10 @@ function BinTrays({ trays, binsPerTray }: { trays: { name: string; greenIndex: n
   );
 }
 
-function BinGrid({ rows, cols, label }: { rows: number; cols: number; label: string }) {
+function BinGrid({ rows, cols, label, selected, onToggle }: {
+  rows: number; cols: number; label: string;
+  selected: Set<string>; onToggle: (id: string) => void;
+}) {
   const cells = Array.from({ length: rows * cols });
   return (
     <div style={{
@@ -101,14 +124,21 @@ function BinGrid({ rows, cols, label }: { rows: number; cols: number; label: str
       display: "grid",
       gridTemplateColumns: `repeat(${cols}, 1fr)`,
       gridTemplateRows: `repeat(${rows}, 1fr)`,
-      gap: 1.5, background: "#4f6138",
-      border: "1.5px solid #4f6138", borderRadius: 8, overflow: "hidden",
+      gap: 1.5, background: "#9aa1a9",
+      border: "1.5px solid #9aa1a9", borderRadius: 8, overflow: "hidden",
     }}>
-      {cells.map((_, i) => (
-        <div key={i} style={{ background: "#b5f09c", padding: "12px 14px" }}>
-          <span style={{ fontSize: 20, fontWeight: 600, color: "#1f2937" }}>{label}</span>
-        </div>
-      ))}
+      {cells.map((_, i) => {
+        const id = `grid-${i}`;
+        const green = selected.has(id);
+        return (
+          <div key={i} onClick={() => onToggle(id)} style={{
+            background: green ? "#b5f09c" : "#c5c5c5",
+            padding: "12px 14px", cursor: "pointer", transition: "background .12s",
+          }}>
+            <span style={{ fontSize: 20, fontWeight: 600, color: "#1f2937" }}>{label}</span>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -123,6 +153,20 @@ function PutawayPage() {
   const [trayId, setTrayId] = useState("");
   const [error, setError] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  // Clear any selected bins whenever the storing/partition mode changes.
+  useEffect(() => {
+    setSelected(new Set());
+  }, [storingType, partition]);
+
+  const toggleBin = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
 
   const isComplete =
     sku.trim() !== "" && qty > 0 && skuDesc.trim() !== "" &&
@@ -145,6 +189,7 @@ function PutawayPage() {
     setBinId("");
     setTrayId("");
     setError(false);
+    setSelected(new Set());
   };
 
   return (
@@ -265,21 +310,19 @@ function PutawayPage() {
           }}>
             <span style={{ fontSize: 19, fontWeight: 600, color: "#1a1a1a" }}>Storage Preview</span>
             {storingType === "Bin" && partition === "Multi" ? (
-              <BinGrid rows={2} cols={2} label="B1" />
+              <BinGrid rows={2} cols={2} label="B1" selected={selected} onToggle={toggleBin} />
             ) : storingType === "Bin" && partition === "Single" ? (
               <BinTrays
                 binsPerTray={4}
-                trays={[
-                  { name: "Tray1", greenIndex: 1 },
-                  { name: "Tray2", greenIndex: 3 },
-                ]}
+                trays={[{ name: "Tray1" }, { name: "Tray2" }]}
+                selected={selected}
+                onToggle={toggleBin}
               />
             ) : storingType === "Tray" && partition === "Single" ? (
               <TrayBlocks
-                trays={[
-                  { name: "Tray1", filled: true },
-                  { name: "Tray2", filled: false },
-                ]}
+                trays={[{ name: "Tray1" }, { name: "Tray2" }]}
+                selected={selected}
+                onToggle={toggleBin}
               />
             ) : (
               <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", minHeight: 0 }}>
