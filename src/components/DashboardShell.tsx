@@ -76,8 +76,8 @@ function EStopModal({ onConfirm, onCancel }: { onConfirm: () => void; onCancel: 
               ⚠&nbsp; VLM will stop immediately
             </span>
             <span style={{ fontSize: 13, color: "#6b7280", lineHeight: 1.65 }}>
-              Triggering an E-Stop will immediately halt the Vertical Lift Module —
-              the lifting platform, tray carrier, and insertion/extraction mechanism
+              Triggering an E-Stop will immediately halt the Vertical Lift Module.
+              The lifting platform, tray carrier, and insertion/extraction mechanism
               will lock in place. Any tray currently in transit will be held mid-cycle.
               Active picks and putaways will be suspended. A manual inspection and
               controlled restart via the operator panel will be required before
