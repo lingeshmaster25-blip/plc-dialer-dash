@@ -29,19 +29,21 @@ export function SettingsPanel({ ip, rack, slot, onConnect, connecting }: Props) 
         <label className="block">
           <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Rack</span>
           <input
-            type="number"
+            type="text"
+            inputMode="numeric"
             value={form.rack}
-            onChange={(e) => setForm({ ...form, rack: Number(e.target.value) })}
-            className="mt-1 w-full bg-black/40 border border-white/10 rounded px-3 py-2 font-mono text-sm"
+            onChange={(e) => { const v = e.target.value.replace(/[^0-9]/g, ""); setForm({ ...form, rack: v === "" ? 0 : parseInt(v, 10) }); }}
+            className="mt-1 w-full bg-black/40 border border-white/10 rounded px-3 py-2 font-mono text-sm [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
           />
         </label>
         <label className="block">
           <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Slot</span>
           <input
-            type="number"
+            type="text"
+            inputMode="numeric"
             value={form.slot}
-            onChange={(e) => setForm({ ...form, slot: Number(e.target.value) })}
-            className="mt-1 w-full bg-black/40 border border-white/10 rounded px-3 py-2 font-mono text-sm"
+            onChange={(e) => { const v = e.target.value.replace(/[^0-9]/g, ""); setForm({ ...form, slot: v === "" ? 0 : parseInt(v, 10) }); }}
+            className="mt-1 w-full bg-black/40 border border-white/10 rounded px-3 py-2 font-mono text-sm [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
           />
         </label>
         <button
