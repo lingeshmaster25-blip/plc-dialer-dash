@@ -31,11 +31,11 @@ const NAV_BUTTONS = [
 export const CARD_SHADOW = "0 1px 3px rgba(16,24,40,0.08)";
 
 function DonutChart({ pct }: { pct: number }) {
-  const r = 60;
+  const r = 52;
   const circ = 2 * Math.PI * r;
   const offset = circ * (1 - pct / 100);
   return (
-    <svg width="148" height="148" viewBox="0 0 130 130" style={{ flexShrink: 0 }}>
+    <svg width="110" height="110" viewBox="0 0 130 130" style={{ flexShrink: 0 }}>
       <circle cx="65" cy="65" r={r} fill="none" stroke="#e5e7eb" strokeWidth="14" />
       <circle cx="65" cy="65" r={r} fill="none" stroke="#22c55e" strokeWidth="14"
         strokeDasharray={circ} strokeDashoffset={offset}
