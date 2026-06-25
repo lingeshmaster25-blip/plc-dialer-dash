@@ -20,7 +20,7 @@ const RECENT_ACTIVITY = [
 // exist today — extend these as new module pages are added.
 const NAV_BUTTONS = [
   { label: "PUTAWAY", sub: "Store Items", Icon: Upload, to: "/putaway" },
-  { label: "PICKLIST", sub: "Retrieve Items", Icon: Download, to: "/" },
+  { label: "PICKLIST", sub: "Retrieve Items", Icon: Download, to: "/picklist" },
   { label: "ORDERS", sub: "Manage Orders", Icon: Package, to: "/orders" },
   { label: "SEARCH", sub: "Find Items", Icon: Search, to: "/" },
   { label: "MAINTENANCE", sub: "Check Status", Icon: Clock, to: "/" },
