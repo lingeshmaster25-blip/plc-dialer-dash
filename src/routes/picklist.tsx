@@ -67,23 +67,24 @@ function PicklistPage() {
           Order Picking
         </h2>
 
-        {/* ONE shared card containing both bin grid and order panel */}
+        {/* Two separate cards side by side */}
         <div style={{
           flex: 1,
           minHeight: 0,
-          border: "1px solid #d0d4da",
-          borderRadius: 10,
-          background: "#fff",
           display: "flex",
-          overflow: "hidden",
+          gap: 12,
+          alignItems: "stretch",
         }}>
 
-          {/* Bin Grid — fills left, no own border */}
+          {/* LEFT — Bin Grid card (flex: 1, takes remaining space) */}
           <div style={{
             flex: 1,
             minWidth: 0,
             minHeight: 0,
-            padding: "14px",
+            border: "1px solid #d0d4da",
+            borderRadius: 10,
+            background: "#fff",
+            padding: "12px",
             display: "grid",
             gridTemplateRows: "repeat(4, 1fr)",
             gridTemplateColumns: "repeat(6, 1fr)",
@@ -105,11 +106,7 @@ function PicklistPage() {
                     boxShadow: state !== "gray" ? "0 2px 6px rgba(0,0,0,0.10)" : "none",
                   }}
                 >
-                  <span style={{
-                    fontSize: 13,
-                    fontWeight: 700,
-                    color: state === "gray" ? "#555" : "#1a1a1a",
-                  }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: state === "gray" ? "#555" : "#1a1a1a" }}>
                     B1
                   </span>
                 </div>
@@ -117,21 +114,21 @@ function PicklistPage() {
             )}
           </div>
 
-          {/* Divider */}
-          <div style={{ width: 1, background: "#e5e7eb", flexShrink: 0 }} />
-
-          {/* Order Panel — fixed width, right side of the same card */}
+          {/* RIGHT — Order Panel card (wider: 310px) */}
           <div style={{
-            width: 230,
+            width: 310,
             flexShrink: 0,
             display: "flex",
             flexDirection: "column",
+            border: "1px solid #d0d4da",
+            borderRadius: 10,
+            background: "#fff",
             overflow: "hidden",
             boxSizing: "border-box",
           }}>
 
             {/* Order title */}
-            <div style={{ padding: "14px 16px 10px", flexShrink: 0 }}>
+            <div style={{ padding: "14px 18px 10px", flexShrink: 0 }}>
               <span style={{ fontSize: 18, fontWeight: 700, color: "#1a1a1a" }}>
                 Order #{ORDER.id}
               </span>
@@ -140,14 +137,14 @@ function PicklistPage() {
             {/* Column headers */}
             <div style={{
               display: "grid",
-              gridTemplateColumns: "80px 1fr 36px",
-              padding: "5px 16px",
+              gridTemplateColumns: "90px 1fr 44px",
+              padding: "6px 18px",
               borderTop: "1px solid #e5e7eb",
               borderBottom: "1px solid #e5e7eb",
               flexShrink: 0,
             }}>
               {["SKU", "ITEMS", "QTY"].map((h) => (
-                <span key={h} style={{ fontSize: 10.5, fontWeight: 700, color: "#9098a3", letterSpacing: "0.6px" }}>
+                <span key={h} style={{ fontSize: 11, fontWeight: 700, color: "#9098a3", letterSpacing: "0.6px" }}>
                   {h}
                 </span>
               ))}
@@ -161,19 +158,19 @@ function PicklistPage() {
                   onClick={() => toggleCheck(idx)}
                   style={{
                     display: "grid",
-                    gridTemplateColumns: "80px 1fr 36px",
+                    gridTemplateColumns: "90px 1fr 44px",
                     alignItems: "center",
-                    padding: "10px 16px",
+                    padding: "11px 18px",
                     borderBottom: "1px solid #f0f0f0",
                     cursor: "pointer",
                     background: checkedItems[idx] ? "#f0fff4" : "#fff",
                     transition: "background .12s",
                   }}
                 >
-                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
                     <div style={{
-                      width: 15,
-                      height: 15,
+                      width: 16,
+                      height: 16,
                       borderRadius: 3,
                       flexShrink: 0,
                       border: checkedItems[idx] ? "none" : "1.5px solid #c0c4cc",
@@ -184,9 +181,9 @@ function PicklistPage() {
                     }}>
                       {checkedItems[idx] && <Check size={10} color="#fff" strokeWidth={3} />}
                     </div>
-                    <span style={{ fontSize: 11.5, fontWeight: 600, color: "#1a1a1a" }}>{item.sku}</span>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: "#1a1a1a" }}>{item.sku}</span>
                   </div>
-                  <span style={{ fontSize: 11.5, color: "#374151" }}>{item.name}</span>
+                  <span style={{ fontSize: 12, color: "#374151" }}>{item.name}</span>
                   <span style={{ fontSize: 13, fontWeight: 700, color: "#1a1a1a" }}>{item.qty}</span>
                 </div>
               ))}
@@ -197,10 +194,10 @@ function PicklistPage() {
 
             {/* Action buttons */}
             <div style={{
-              padding: "10px 12px 14px",
+              padding: "12px 14px 16px",
               display: "flex",
               flexDirection: "column",
-              gap: 8,
+              gap: 9,
               borderTop: "1px solid #e5e7eb",
               flexShrink: 0,
             }}>
@@ -210,8 +207,8 @@ function PicklistPage() {
                   color: "#fff",
                   border: "none",
                   borderRadius: 7,
-                  padding: "12px 0",
-                  fontSize: 13,
+                  padding: "13px 0",
+                  fontSize: 14,
                   fontWeight: 600,
                   cursor: "pointer",
                   width: "100%",
@@ -223,7 +220,7 @@ function PicklistPage() {
                 Retrieve Next Tray
               </button>
 
-              <div style={{ display: "flex", gap: 8 }}>
+              <div style={{ display: "flex", gap: 9 }}>
                 <button
                   style={{
                     flex: 1,
@@ -231,14 +228,14 @@ function PicklistPage() {
                     color: "#fff",
                     border: "none",
                     borderRadius: 7,
-                    padding: "10px 0",
-                    fontSize: 12,
+                    padding: "11px 0",
+                    fontSize: 13,
                     fontWeight: 600,
                     cursor: "pointer",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    gap: 4,
+                    gap: 5,
                     transition: "background .15s",
                   }}
                   onMouseEnter={(e) => { e.currentTarget.style.background = "#21813f"; }}
@@ -254,8 +251,8 @@ function PicklistPage() {
                     color: "#1a1a1a",
                     border: "1.5px solid #d0d4da",
                     borderRadius: 7,
-                    padding: "10px 0",
-                    fontSize: 12,
+                    padding: "11px 0",
+                    fontSize: 13,
                     fontWeight: 600,
                     cursor: "pointer",
                     transition: "background .15s",
