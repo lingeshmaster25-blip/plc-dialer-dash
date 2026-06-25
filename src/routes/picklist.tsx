@@ -2,264 +2,166 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { Check } from "lucide-react";
 import { DashboardShell } from "@/components/DashboardShell";
+import { getPickingOrder } from "@/lib/orders-store";
 
 export const Route = createFileRoute("/picklist")({
   component: PicklistPage,
 });
 
-const ORDER = {
-  id: "532",
-  items: [
-    { sku: "SKU-007", name: "Automotive Part", qty: 24, checked: true },
-    { sku: "SKU-053", name: "Screws",          qty: 10, checked: false },
-  ],
-};
+const TILE_COLOR = {
+  now: "#f6a656",
+  queued: "#7dc0f7",
+  picked: "#41cc17",
+  empty: "#c5c5c5",
+} as const;
 
-type BinState = "green" | "yellow" | "gray";
+const HCELL: React.CSSProperties = { fontSize: 15, fontWeight: 600, color: "#9098a3", letterSpacing: "0.3px" };
+const ROW_COLS = "44px 1.2fr 1.3fr 0.8fr 0.6fr";
 
-const INITIAL_BINS: BinState[][] = Array.from({ length: 4 }, (_, r) =>
-  Array.from({ length: 6 }, (_, c) => {
-    if (r === 0 && c === 1) return "green";
-    if (r === 1 && c === 1) return "yellow";
-    if (r === 1 && c === 2) return "yellow";
-    return "gray";
-  })
-);
-
-const BIN_COLOR: Record<BinState, string> = {
-  green:  "#4caf50",
-  yellow: "#f5c842",
-  gray:   "#c5c5c5",
-};
+const binNum = (b: string) => parseInt(b.replace(/\D/g, ""), 10) || 0;
 
 function PicklistPage() {
-  const [bins] = useState<BinState[][]>(INITIAL_BINS);
-  const [checkedItems, setCheckedItems] = useState<boolean[]>(
-    ORDER.items.map((i) => i.checked)
-  );
+  const order = getPickingOrder();
+  const [picked, setPicked] = useState<Set<number>>(new Set());
 
-  const toggleCheck = (idx: number) =>
-    setCheckedItems((prev) => prev.map((v, i) => (i === idx ? !v : v)));
+  const involved = new Set(order.items.map((it) => binNum(it.bin)));
+  const pickedBins = new Set([...picked].map((i) => binNum(order.items[i].bin)));
+  const firstUnpicked = order.items.findIndex((_, i) => !picked.has(i));
+  const currentBin = firstUnpicked >= 0 ? binNum(order.items[firstUnpicked].bin) : -1;
+
+  const tileState = (n: number): keyof typeof TILE_COLOR =>
+    pickedBins.has(n) ? "picked" : n === currentBin ? "now" : involved.has(n) ? "queued" : "empty";
+
+  const toggle = (i: number) =>
+    setPicked((prev) => {
+      const next = new Set(prev);
+      next.has(i) ? next.delete(i) : next.add(i);
+      return next;
+    });
 
   return (
     <DashboardShell>
-      <div style={{
-        flex: 1,
-        minWidth: 0,
-        overflow: "hidden",
-        padding: "20px 22px 16px 22px",
-        display: "flex",
-        flexDirection: "column",
-        fontFamily: "'Inter','Segoe UI',sans-serif",
-        boxSizing: "border-box",
-      }}>
+      <div style={{ flex: 1, minWidth: 0, overflow: "hidden", padding: "18px 32px", display: "flex", flexDirection: "column" }}>
 
-        {/* Page heading */}
-        <h1 style={{ fontSize: 30, fontWeight: 800, color: "#1a1a1a", margin: 0, letterSpacing: "-0.5px", lineHeight: 1.1 }}>
+        {/* Header */}
+        <h1 style={{ fontSize: 30, fontWeight: 800, color: "#1a1a1a", margin: 0, letterSpacing: "-0.5px" }}>
           Picklist Overview
         </h1>
-        <p style={{ fontSize: 14, color: "#6b7280", margin: "2px 0 0", lineHeight: 1 }}>
-          Retrieve items
-        </p>
+        <p style={{ fontSize: 15, color: "#6b7280", margin: "4px 0 0" }}>Retrieve items</p>
+        <div style={{ height: 1, background: "#e5e7eb", margin: "14px 0 14px", flexShrink: 0 }} />
 
-        {/* Section heading */}
-        <h2 style={{ fontSize: 22, fontWeight: 800, color: "#1a1a1a", margin: "12px 0 8px", lineHeight: 1 }}>
-          Order Picking
-        </h2>
+        <h2 style={{ fontSize: 28, fontWeight: 800, color: "#1a1a1a", margin: "0 0 14px" }}>Order Picking</h2>
 
-        {/* Two separate cards side by side */}
+        {/* Bin tiles */}
         <div style={{
-          flex: 1,
-          minHeight: 0,
-          display: "flex",
-          gap: 12,
-          alignItems: "stretch",
+          border: "1px solid #d8dbe0", borderRadius: 12, padding: 14, flexShrink: 0,
+          boxShadow: "0 1px 4px rgba(16,24,40,0.06)",
         }}>
-
-          {/* LEFT — Bin Grid card (flex: 1, takes remaining space) */}
-          <div style={{
-            flex: 1,
-            minWidth: 0,
-            minHeight: 0,
-            border: "1px solid #d0d4da",
-            borderRadius: 10,
-            background: "#fff",
-            padding: "12px",
-            display: "grid",
-            gridTemplateRows: "repeat(4, 1fr)",
-            gridTemplateColumns: "repeat(6, 1fr)",
-            gap: 10,
-            boxSizing: "border-box",
-          }}>
-            {bins.map((row, r) =>
-              row.map((state, c) => (
-                <div
-                  key={`${r}-${c}`}
-                  style={{
-                    background: BIN_COLOR[state],
-                    borderRadius: 6,
-                    display: "flex",
-                    alignItems: "flex-start",
-                    justifyContent: "flex-start",
-                    padding: "8px 10px",
-                    minHeight: 0,
-                    boxShadow: state !== "gray" ? "0 2px 6px rgba(0,0,0,0.10)" : "none",
-                  }}
-                >
-                  <span style={{ fontSize: 13, fontWeight: 700, color: state === "gray" ? "#555" : "#1a1a1a" }}>
-                    B1
-                  </span>
+          <div style={{ display: "flex", gap: 14 }}>
+            {Array.from({ length: 9 }).map((_, idx) => {
+              const n = idx + 1;
+              const state = tileState(n);
+              return (
+                <div key={n} style={{
+                  flex: 1, height: 116, borderRadius: 12, background: TILE_COLOR[state],
+                  border: "1px solid rgba(0,0,0,0.1)", boxShadow: "0 2px 5px rgba(0,0,0,0.18)",
+                  padding: "10px 12px", position: "relative",
+                }}>
+                  <span style={{ fontSize: 20, fontWeight: 600, color: "#1f2937" }}>B{n}</span>
+                  {state === "picked" && (
+                    <Check size={20} color="#fff" strokeWidth={3} style={{ position: "absolute", left: 10, bottom: 10 }} />
+                  )}
                 </div>
-              ))
-            )}
+              );
+            })}
           </div>
+        </div>
 
-          {/* RIGHT — Order Panel card (wider: 310px) */}
-          <div style={{
-            width: 310,
-            flexShrink: 0,
-            display: "flex",
-            flexDirection: "column",
-            border: "1px solid #d0d4da",
-            borderRadius: 10,
-            background: "#fff",
-            overflow: "hidden",
-            boxSizing: "border-box",
-          }}>
+        {/* Order card */}
+        <div style={{
+          flex: 1, minHeight: 0, marginTop: 16, border: "1px solid #e5e7eb", borderRadius: 14,
+          padding: "18px 24px", display: "flex", flexDirection: "column",
+          boxShadow: "0 1px 4px rgba(16,24,40,0.06)",
+        }}>
+          <span style={{ fontSize: 24, fontWeight: 800, color: "#1a1a1a" }}>Order {order.id}</span>
+          <div style={{ height: 1, background: "#e5e7eb", margin: "12px 0 14px" }} />
 
-            {/* Order title */}
-            <div style={{ padding: "14px 18px 10px", flexShrink: 0 }}>
-              <span style={{ fontSize: 18, fontWeight: 700, color: "#1a1a1a" }}>
-                Order #{ORDER.id}
-              </span>
-            </div>
+          <div style={{ display: "flex", gap: 32, flex: 1, minHeight: 0 }}>
 
-            {/* Column headers */}
-            <div style={{
-              display: "grid",
-              gridTemplateColumns: "90px 1fr 44px",
-              padding: "6px 18px",
-              borderTop: "1px solid #e5e7eb",
-              borderBottom: "1px solid #e5e7eb",
-              flexShrink: 0,
-            }}>
-              {["SKU", "ITEMS", "QTY"].map((h) => (
-                <span key={h} style={{ fontSize: 11, fontWeight: 700, color: "#9098a3", letterSpacing: "0.6px" }}>
-                  {h}
-                </span>
-              ))}
-            </div>
-
-            {/* SKU rows */}
-            <div style={{ overflowY: "auto", flexShrink: 0 }}>
-              {ORDER.items.map((item, idx) => (
-                <div
-                  key={item.sku}
-                  onClick={() => toggleCheck(idx)}
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "90px 1fr 44px",
-                    alignItems: "center",
-                    padding: "11px 18px",
-                    borderBottom: "1px solid #f0f0f0",
-                    cursor: "pointer",
-                    background: checkedItems[idx] ? "#f0fff4" : "#fff",
-                    transition: "background .12s",
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                    <div style={{
-                      width: 16,
-                      height: 16,
-                      borderRadius: 3,
-                      flexShrink: 0,
-                      border: checkedItems[idx] ? "none" : "1.5px solid #c0c4cc",
-                      background: checkedItems[idx] ? "#22c55e" : "#fff",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}>
-                      {checkedItems[idx] && <Check size={10} color="#fff" strokeWidth={3} />}
-                    </div>
-                    <span style={{ fontSize: 12, fontWeight: 600, color: "#1a1a1a" }}>{item.sku}</span>
+            {/* items table */}
+            <div style={{ flex: 1.25, minWidth: 0, display: "flex", flexDirection: "column" }}>
+              <div style={{ display: "grid", gridTemplateColumns: ROW_COLS, alignItems: "center", marginBottom: 6 }}>
+                <span />
+                <span style={HCELL}>SKU</span>
+                <span style={HCELL}>ITEMS</span>
+                <span style={HCELL}>BIN</span>
+                <span style={HCELL}>QTY</span>
+              </div>
+              {order.items.map((it, i) => (
+                <div key={i} style={{ display: "grid", gridTemplateColumns: ROW_COLS, alignItems: "center", padding: "9px 0" }}>
+                  <div
+                    onClick={() => toggle(i)}
+                    style={{
+                      width: 26, height: 26, borderRadius: 6, cursor: "pointer",
+                      border: "1.5px solid #c2c6cc",
+                      background: picked.has(i) ? "#41cc17" : "#f3f4f6",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                    }}
+                  >
+                    {picked.has(i) && <Check size={17} color="#fff" strokeWidth={3} />}
                   </div>
-                  <span style={{ fontSize: 12, color: "#374151" }}>{item.name}</span>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: "#1a1a1a" }}>{item.qty}</span>
+                  <span style={{ fontSize: 17, color: "#1f2937" }}>{it.sku}</span>
+                  <span style={{ fontSize: 17, color: "#1f2937" }}>{it.item}</span>
+                  <span style={{ fontSize: 17, color: "#1f2937" }}>{it.bin}</span>
+                  <span style={{ fontSize: 17, color: "#1f2937" }}>{it.qty}</span>
                 </div>
               ))}
             </div>
 
-            {/* Push buttons to bottom */}
-            <div style={{ flex: 1 }} />
+            {/* legend + actions */}
+            <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {[
+                  { c: TILE_COLOR.now, label: "Pick now" },
+                  { c: TILE_COLOR.queued, label: "Queued" },
+                  { c: TILE_COLOR.picked, label: "Picked" },
+                ].map((l) => (
+                  <div key={l.label} style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                    <span style={{ width: 50, height: 30, borderRadius: 6, background: l.c, border: "1px solid rgba(0,0,0,0.08)" }} />
+                    <span style={{ fontSize: 17, color: "#1f2937" }}>- &nbsp;{l.label}</span>
+                  </div>
+                ))}
+              </div>
 
-            {/* Action buttons */}
-            <div style={{
-              padding: "12px 14px 16px",
-              display: "flex",
-              flexDirection: "column",
-              gap: 9,
-              borderTop: "1px solid #e5e7eb",
-              flexShrink: 0,
-            }}>
-              <button
-                style={{
-                  background: "#1068ff",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: 7,
-                  padding: "13px 0",
-                  fontSize: 14,
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  width: "100%",
-                  transition: "background .15s",
-                }}
+              <div style={{ flex: 1 }} />
+
+              <button style={{
+                background: "#0058f1", color: "#fff", fontSize: 16, fontWeight: 600,
+                border: "none", borderRadius: 8, padding: "14px 0", cursor: "pointer",
+                marginBottom: 14, transition: "background .15s",
+              }}
                 onMouseEnter={(e) => { e.currentTarget.style.background = "#0049cc"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = "#1068ff"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "#0058f1"; }}
               >
                 Retrieve Next Tray
               </button>
 
-              <div style={{ display: "flex", gap: 9 }}>
-                <button
-                  style={{
-                    flex: 1,
-                    background: "#28954b",
-                    color: "#fff",
-                    border: "none",
-                    borderRadius: 7,
-                    padding: "11px 0",
-                    fontSize: 13,
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: 5,
-                    transition: "background .15s",
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = "#21813f"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = "#28954b"; }}
+              <div style={{ display: "flex", gap: 14 }}>
+                <button style={{
+                  flex: 1, background: "#1e8449", color: "#fff", fontSize: 16, fontWeight: 600,
+                  border: "none", borderRadius: 8, padding: "14px 0", cursor: "pointer",
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                  transition: "background .15s",
+                }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "#196e3c"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "#1e8449"; }}
                 >
-                  <Check size={13} strokeWidth={2.5} />
-                  Confirm Pick
+                  <Check size={18} strokeWidth={3} /> Confirm Pick
                 </button>
-                <button
-                  style={{
-                    flex: 1,
-                    background: "#fff",
-                    color: "#1a1a1a",
-                    border: "1.5px solid #d0d4da",
-                    borderRadius: 7,
-                    padding: "11px 0",
-                    fontSize: 13,
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    transition: "background .15s",
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = "#f3f4f6"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = "#fff"; }}
-                >
+                <button style={{
+                  width: 140, background: "#fff", color: "#1f2937", fontSize: 16, fontWeight: 600,
+                  border: "1px solid #d0d4da", borderRadius: 8, padding: "14px 0", cursor: "pointer",
+                }}>
                   Find
                 </button>
               </div>
@@ -267,7 +169,6 @@ function PicklistPage() {
 
           </div>
         </div>
-
       </div>
     </DashboardShell>
   );
