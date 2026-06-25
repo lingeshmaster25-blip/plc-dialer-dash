@@ -48,8 +48,8 @@ const STATUS_STYLE: Record<Status, { bg: string; color: string }> = {
 function Pill({ text, bg, color }: { text: string; bg: string; color: string }) {
   return (
     <span style={{
-      background: bg, color, padding: "5px 16px", borderRadius: 999,
-      fontSize: 14, fontWeight: 600, display: "inline-block", whiteSpace: "nowrap",
+      background: bg, color, padding: "4px 14px", borderRadius: 999,
+      fontSize: 13, fontWeight: 600, display: "inline-block", whiteSpace: "nowrap",
     }}>
       {text}
     </span>
@@ -94,7 +94,7 @@ function OrdersPage() {
 
           {/* ── ORDER QUEUE ── */}
           <div style={{ flex: 1.1, minWidth: 0, display: "flex", flexDirection: "column", minHeight: 0 }}>
-            <h2 style={{ fontSize: 24, fontWeight: 800, color: "#1a1a1a", margin: "0 0 12px" }}>Order Queue</h2>
+            <h2 style={{ fontSize: 22, fontWeight: 800, color: "#1a1a1a", margin: "0 0 8px" }}>Order Queue</h2>
 
             <div style={{
               flex: 1, minHeight: 0, border: "1px solid #e5e7eb", borderRadius: 10,
@@ -103,7 +103,7 @@ function OrdersPage() {
               {/* table header */}
               <div style={{
                 display: "grid", gridTemplateColumns: ROW_COLS, alignItems: "center",
-                padding: "13px 18px", borderBottom: "1px solid #e5e7eb", flexShrink: 0,
+                padding: "9px 18px", borderBottom: "1px solid #e5e7eb", flexShrink: 0,
               }}>
                 <span style={HCELL}>ORDER</span>
                 <span style={HCELL}>EMPLOYEE NAME</span>
@@ -118,12 +118,12 @@ function OrdersPage() {
                     onClick={() => setSelected(i)}
                     style={{
                       display: "grid", gridTemplateColumns: ROW_COLS, alignItems: "center",
-                      padding: "12px 18px", borderBottom: "1px solid #f0f1f3", cursor: "pointer",
+                      padding: "7px 18px", borderBottom: "1px solid #f0f1f3", cursor: "pointer",
                       background: i === selected ? "#e2e4e8" : "transparent",
                     }}
                   >
-                    <span style={{ fontSize: 16, fontWeight: 600, color: "#1a1a1a" }}>{o.id}</span>
-                    <span style={{ fontSize: 16, color: "#1f2937" }}>{o.emp}</span>
+                    <span style={{ fontSize: 15, fontWeight: 600, color: "#1a1a1a" }}>{o.id}</span>
+                    <span style={{ fontSize: 15, color: "#1f2937" }}>{o.emp}</span>
                     <span style={{ textAlign: "center" }}>
                       <Pill text={o.priority} {...PRIORITY_STYLE[o.priority]} />
                     </span>
