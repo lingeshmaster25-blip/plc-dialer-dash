@@ -215,4 +215,4 @@ function SearchPage2() {
       </div>
     </DashboardShell>
   );
-}  
+}
