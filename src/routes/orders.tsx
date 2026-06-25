@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { DashboardShell } from "@/components/DashboardShell";
@@ -59,6 +59,7 @@ function Pill({ text, bg, color }: { text: string; bg: string; color: string }) 
 const ROW_COLS = "0.85fr 1.5fr 1fr 1fr";
 
 function OrdersPage() {
+  const navigate = useNavigate();
   const [selected, setSelected] = useState(1);
   const order = ORDERS[selected];
 
@@ -76,7 +77,9 @@ function OrdersPage() {
               Manage and release picking orders
             </p>
           </div>
-          <button style={{
+          <button
+            onClick={() => navigate({ to: "/order-new" })}
+            style={{
             background: "#0058f1", color: "#fff", fontSize: 15, fontWeight: 700,
             border: "none", borderRadius: 8, padding: "11px 20px", cursor: "pointer",
             marginTop: 4, boxShadow: "0 2px 8px rgba(0,88,241,0.3)", transition: "background .15s",
