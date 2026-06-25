@@ -117,10 +117,27 @@ function PutawayPage() {
   const [storingType, setStoringType] = useState<"Tray" | "Bin" | null>(null);
   const [partition, setPartition] = useState<"Single" | "Multi" | null>(null);
   const [qty, setQty] = useState<number>(0);
+  const [sku, setSku] = useState("");
+  const [skuDesc, setSkuDesc] = useState("");
+  const [binId, setBinId] = useState("");
+  const [trayId, setTrayId] = useState("");
+  const [error, setError] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+
+  const isComplete =
+    sku.trim() !== "" && qty > 0 && skuDesc.trim() !== "" &&
+    storingType !== null && partition !== null &&
+    binId.trim() !== "" && trayId.trim() !== "";
+
+  const handleKeep = () => {
+    if (!isComplete) { setError(true); return; }
+    setError(false);
+    setShowModal(true);
+  };
 
   return (
     <DashboardShell>
-      <div style={{ flex: 1, minWidth: 0, overflow: "hidden", padding: "18px 32px", display: "flex", flexDirection: "column" }}>
+      <div style={{ flex: 1, minWidth: 0, overflow: "hidden", padding: "18px 32px", display: "flex", flexDirection: "column", position: "relative" }}>
 
         {/* Header */}
         <h1 style={{ fontSize: 30, fontWeight: 800, color: "#1a1a1a", margin: 0, letterSpacing: "-0.5px" }}>
@@ -141,7 +158,8 @@ function PutawayPage() {
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
               <div>
                 <label style={LABEL}>SKUs</label>
-                <input style={FIELD} placeholder="Enter SKU or Scan SKU" />
+                <input style={FIELD} placeholder="Enter SKU or Scan SKU"
+                  value={sku} onChange={(e) => setSku(e.target.value)} />
               </div>
               <div>
                 <label style={LABEL}>Quantity</label>
@@ -169,7 +187,8 @@ function PutawayPage() {
             {/* SKU Description */}
             <div>
               <label style={LABEL}>SKU Description</label>
-              <input style={FIELD} placeholder="Enter SKU description" />
+              <input style={FIELD} placeholder="Enter SKU description"
+                value={skuDesc} onChange={(e) => setSkuDesc(e.target.value)} />
             </div>
 
             {/* Choose Storing Type */}
@@ -194,22 +213,31 @@ function PutawayPage() {
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
               <div>
                 <label style={LABEL}>BIN ID</label>
-                <input style={FIELD} placeholder="Enter or Scan BIN ID" />
+                <input style={FIELD} placeholder="Enter or Scan BIN ID"
+                  value={binId} onChange={(e) => setBinId(e.target.value)} />
               </div>
               <div>
                 <label style={LABEL}>TRAY ID</label>
-                <input style={FIELD} placeholder="Enter or Scan TRAY ID" />
+                <input style={FIELD} placeholder="Enter or Scan TRAY ID"
+                  value={trayId} onChange={(e) => setTrayId(e.target.value)} />
               </div>
             </div>
 
             {/* KEEP */}
-            <div style={{ display: "flex", justifyContent: "center", marginTop: "auto", paddingTop: 8 }}>
-              <button style={{
-                background: "#15803d", color: "#fff", fontWeight: 700, fontSize: 17,
-                letterSpacing: "1px", border: "none", borderRadius: 8,
-                padding: "11px 0", width: 280, cursor: "pointer",
-                boxShadow: "0 2px 6px rgba(21,128,61,0.3)", transition: "background .15s",
-              }}
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: "auto", paddingTop: 8, gap: 6 }}>
+              {error && (
+                <span style={{ fontSize: 13, color: "#dc2626", fontWeight: 500 }}>
+                  Please fill in all fields and select both types.
+                </span>
+              )}
+              <button
+                onClick={handleKeep}
+                style={{
+                  background: "#15803d", color: "#fff", fontWeight: 700, fontSize: 17,
+                  letterSpacing: "1px", border: "none", borderRadius: 8,
+                  padding: "11px 0", width: 280, cursor: "pointer",
+                  boxShadow: "0 2px 6px rgba(21,128,61,0.3)", transition: "background .15s",
+                }}
                 onMouseEnter={(e) => { e.currentTarget.style.background = "#13702f"; }}
                 onMouseLeave={(e) => { e.currentTarget.style.background = "#15803d"; }}
               >
@@ -249,6 +277,43 @@ function PutawayPage() {
           </div>
 
         </div>
+
+        {/* ── CONFIRMATION MODAL ── */}
+        {showModal && (
+          <div style={{
+            position: "absolute", inset: 0, zIndex: 50,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            background: "rgba(255,255,255,0.35)",
+            backdropFilter: "blur(7px)", WebkitBackdropFilter: "blur(7px)",
+            borderRadius: 10,
+          }}>
+            <div style={{
+              background: "rgba(255,255,255,0.72)",
+              backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)",
+              borderRadius: 24, boxShadow: "0 24px 70px rgba(0,0,0,0.22)",
+              border: "1px solid rgba(255,255,255,0.6)",
+              padding: "44px 56px", width: "min(560px, 80%)",
+              display: "flex", flexDirection: "column", alignItems: "center", gap: 30,
+            }}>
+              <span style={{ fontSize: 30, fontWeight: 600, color: "#1a1a1a", textAlign: "center", lineHeight: 1.35 }}>
+                The Items have been allocated in the designated bin/tray
+              </span>
+              <button
+                onClick={() => setShowModal(false)}
+                style={{
+                  background: "#0058f1", color: "#fff", fontSize: 22, fontWeight: 600,
+                  border: "none", borderRadius: 12, padding: "13px 56px", cursor: "pointer",
+                  boxShadow: "0 4px 14px rgba(0,88,241,0.35)", transition: "background .15s",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "#0049cc"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "#0058f1"; }}
+              >
+                Okay
+              </button>
+            </div>
+          </div>
+        )}
+
       </div>
     </DashboardShell>
   );
