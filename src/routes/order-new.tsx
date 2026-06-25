@@ -12,7 +12,8 @@ const FIELD: React.CSSProperties = {
   width: "100%", background: "#e6e7ea", border: "1px solid #dadbdf",
   borderRadius: 8, padding: "12px 16px", fontSize: 15, color: "#111827",
   outline: "none", boxSizing: "border-box",
-};
+  MozAppearance: "textfield",
+} as React.CSSProperties;
 
 const SECTION: React.CSSProperties = {
   display: "block", fontSize: 18, fontWeight: 600, color: "#1a1a1a", marginBottom: 8,
@@ -153,10 +154,11 @@ function OrderNewPage() {
                         ...FIELD,
                         border: showValidation && qty === 0 ? "1.5px solid #db0000" : "1px solid #dadbdf",
                       }}
-                      type="number"
+                      type="text"
+                      inputMode="numeric"
                       placeholder="Qty"
                       value={qty === 0 ? "" : qty}
-                      onChange={(e) => { setQty(Number(e.target.value) || 0); setShowValidation(false); }}
+                      onChange={(e) => { const v = e.target.value.replace(/[^0-9]/g, ""); setQty(v === "" ? 0 : parseInt(v, 10)); setShowValidation(false); }}
                     />
                     <div style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", display: "flex", flexDirection: "column" }}>
                       <ChevronUp size={15} color="#374151" style={{ cursor: "pointer" }} onClick={() => setQty((q) => q + 1)} />
