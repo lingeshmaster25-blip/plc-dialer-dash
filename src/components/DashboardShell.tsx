@@ -56,7 +56,7 @@ function StatCard({ Icon, color, label, value }: { Icon: typeof Clock; color: st
       <Icon size={30} color={color} strokeWidth={2} style={{ flexShrink: 0 }} />
       <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
         <span style={{ fontSize: 13, color: "#6b7280", fontWeight: 400 }}>{label}</span>
-        <span style={{ fontSize: 23, fontWeight: 800, color: "#111827", lineHeight: 1.05 }}>{value}</span>
+        <span style={{ fontSize: 20, fontWeight: 800, color: "#111827", lineHeight: 1.05, whiteSpace: "nowrap" }}>{value}</span>
       </div>
     </div>
   );
