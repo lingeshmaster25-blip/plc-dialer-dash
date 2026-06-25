@@ -24,8 +24,48 @@ const BOX: React.CSSProperties = {
 
 const RECENT_ORDERS = ["Order #532", "Order #530", "Order #528", "Order #526", "Order #524", "Order #522"];
 
+type Avail = { bin: string; tray: string; available: number };
+
+// Where each SKU lives + how much stock is on hand.
+const INVENTORY: Record<string, Avail> = {
+  "SKU-001": { bin: "Bin B4", tray: "Tray T2", available: 56 },
+  "SKU-007": { bin: "Bin B7", tray: "Tray T07", available: 40 },
+  "SKU-053": { bin: "Bin B5", tray: "Tray T12", available: 18 },
+};
+
+function lookupAvailability(sku: string): Avail | null {
+  const key = sku.trim().toUpperCase();
+  if (!key) return null;
+  if (INVENTORY[key]) return INVENTORY[key];
+  // Deterministic fallback so any entered SKU still resolves to a location.
+  let hash = 0;
+  for (const c of key) hash = (hash * 31 + c.charCodeAt(0)) >>> 0;
+  return { bin: `Bin B${(hash % 9) + 1}`, tray: `Tray T${(hash % 14) + 1}`, available: 20 + (hash % 80) };
+}
+
+const VLABEL: React.CSSProperties = { fontSize: 15, color: "#9098a3", fontWeight: 400, marginBottom: 3 };
+const VVALUE: React.CSSProperties = { fontSize: 22, fontWeight: 700, color: "#1a1a1a", lineHeight: 1.1 };
+const VSUB: React.CSSProperties = { fontSize: 14, color: "#6b7280", marginTop: 3 };
+
+function Field({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
+  return (
+    <div style={{ minWidth: 0 }}>
+      <div style={VLABEL}>{label}</div>
+      <div style={VVALUE}>{value}</div>
+      {sub ? <div style={VSUB}>{sub}</div> : null}
+    </div>
+  );
+}
+
 function OrderNewPage() {
+  const [employee, setEmployee] = useState("");
+  const [priority, setPriority] = useState("");
+  const [sku, setSku] = useState("");
+  const [desc, setDesc] = useState("");
   const [qty, setQty] = useState(0);
+
+  const avail = lookupAvailability(sku);
+  const previewReady = !!avail && qty > 0 && employee.trim() !== "" && priority !== "";
 
   return (
     <DashboardShell>
@@ -53,9 +93,11 @@ function OrderNewPage() {
               <div>
                 <label style={SECTION}>Order Created by</label>
                 <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 18 }}>
-                  <input style={FIELD} placeholder="Enter Employee Name" />
+                  <input style={FIELD} placeholder="Enter Employee Name"
+                    value={employee} onChange={(e) => setEmployee(e.target.value)} />
                   <div style={{ position: "relative" }}>
-                    <select defaultValue="" style={{ ...FIELD, appearance: "none", cursor: "pointer", color: "#6b7280" }}>
+                    <select value={priority} onChange={(e) => setPriority(e.target.value)}
+                      style={{ ...FIELD, appearance: "none", cursor: "pointer", color: priority ? "#111827" : "#9ca3af" }}>
                       <option value="" disabled>Select Priority</option>
                       <option>High</option>
                       <option>Medium</option>
@@ -69,8 +111,10 @@ function OrderNewPage() {
               <div>
                 <label style={SECTION}>Enter Order Details</label>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1.2fr 0.7fr", gap: 18 }}>
-                  <input style={FIELD} placeholder="*SKU Code" />
-                  <input style={FIELD} placeholder="Description" />
+                  <input style={FIELD} placeholder="*SKU Code"
+                    value={sku} onChange={(e) => setSku(e.target.value)} />
+                  <input style={FIELD} placeholder="Description"
+                    value={desc} onChange={(e) => setDesc(e.target.value)} />
                   <div style={{ position: "relative" }}>
                     <input style={FIELD} type="number" placeholder="Qty"
                       value={qty === 0 ? "" : qty}
@@ -91,7 +135,18 @@ function OrderNewPage() {
             {/* item availability */}
             <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
               <label style={{ ...SECTION, fontWeight: 500, fontSize: 20 }}>Item Availability</label>
-              <div style={BOX} />
+              <div style={BOX}>
+                {avail ? (
+                  <div style={{ padding: "20px 24px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", gap: 18, overflow: "auto" }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 0.8fr", gap: 16 }}>
+                      <Field label="Bin" value={avail.bin} />
+                      <Field label="Tray" value={avail.tray} />
+                      <Field label="Qty" value={avail.available} />
+                    </div>
+                    <Field label="SKU" value={sku} sub={desc || undefined} />
+                  </div>
+                ) : null}
+              </div>
             </div>
           </div>
 
@@ -120,7 +175,23 @@ function OrderNewPage() {
             {/* order preview */}
             <div style={{ flex: 1.55, minWidth: 0, display: "flex", flexDirection: "column", minHeight: 0 }}>
               <label style={{ ...SECTION, fontWeight: 500, fontSize: 22 }}>Order Preview</label>
-              <div style={BOX} />
+              <div style={BOX}>
+                {previewReady && avail ? (
+                  <div style={{ padding: "20px 24px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", gap: 22, overflow: "auto" }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr 1fr 0.7fr", gap: 16 }}>
+                      <Field label="SKU" value={sku} sub={desc || undefined} />
+                      <Field label="Bin" value={avail.bin} />
+                      <Field label="Tray" value={avail.tray} />
+                      <Field label="Qty" value={qty} />
+                    </div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr 1fr", gap: 16 }}>
+                      <Field label="Employee Name" value={employee} />
+                      <Field label="Priority" value={priority} />
+                      <Field label="No of Items" value={String(1).padStart(2, "0")} />
+                    </div>
+                  </div>
+                ) : null}
+              </div>
             </div>
 
             {/* confirm */}
