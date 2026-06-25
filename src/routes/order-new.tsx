@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { ChevronUp, ChevronDown } from "lucide-react";
 import { DashboardShell } from "@/components/DashboardShell";
+import { lookupBySku, usePutawayRecords } from "@/lib/inventory-store";
 
 export const Route = createFileRoute("/order-new")({
   component: OrderNewPage,
@@ -24,25 +25,6 @@ const BOX: React.CSSProperties = {
 
 const RECENT_ORDERS = ["Order #532", "Order #530", "Order #528", "Order #526", "Order #524", "Order #522"];
 
-type Avail = { bin: string; tray: string; available: number };
-
-// Where each SKU lives + how much stock is on hand.
-const INVENTORY: Record<string, Avail> = {
-  "SKU-001": { bin: "Bin B4", tray: "Tray T2", available: 56 },
-  "SKU-007": { bin: "Bin B7", tray: "Tray T07", available: 40 },
-  "SKU-053": { bin: "Bin B5", tray: "Tray T12", available: 18 },
-};
-
-function lookupAvailability(sku: string): Avail | null {
-  const key = sku.trim().toUpperCase();
-  if (!key) return null;
-  if (INVENTORY[key]) return INVENTORY[key];
-  // Deterministic fallback so any entered SKU still resolves to a location.
-  let hash = 0;
-  for (const c of key) hash = (hash * 31 + c.charCodeAt(0)) >>> 0;
-  return { bin: `Bin B${(hash % 9) + 1}`, tray: `Tray T${(hash % 14) + 1}`, available: 20 + (hash % 80) };
-}
-
 const VLABEL: React.CSSProperties = { fontSize: 15, color: "#9098a3", fontWeight: 400, marginBottom: 3 };
 const VVALUE: React.CSSProperties = { fontSize: 22, fontWeight: 700, color: "#1a1a1a", lineHeight: 1.1 };
 const VSUB: React.CSSProperties = { fontSize: 14, color: "#6b7280", marginTop: 3 };
@@ -64,7 +46,8 @@ function OrderNewPage() {
   const [desc, setDesc] = useState("");
   const [qty, setQty] = useState(0);
 
-  const avail = lookupAvailability(sku);
+  usePutawayRecords(); // re-render when putaway inventory changes
+  const avail = lookupBySku(sku);
   const previewReady = !!avail && qty > 0 && employee.trim() !== "" && priority !== "";
 
   return (
@@ -143,7 +126,7 @@ function OrderNewPage() {
                       <Field label="Tray" value={avail.tray} />
                       <Field label="Qty" value={avail.available} />
                     </div>
-                    <Field label="SKU" value={sku} sub={desc || undefined} />
+                    <Field label="SKU" value={sku} sub={desc || avail.description} />
                   </div>
                 ) : null}
               </div>
@@ -179,7 +162,7 @@ function OrderNewPage() {
                 {previewReady && avail ? (
                   <div style={{ padding: "20px 24px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", gap: 22, overflow: "auto" }}>
                     <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr 1fr 0.7fr", gap: 16 }}>
-                      <Field label="SKU" value={sku} sub={desc || undefined} />
+                      <Field label="SKU" value={sku} sub={desc || avail.description} />
                       <Field label="Bin" value={avail.bin} />
                       <Field label="Tray" value={avail.tray} />
                       <Field label="Qty" value={qty} />
