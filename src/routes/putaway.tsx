@@ -293,7 +293,7 @@ function PutawayPage() {
               borderRadius: 26, boxShadow: "0 24px 70px rgba(0,0,0,0.20)",
               border: "1px solid rgba(255,255,255,0.65)",
               padding: 44, boxSizing: "border-box",
-              width: "min(640px, 84%)", aspectRatio: "1.4 / 1", maxHeight: "88%",
+              width: "min(780px, 90%)", height: 460, maxHeight: "88%",
               display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 34,
             }}>
               <span style={{ fontSize: 30, fontWeight: 600, color: "#1a1a1a", textAlign: "center", lineHeight: 1.35 }}>
