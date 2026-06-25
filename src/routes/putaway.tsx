@@ -36,6 +36,26 @@ function Toggle({ label, active, onClick }: { label: string; active: boolean; on
   );
 }
 
+function TrayBlocks({ trays }: { trays: { name: string; filled: boolean }[] }) {
+  return (
+    <div style={{ flex: 1, minHeight: 0, marginTop: 14, display: "flex", flexDirection: "column", gap: 14 }}>
+      {trays.map((tray) => (
+        <div key={tray.name} style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
+          <span style={{ fontSize: 22, fontWeight: 500, color: "#1f2937", marginBottom: 8, flexShrink: 0 }}>
+            {tray.name}
+          </span>
+          <div style={{
+            flex: 1, minHeight: 0, borderRadius: 12,
+            background: tray.filled ? "#b5f09c" : "#fff",
+            border: tray.filled ? "1px solid rgba(0,0,0,0.08)" : "1px solid #d0d4da",
+            boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
+          }} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function BinCell({ green }: { green: boolean }) {
   return (
     <div style={{
@@ -212,6 +232,13 @@ function PutawayPage() {
                 trays={[
                   { name: "Tray1", greenIndex: 1 },
                   { name: "Tray2", greenIndex: 3 },
+                ]}
+              />
+            ) : storingType === "Tray" && partition === "Single" ? (
+              <TrayBlocks
+                trays={[
+                  { name: "Tray1", filled: true },
+                  { name: "Tray2", filled: false },
                 ]}
               />
             ) : (
