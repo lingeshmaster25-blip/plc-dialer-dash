@@ -45,7 +45,7 @@ function OrderNewPage() {
         <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", gap: 20 }}>
 
           {/* TOP: form + item availability */}
-          <div style={{ display: "flex", gap: 28, alignItems: "stretch", flexShrink: 0 }}>
+          <div style={{ display: "flex", gap: 28, alignItems: "stretch", flex: 0.92, minHeight: 0 }}>
 
             {/* form */}
             <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 14 }}>
@@ -90,7 +90,7 @@ function OrderNewPage() {
             {/* item availability */}
             <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
               <label style={{ ...SECTION, fontWeight: 500, fontSize: 20 }}>Item Availability</label>
-              <div style={{ ...BOX, minHeight: 190 }} />
+              <div style={BOX} />
             </div>
           </div>
 
@@ -98,7 +98,7 @@ function OrderNewPage() {
           <div style={{ display: "flex", gap: 24, flex: 1, minHeight: 0, alignItems: "stretch" }}>
 
             {/* recent orders */}
-            <div style={{ flex: 0.95, minWidth: 0, display: "flex", flexDirection: "column", minHeight: 0 }}>
+            <div style={{ flex: 0.92, minWidth: 0, display: "flex", flexDirection: "column", minHeight: 0 }}>
               <label style={{ ...SECTION, fontWeight: 700, fontSize: 22 }}>Recent Orders</label>
               <div style={{ flex: 1, minHeight: 0, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
                 {RECENT_ORDERS.map((o) => (
@@ -117,13 +117,13 @@ function OrderNewPage() {
             </div>
 
             {/* order preview */}
-            <div style={{ flex: 1.5, minWidth: 0, display: "flex", flexDirection: "column", minHeight: 0 }}>
+            <div style={{ flex: 1.55, minWidth: 0, display: "flex", flexDirection: "column", minHeight: 0 }}>
               <label style={{ ...SECTION, fontWeight: 500, fontSize: 22 }}>Order Preview</label>
               <div style={BOX} />
             </div>
 
             {/* confirm */}
-            <div style={{ flex: 0.7, minWidth: 0, display: "flex", flexDirection: "column", minHeight: 0 }}>
+            <div style={{ flex: 0.58, minWidth: 0, display: "flex", flexDirection: "column", minHeight: 0 }}>
               <label style={{ ...SECTION, fontWeight: 500, fontSize: 22, visibility: "hidden" }}>Confirm</label>
               <button style={{
                 flex: 1, minHeight: 0, background: "#28954b", color: "#fff",
