@@ -4,8 +4,134 @@ import { hmiApi, type PlcStatus } from "@/lib/hmi-api";
 import {
   Bell, Clock, Wifi, User, Home, Upload, Download, Package,
   Search, AlertTriangle, Settings, CheckCircle2,
-  Truck, ClipboardList, AlertCircle,
+  Truck, ClipboardList, AlertCircle, OctagonX,
 } from "lucide-react";
+
+/* ─────────────────────────────────────────────
+   E-STOP Confirmation Modal
+───────────────────────────────────────────── */
+function EStopModal({ onConfirm, onCancel }: { onConfirm: () => void; onCancel: () => void }) {
+  return (
+    <div
+      style={{
+        position: "fixed", inset: 0, zIndex: 9999,
+        background: "rgba(0,0,0,0.65)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        backdropFilter: "blur(4px)",
+      }}
+      onClick={onCancel}
+    >
+      <div
+        style={{
+          background: "#fff", borderRadius: 16,
+          width: "min(480px, 92vw)",
+          boxShadow: "0 24px 60px rgba(0,0,0,0.35)",
+          overflow: "hidden",
+          animation: "estop-pop .18s cubic-bezier(.34,1.56,.64,1)",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <style>{`
+          @keyframes estop-pop {
+            from { transform: scale(.88); opacity: 0; }
+            to   { transform: scale(1);  opacity: 1; }
+          }
+        `}</style>
+
+        {/* Red header band */}
+        <div style={{
+          background: "#db0000",
+          padding: "28px 32px 24px",
+          display: "flex", flexDirection: "column", alignItems: "center", gap: 10,
+        }}>
+          <div style={{
+            width: 68, height: 68, borderRadius: "50%",
+            background: "rgba(255,255,255,0.15)",
+            border: "2.5px solid rgba(255,255,255,0.45)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            <OctagonX size={38} color="#fff" strokeWidth={2.25} />
+          </div>
+          <span style={{
+            color: "#fff", fontSize: 22, fontWeight: 800,
+            letterSpacing: "2.5px", textTransform: "uppercase",
+          }}>
+            Force Stop
+          </span>
+          <span style={{ color: "rgba(255,255,255,0.78)", fontSize: 12.5, fontWeight: 600, letterSpacing: "1px" }}>
+            EMERGENCY STOP INITIATED
+          </span>
+        </div>
+
+        {/* Body */}
+        <div style={{ padding: "26px 28px 28px", display: "flex", flexDirection: "column", gap: 18 }}>
+
+          {/* Warning box */}
+          <div style={{
+            background: "#fff5f5", border: "1.5px solid #fecaca",
+            borderRadius: 10, padding: "14px 16px",
+            display: "flex", flexDirection: "column", gap: 6,
+          }}>
+            <span style={{ fontSize: 14.5, fontWeight: 700, color: "#991b1b" }}>
+              ⚠&nbsp; All machines will stop immediately
+            </span>
+            <span style={{ fontSize: 13, color: "#6b7280", lineHeight: 1.65 }}>
+              Triggering an E-Stop will halt all conveyor belts, robotic arms,
+              and automated systems. Active orders will be suspended and any
+              in-progress operations will be interrupted. A manual restart will
+              be required to resume operations.
+            </span>
+          </div>
+
+          {/* Affected systems */}
+          <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
+            {["Conveyor Belt", "Robotic Arm", "Tray Dispenser", "All Actuators"].map((sys) => (
+              <span key={sys} style={{
+                padding: "5px 12px", borderRadius: 20,
+                background: "#fee2e2", color: "#991b1b",
+                fontSize: 12, fontWeight: 600, border: "1px solid #fca5a5",
+              }}>
+                ⬤ {sys}
+              </span>
+            ))}
+          </div>
+
+          {/* Action buttons */}
+          <div style={{ display: "flex", gap: 12, marginTop: 2 }}>
+            <button
+              onClick={onCancel}
+              style={{
+                flex: 1, padding: "13px 0", borderRadius: 9,
+                border: "1.5px solid #d1d5db", background: "#fff",
+                fontSize: 15, fontWeight: 700, color: "#374151",
+                cursor: "pointer", transition: "background .12s",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "#f3f4f6"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "#fff"; }}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={onConfirm}
+              style={{
+                flex: 1, padding: "13px 0", borderRadius: 9,
+                border: "none", background: "#db0000",
+                fontSize: 15, fontWeight: 700, color: "#fff",
+                cursor: "pointer", transition: "background .12s",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "#b91c1c"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "#db0000"; }}
+            >
+              <OctagonX size={16} strokeWidth={2.5} />
+              Confirm E-Stop
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 const RECENT_ACTIVITY = [
   { time: "10:24 AM", action: "Order #424 Picked", detail: "Tray T12 Bin B5" },
@@ -16,8 +142,6 @@ const RECENT_ACTIVITY = [
   { time: "09:32 AM", action: "Tray 10 Picked", detail: "By Operator Bob" },
 ];
 
-// `to` is the route each button navigates to. Only "/" and "/putaway"
-// exist today — extend these as new module pages are added.
 const NAV_BUTTONS = [
   { label: "PUTAWAY", sub: "Store Items", Icon: Upload, to: "/putaway" },
   { label: "PICKLIST", sub: "Retrieve Items", Icon: Download, to: "/picklist" },
@@ -62,15 +186,13 @@ function StatCard({ Icon, color, label, value }: { Icon: typeof Clock; color: st
   );
 }
 
-/**
- * Shared app frame: dark navbar, the right-hand stats/activity/inventory
- * column, and the bottom navigation. `children` fills the large left panel.
- */
 export function DashboardShell({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const [status, setStatus] = useState<PlcStatus | null>(null);
   const prevRef = useRef<PlcStatus | null>(null);
   const [now, setNow] = useState(new Date());
+  const [estopOpen, setEstopOpen] = useState(false);
+  const [stopped, setStopped] = useState(false);
 
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 1000);
@@ -92,7 +214,12 @@ export function DashboardShell({ children }: { children: ReactNode }) {
     return () => { cancelled = true; clearInterval(id); };
   }, []);
 
-  const isRunning = status?.connected ?? true;
+  const isRunning = stopped ? false : (status?.connected ?? true);
+
+  const handleEstopConfirm = () => {
+    setStopped(true);
+    setEstopOpen(false);
+  };
 
   return (
     <div style={{
@@ -101,6 +228,14 @@ export function DashboardShell({ children }: { children: ReactNode }) {
       fontFamily: "'Inter','Segoe UI',sans-serif",
       background: "#d4d7db",
     }}>
+
+      {/* E-STOP modal */}
+      {estopOpen && (
+        <EStopModal
+          onConfirm={handleEstopConfirm}
+          onCancel={() => setEstopOpen(false)}
+        />
+      )}
 
       {/* ───────────────── NAVBAR ───────────────── */}
       <header style={{
@@ -260,12 +395,14 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         ))}
 
         {/* E-STOP */}
-        <button style={{
-          flex: 1, background: "#db0000", borderRadius: 10, border: "none",
-          boxShadow: CARD_SHADOW, cursor: "pointer", display: "flex",
-          flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8,
-          transition: "background .15s",
-        }}
+        <button
+          onClick={() => setEstopOpen(true)}
+          style={{
+            flex: 1, background: "#db0000", borderRadius: 10, border: "none",
+            boxShadow: CARD_SHADOW, cursor: "pointer", display: "flex",
+            flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8,
+            transition: "background .15s",
+          }}
           onMouseEnter={(e) => { e.currentTarget.style.background = "#c40000"; }}
           onMouseLeave={(e) => { e.currentTarget.style.background = "#db0000"; }}
         >
