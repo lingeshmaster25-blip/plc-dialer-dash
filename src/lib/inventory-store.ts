@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from "react";
+import { useMemo, useSyncExternalStore } from "react";
 
 export type PutawayRecord = {
   sku: string;
@@ -103,4 +103,26 @@ function subscribe(cb: () => void) {
 /** Subscribe a component to inventory changes. */
 export function usePutawayRecords() {
   return useSyncExternalStore(subscribe, getRecords, getRecords);
+}
+
+/** SKU total units below this surface as low-stock notifications. */
+export const LOW_STOCK_THRESHOLD = 10;
+
+export type LowStockItem = { sku: string; description: string; qty: number };
+
+/** Reactive list of SKUs whose total on-hand quantity is low (0 < qty < threshold). */
+export function useLowStock(): LowStockItem[] {
+  const recs = usePutawayRecords();
+  return useMemo(() => {
+    const map = new Map<string, LowStockItem>();
+    for (const r of recs) {
+      const key = r.sku.trim().toUpperCase();
+      if (!key) continue;
+      const cur = map.get(key) ?? { sku: key, description: r.description, qty: 0 };
+      cur.qty += Number(r.qty) || 0;
+      if (!cur.description && r.description) cur.description = r.description;
+      map.set(key, cur);
+    }
+    return [...map.values()].filter((i) => i.qty > 0 && i.qty < LOW_STOCK_THRESHOLD);
+  }, [recs]);
 }
