@@ -217,7 +217,7 @@ function OrderNewPage() {
                   <span style={{ fontSize: 15, color: "#9ca3af", gridColumn: "1/-1" }}>No orders yet.</span>
                 ) : recentOrders.map((o) => (
                   <button key={o.id}
-                    onClick={() => navigate({ to: "/orders" })}
+                    onClick={() => navigate({ to: "/orders", search: { order: o.id } })}
                     style={{
                       background: "#fff", border: "1px solid #d0d4da", borderRadius: 8,
                       fontSize: 15, fontWeight: 500, color: "#1a1a1a", cursor: "pointer",
