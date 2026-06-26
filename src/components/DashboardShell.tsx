@@ -14,7 +14,7 @@ const NAV_BUTTONS = [
   { label: "PUTAWAY", sub: "Store Items", Icon: Upload, to: "/putaway" },
   { label: "PICKLIST", sub: "Retrieve Items", Icon: Download, to: "/picklist" },
   { label: "ORDERS", sub: "Manage Orders", Icon: Package, to: "/orders" },
-  { label: "SEARCH", sub: "Find Items", Icon: Search, to: "/" },
+  { label: "SEARCH", sub: "Find Items", Icon: Search, to: "/search" },
   { label: "MAINTENANCE", sub: "Check Status", Icon: Clock, to: "/" },
   { label: "TROUBLESHOOT", sub: "Manage Alerts", Icon: AlertCircle, to: "/troubleshoot" },
   { label: "SETTINGS", sub: "System Config", Icon: Settings, to: "/" },
