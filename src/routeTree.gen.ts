@@ -9,7 +9,6 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as _rootSpaRouteImport } from './routes/__root.spa'
 import { Route as TroubleshootRouteImport } from './routes/troubleshoot'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as PutawayRouteImport } from './routes/putaway'
@@ -18,11 +17,6 @@ import { Route as OrdersRouteImport } from './routes/orders'
 import { Route as OrderNewRouteImport } from './routes/order-new'
 import { Route as IndexRouteImport } from './routes/index'
 
-const _rootSpaRoute = _rootSpaRouteImport.update({
-  id: '/__root/spa',
-  path: '/spa',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const TroubleshootRoute = TroubleshootRouteImport.update({
   id: '/troubleshoot',
   path: '/troubleshoot',
@@ -67,7 +61,6 @@ export interface FileRoutesByFullPath {
   '/putaway': typeof PutawayRoute
   '/search': typeof SearchRoute
   '/troubleshoot': typeof TroubleshootRoute
-  '/spa': typeof _rootSpaRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -77,7 +70,6 @@ export interface FileRoutesByTo {
   '/putaway': typeof PutawayRoute
   '/search': typeof SearchRoute
   '/troubleshoot': typeof TroubleshootRoute
-  '/spa': typeof _rootSpaRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -88,7 +80,6 @@ export interface FileRoutesById {
   '/putaway': typeof PutawayRoute
   '/search': typeof SearchRoute
   '/troubleshoot': typeof TroubleshootRoute
-  '/__root/spa': typeof _rootSpaRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -100,7 +91,6 @@ export interface FileRouteTypes {
     | '/putaway'
     | '/search'
     | '/troubleshoot'
-    | '/spa'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -110,7 +100,6 @@ export interface FileRouteTypes {
     | '/putaway'
     | '/search'
     | '/troubleshoot'
-    | '/spa'
   id:
     | '__root__'
     | '/'
@@ -120,7 +109,6 @@ export interface FileRouteTypes {
     | '/putaway'
     | '/search'
     | '/troubleshoot'
-    | '/__root/spa'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -131,18 +119,10 @@ export interface RootRouteChildren {
   PutawayRoute: typeof PutawayRoute
   SearchRoute: typeof SearchRoute
   TroubleshootRoute: typeof TroubleshootRoute
-  _rootSpaRoute: typeof _rootSpaRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/__root/spa': {
-      id: '/__root/spa'
-      path: '/spa'
-      fullPath: '/spa'
-      preLoaderRoute: typeof _rootSpaRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/troubleshoot': {
       id: '/troubleshoot'
       path: '/troubleshoot'
@@ -203,7 +183,6 @@ const rootRouteChildren: RootRouteChildren = {
   PutawayRoute: PutawayRoute,
   SearchRoute: SearchRoute,
   TroubleshootRoute: TroubleshootRoute,
-  _rootSpaRoute: _rootSpaRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
