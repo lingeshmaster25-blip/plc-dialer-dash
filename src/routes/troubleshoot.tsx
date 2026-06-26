@@ -1,13 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { AlertTriangle, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Square } from "lucide-react";
 import { DashboardShell } from "@/components/DashboardShell";
+import { usePutawayRecords, BIN_CAPACITY } from "@/lib/inventory-store";
+import { useOrders } from "@/lib/orders-store";
 
 export const Route = createFileRoute("/troubleshoot")({
   component: TroubleshootPage,
 });
 
-type Alert = { id: number; tone: "red" | "yellow" | "blue"; title: string; detail: string };
+type Alert = { id: string; tone: "red" | "yellow" | "blue"; title: string; detail: string };
 
 const TONE: Record<Alert["tone"], { box: string; icon: string }> = {
   red: { box: "#fde2e2", icon: "#db0000" },
@@ -15,8 +17,9 @@ const TONE: Record<Alert["tone"], { box: string; icon: string }> = {
   blue: { box: "#dbeeff", icon: "#2b8fff" },
 };
 
-// No demo alerts — alerts arrive from real fault events.
-const INITIAL_ALERTS: Alert[] = [];
+// Alerts are derived live from store state (no demo data).
+const LOW_STOCK_THRESHOLD = 10;          // SKU total units below this → low-stock alert
+const STALE_ORDER_MS = 2 * 60 * 1000;    // Queued longer than this → awaiting-release alert
 
 const FIELD: React.CSSProperties = {
   width: "100%", background: "#dcdde0", border: "1px solid #d0d1d5",
@@ -49,13 +52,92 @@ function ControlTile({ icon, label }: { icon: React.ReactNode; label: string }) 
 }
 
 function TroubleshootPage() {
-  const [alerts, setAlerts] = useState<Alert[]>(INITIAL_ALERTS);
+  const records = usePutawayRecords();
+  const orders = useOrders();
+  const [acked, setAcked] = useState<Set<string>>(new Set());
+  const [tick, setTick] = useState(0);
   const [userId, setUserId] = useState("");
   const [passkey, setPasskey] = useState("");
   const [unlocked, setUnlocked] = useState(false);
   const [error, setError] = useState(false);
 
-  const acknowledge = (id: number) => setAlerts((prev) => prev.filter((a) => a.id !== id));
+  // Re-evaluate time-based alerts (stale orders) periodically.
+  useEffect(() => {
+    const t = setInterval(() => setTick((n) => n + 1), 30000);
+    return () => clearInterval(t);
+  }, []);
+
+  // Derive the current set of alerts from live store state.
+  const derived = useMemo<Alert[]>(() => {
+    const out: Alert[] = [];
+
+    // 1) Bins over capacity
+    const binUsage = new Map<string, { label: string; qty: number }>();
+    for (const r of records) {
+      const key = r.binId.trim().toUpperCase();
+      if (!key) continue;
+      const cur = binUsage.get(key) ?? { label: r.binId.trim(), qty: 0 };
+      cur.qty += Number(r.qty) || 0;
+      binUsage.set(key, cur);
+    }
+    for (const [key, v] of binUsage) {
+      if (v.qty > BIN_CAPACITY) {
+        out.push({
+          id: `bin-cap:${key}`, tone: "red",
+          title: `Bin ${v.label} over capacity`,
+          detail: `${v.qty} of ${BIN_CAPACITY} units stored — redistribute stock.`,
+        });
+      }
+    }
+
+    // 2) Low stock per SKU
+    const skuQty = new Map<string, { label: string; qty: number; desc: string }>();
+    for (const r of records) {
+      const key = r.sku.trim().toUpperCase();
+      if (!key) continue;
+      const cur = skuQty.get(key) ?? { label: key, qty: 0, desc: r.description };
+      cur.qty += Number(r.qty) || 0;
+      skuQty.set(key, cur);
+    }
+    for (const [key, v] of skuQty) {
+      if (v.qty > 0 && v.qty < LOW_STOCK_THRESHOLD) {
+        out.push({
+          id: `low:${key}`, tone: "yellow",
+          title: `Low stock: ${v.label}`,
+          detail: `${v.desc || "Item"} — only ${v.qty} unit${v.qty === 1 ? "" : "s"} remaining.`,
+        });
+      }
+    }
+
+    // 3) Stale queued orders
+    const now = Date.now();
+    for (const o of orders) {
+      if (o.status === "Queued" && now - o.createdAt > STALE_ORDER_MS) {
+        const mins = Math.max(1, Math.floor((now - o.createdAt) / 60000));
+        out.push({
+          id: `stale:${o.id}`, tone: "blue",
+          title: `Order ${o.id} awaiting release`,
+          detail: `Queued ${mins} min — release to Picklist when ready.`,
+        });
+      }
+    }
+
+    return out;
+  }, [records, orders, tick]);
+
+  // Drop acknowledgements for conditions that have cleared, so they re-alert if they recur.
+  const derivedKey = derived.map((a) => a.id).join("|");
+  useEffect(() => {
+    setAcked((prev) => {
+      const live = new Set(derivedKey ? derivedKey.split("|") : []);
+      const next = new Set<string>();
+      for (const id of prev) if (live.has(id)) next.add(id);
+      return next.size === prev.size ? prev : next;
+    });
+  }, [derivedKey]);
+
+  const alerts = derived.filter((a) => !acked.has(a.id));
+  const acknowledge = (id: string) => setAcked((prev) => new Set(prev).add(id));
 
   const grantAccess = () => {
     const idOk = userId.trim().toLowerCase() === MASTER_USER.toLowerCase();
