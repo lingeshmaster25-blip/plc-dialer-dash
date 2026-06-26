@@ -15,9 +15,9 @@ const NAV_BUTTONS = [
   { label: "PICKLIST", sub: "Retrieve Items", Icon: Download, to: "/picklist" },
   { label: "ORDERS", sub: "Manage Orders", Icon: Package, to: "/orders" },
   { label: "SEARCH", sub: "Find Items", Icon: Search, to: "/search" },
-  { label: "MAINTENANCE", sub: "Check Status", Icon: Clock, to: "/" },
+  { label: "MAINTENANCE", sub: "Check Status", Icon: Clock, to: "/maintenance" },
   { label: "TROUBLESHOOT", sub: "Manage Alerts", Icon: AlertCircle, to: "/troubleshoot" },
-  { label: "SETTINGS", sub: "System Config", Icon: Settings, to: "/" },
+  { label: "SETTINGS", sub: "System Config", Icon: Settings, to: "/settings" },
 ] as const;
 
 export const CARD_SHADOW = "0 1px 3px rgba(16,24,40,0.08)";
@@ -237,7 +237,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         height: 150, padding: "10px",
       }}>
         {NAV_BUTTONS.map(({ label, sub, Icon, to }) => {
-          const active = to !== "/" && pathname === to;
+          const active = pathname === to;
           const restShadow = active ? "0 3px 12px rgba(0,88,241,0.22)" : CARD_SHADOW;
           return (
           <Link key={label}
