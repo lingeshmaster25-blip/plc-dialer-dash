@@ -239,16 +239,16 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           </div>
 
           {/* Recent Activity */}
-          <div style={{ background: "#fff", borderRadius: 10, padding: "16px 18px", border: "1px solid #edeff2", boxShadow: CARD_SHADOW }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+          <div style={{ height: 200, flexShrink: 0, display: "flex", flexDirection: "column", background: "#fff", borderRadius: 10, padding: "16px 18px", border: "1px solid #edeff2", boxShadow: CARD_SHADOW }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, flexShrink: 0 }}>
               <span style={{ fontWeight: 700, fontSize: 13, color: "#111827", letterSpacing: "0.6px" }}>RECENT ACTIVITY</span>
               <span style={{ color: "#2563eb", fontSize: 12.5, cursor: "pointer", fontWeight: 600 }}>View all activity</span>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>
+            <div style={{ flex: 1, minHeight: 0, overflowY: "auto", display: "flex", flexDirection: "column", gap: 11 }}>
               {activity.length === 0 ? (
                 <span style={{ fontSize: 11, color: "#9ca3af" }}>No recent activity.</span>
               ) : activity.map((item, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0, flexShrink: 0 }}>
                   <CheckCircle2 size={15} color="#fff" fill="#22c55e" style={{ flexShrink: 0 }} />
                   <span style={{ fontSize: 11, color: "#6b7280", width: 52, flexShrink: 0 }}>{item.time}</span>
                   <span style={{ fontSize: 11, fontWeight: 700, color: "#111827", width: 108, flexShrink: 0 }}>{item.action}</span>
