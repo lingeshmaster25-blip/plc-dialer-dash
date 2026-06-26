@@ -18,7 +18,7 @@ const TONE: Record<Alert["tone"], { box: string; icon: string }> = {
 };
 
 // Alerts are derived live from store state (no demo data).
-const LOW_STOCK_THRESHOLD = 10;          // SKU total units below this → low-stock alert
+// Low-stock notifications live on the navbar bell, not here.
 const STALE_ORDER_MS = 2 * 60 * 1000;    // Queued longer than this → awaiting-release alert
 
 const FIELD: React.CSSProperties = {
@@ -90,26 +90,7 @@ function TroubleshootPage() {
       }
     }
 
-    // 2) Low stock per SKU
-    const skuQty = new Map<string, { label: string; qty: number; desc: string }>();
-    for (const r of records) {
-      const key = r.sku.trim().toUpperCase();
-      if (!key) continue;
-      const cur = skuQty.get(key) ?? { label: key, qty: 0, desc: r.description };
-      cur.qty += Number(r.qty) || 0;
-      skuQty.set(key, cur);
-    }
-    for (const [key, v] of skuQty) {
-      if (v.qty > 0 && v.qty < LOW_STOCK_THRESHOLD) {
-        out.push({
-          id: `low:${key}`, tone: "yellow",
-          title: `Low stock: ${v.label}`,
-          detail: `${v.desc || "Item"} — only ${v.qty} unit${v.qty === 1 ? "" : "s"} remaining.`,
-        });
-      }
-    }
-
-    // 3) Stale queued orders
+    // 2) Stale queued orders
     const now = Date.now();
     for (const o of orders) {
       if (o.status === "Queued" && now - o.createdAt > STALE_ORDER_MS) {
