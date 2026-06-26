@@ -80,14 +80,14 @@ export function addOrder(
   return id;
 }
 
-/** Edit a Queued order's employee, priority, and items. No-op once released. */
+/** Edit a Queued or Released order's employee, priority, and items. No-op once picking starts. */
 export function editOrder(
   id: string,
   patch: { emp: string; priority: Priority; items: Omit<OrderItem, "picked">[] },
 ): boolean {
   let edited = false;
   orders = orders.map((o) => {
-    if (o.id !== id || o.status !== "Queued") return o;
+    if (o.id !== id || (o.status !== "Queued" && o.status !== "Released")) return o;
     edited = true;
     return {
       ...o,
