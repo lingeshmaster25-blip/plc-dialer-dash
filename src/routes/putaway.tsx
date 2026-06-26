@@ -2,7 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ChevronUp, ChevronDown } from "lucide-react";
 import { DashboardShell } from "@/components/DashboardShell";
-import { addPutaway, getBinUsage, BIN_CAPACITY } from "@/lib/inventory-store";
+import { addPutaway, getBinUsage } from "@/lib/inventory-store";
+import { useConfig } from "@/lib/config-store";
 
 export const Route = createFileRoute("/putaway")({
   component: PutawayPage,
@@ -146,6 +147,7 @@ function BinGrid({ rows, cols, label, selected, onToggle }: {
 }
 
 function PutawayPage() {
+  const cfg = useConfig();
   const [storingType, setStoringType] = useState<"Tray" | "Bin" | null>(null);
   const [partition, setPartition] = useState<"Single" | "Multi" | null>(null);
   const [qty, setQty] = useState<number>(0);
@@ -193,7 +195,7 @@ function PutawayPage() {
     // Capacity cross-check: would this push the target bin over its limit?
     const usage = getBinUsage(binId);
     const projected = usage + qty;
-    if (projected > BIN_CAPACITY) {
+    if (projected > cfg.binCapacity) {
       setCapacityWarn({ usage, projected });
       return;
     }
@@ -378,8 +380,8 @@ function PutawayPage() {
                 Bin Over Capacity
               </span>
               <span style={{ fontSize: 19, fontWeight: 500, color: "#1a1a1a", textAlign: "center", lineHeight: 1.4 }}>
-                Bin <b>{binId}</b> holds {capacityWarn.usage} of {BIN_CAPACITY} units.
-                Adding {qty} would bring it to {capacityWarn.projected}, over the {BIN_CAPACITY}-unit limit.
+                Bin <b>{binId}</b> holds {capacityWarn.usage} of {cfg.binCapacity} units.
+                Adding {qty} would bring it to {capacityWarn.projected}, over the {cfg.binCapacity}-unit limit.
               </span>
               <div style={{ display: "flex", gap: 16, marginTop: 18 }}>
                 <button
