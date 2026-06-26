@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from "react";
+import { decrementSku } from "./inventory-store";
 
 export type Priority = "High" | "Medium" | "Low";
 export type Status = "Queued" | "Released" | "Picking" | "Completed";
@@ -85,11 +86,17 @@ export function toggleItemPicked(orderId: string, itemIndex: number) {
 /** Confirm all items in the active order as picked → Completed. */
 export function confirmPick(orderId: string): boolean {
   let completed = false;
+  let pickedItems: OrderItem[] = [];
   orders = orders.map((o) => {
     if (o.id !== orderId) return o;
     completed = true;
+    pickedItems = o.items;
     return { ...o, status: "Completed" as Status, items: o.items.map((it) => ({ ...it, picked: true })) };
   });
+  // Decrement inventory for every picked item
+  if (completed) {
+    pickedItems.forEach((it) => decrementSku(it.sku, it.qty));
+  }
   emit();
   return completed;
 }
