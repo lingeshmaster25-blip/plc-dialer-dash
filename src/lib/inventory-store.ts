@@ -44,6 +44,31 @@ export function addPutaway(rec: Omit<PutawayRecord, "ts">) {
 
 export function getRecords() { return records; }
 
+/**
+ * Decrement stock for a SKU by `qty` when an order is picked.
+ * Works by reducing qty on the most-recent matching record(s) in order,
+ * removing a record entirely when its qty hits zero.
+ */
+export function decrementSku(sku: string, qty: number) {
+  const key = sku.trim().toUpperCase();
+  let remaining = qty;
+  const next: PutawayRecord[] = [];
+  for (const r of records) {
+    if (remaining <= 0 || r.sku.trim().toUpperCase() !== key) {
+      next.push(r);
+      continue;
+    }
+    const take = Math.min(r.qty, remaining);
+    remaining -= take;
+    const newQty = r.qty - take;
+    if (newQty > 0) next.push({ ...r, qty: newQty });
+    // qty === 0 → drop the record (bin freed)
+  }
+  records = next;
+  persist();
+  emit();
+}
+
 /** Aggregate availability for a SKU from all putaway records. */
 export function lookupBySku(sku: string): Availability | null {
   const key = sku.trim().toUpperCase();
