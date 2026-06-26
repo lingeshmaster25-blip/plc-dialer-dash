@@ -22,12 +22,13 @@ const binNum = (b: string) => parseInt(b.replace(/\D/g, ""), 10) || 0;
 
 function PicklistPage() {
   const order = getPickingOrder();
+  const items = order?.items ?? [];
   const [picked, setPicked] = useState<Set<number>>(new Set());
 
-  const involved = new Set(order.items.map((it) => binNum(it.bin)));
-  const pickedBins = new Set([...picked].map((i) => binNum(order.items[i].bin)));
-  const firstUnpicked = order.items.findIndex((_, i) => !picked.has(i));
-  const currentBin = firstUnpicked >= 0 ? binNum(order.items[firstUnpicked].bin) : -1;
+  const involved = new Set(items.map((it) => binNum(it.bin)));
+  const pickedBins = new Set([...picked].map((i) => binNum(items[i].bin)));
+  const firstUnpicked = items.findIndex((_, i) => !picked.has(i));
+  const currentBin = firstUnpicked >= 0 ? binNum(items[firstUnpicked].bin) : -1;
 
   const tileState = (n: number): keyof typeof TILE_COLOR =>
     pickedBins.has(n) ? "picked" : n === currentBin ? "now" : involved.has(n) ? "queued" : "empty";
@@ -83,7 +84,9 @@ function PicklistPage() {
           padding: "12px 22px", display: "flex", flexDirection: "column",
           boxShadow: "0 1px 4px rgba(16,24,40,0.06)",
         }}>
-          <span style={{ fontSize: 21, fontWeight: 800, color: "#1a1a1a" }}>Order {order.id}</span>
+          <span style={{ fontSize: 21, fontWeight: 800, color: "#1a1a1a" }}>
+            {order ? `Order ${order.id}` : "No active order"}
+          </span>
           <div style={{ height: 1, background: "#e5e7eb", margin: "8px 0 10px" }} />
 
           <div style={{ display: "flex", gap: 32, flex: 1, minHeight: 0 }}>
@@ -97,7 +100,9 @@ function PicklistPage() {
                 <span style={HCELL}>BIN</span>
                 <span style={HCELL}>QTY</span>
               </div>
-              {order.items.map((it, i) => (
+              {items.length === 0 ? (
+                <div style={{ padding: "16px 0", color: "#9ca3af", fontSize: 15 }}>No items to pick.</div>
+              ) : items.map((it, i) => (
                 <div key={i} style={{ display: "grid", gridTemplateColumns: ROW_COLS, alignItems: "center", padding: "5px 0" }}>
                   <div
                     onClick={() => toggle(i)}
