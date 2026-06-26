@@ -63,8 +63,15 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<PlcStatus | null>(null);
   const prevRef = useRef<PlcStatus | null>(null);
   const [now, setNow] = useState(new Date());
+  const [estop, setEstop] = useState(false);
   const m = useDashboardMetrics();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+
+  const triggerEstop = () => {
+    setEstop(true);
+    // Best-effort hardware stop; ignore errors when no PLC backend is present.
+    try { Promise.resolve(hmiApi.stop()).catch(() => {}); } catch {}
+  };
 
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 1000);
@@ -86,7 +93,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
     return () => { cancelled = true; clearInterval(id); };
   }, []);
 
-  const isRunning = status?.connected ?? true;
+  const isRunning = !estop && (status?.connected ?? true);
 
   return (
     <div style={{
@@ -264,7 +271,9 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         })}
 
         {/* E-STOP */}
-        <button style={{
+        <button
+          onClick={triggerEstop}
+          style={{
           flex: 1, background: "#db0000", borderRadius: 10, border: "none",
           boxShadow: CARD_SHADOW, cursor: "pointer", display: "flex",
           flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8,
@@ -277,6 +286,47 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           <span style={{ color: "#fff", fontWeight: 800, fontSize: 18, letterSpacing: "1px" }}>E-STOP</span>
         </button>
       </div>
+
+      {/* ───────────── EMERGENCY STOP OVERLAY ───────────── */}
+      {estop && (
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 1000,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          background: "rgba(120,0,0,0.28)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)",
+        }}>
+          <div style={{
+            background: "#fff", borderRadius: 20, border: "3px solid #db0000",
+            boxShadow: "0 24px 70px rgba(0,0,0,0.35)", padding: "40px 56px",
+            display: "flex", flexDirection: "column", alignItems: "center", gap: 18,
+            width: "min(560px, 90%)", textAlign: "center",
+          }}>
+            <div style={{
+              width: 84, height: 84, borderRadius: "50%", background: "#fde2e2",
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              <AlertTriangle size={46} color="#db0000" strokeWidth={2.4} />
+            </div>
+            <span style={{ fontSize: 28, fontWeight: 800, color: "#db0000", letterSpacing: "0.5px" }}>
+              EMERGENCY STOP ACTIVATED
+            </span>
+            <span style={{ fontSize: 17, color: "#4b5563", lineHeight: 1.4 }}>
+              All operations have been halted. Inspect the system and ensure it is safe before resuming.
+            </span>
+            <button
+              onClick={() => setEstop(false)}
+              style={{
+                marginTop: 6, background: "#1e8449", color: "#fff", fontSize: 18, fontWeight: 700,
+                border: "none", borderRadius: 10, padding: "14px 44px", cursor: "pointer",
+                transition: "background .15s",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "#196e3c"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "#1e8449"; }}
+            >
+              Reset System
+            </button>
+          </div>
+        </div>
+      )}
 
     </div>
   );
