@@ -6,7 +6,7 @@ import { useLowStock } from "@/lib/inventory-store";
 import {
   Bell, Clock, Wifi, User, Home, Upload, Download, Package,
   Search, AlertTriangle, Settings, CheckCircle2,
-  Truck, ClipboardList, AlertCircle,
+  Truck, ClipboardList, AlertCircle, X,
 } from "lucide-react";
 
 // `to` is the route each button navigates to. Only "/" and "/putaway"
@@ -55,6 +55,17 @@ function StatCard({ Icon, color, label, value }: { Icon: typeof Clock; color: st
   );
 }
 
+function PopRow({ label, value, dot }: { label: string; value: string; dot?: string }) {
+  return (
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 0", fontSize: 13 }}>
+      <span style={{ color: "#6b7280" }}>{label}</span>
+      <span style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "#111827", fontWeight: 600 }}>
+        {dot ? <span style={{ width: 8, height: 8, borderRadius: "50%", background: dot }} /> : null}{value}
+      </span>
+    </div>
+  );
+}
+
 /**
  * Shared app frame: dark navbar, the right-hand stats/activity/inventory
  * column, and the bottom navigation. `children` fills the large left panel.
@@ -69,6 +80,9 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const activity = useActivity();
   const lowStock = useLowStock();
   const [notifOpen, setNotifOpen] = useState(false);
+  const [dismissed, setDismissed] = useState<Set<string>>(new Set());
+  const [wifiOpen, setWifiOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   const triggerEstop = () => {
@@ -98,6 +112,19 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   }, []);
 
   const isRunning = !estop && (status?.connected ?? true);
+
+  // Notifications: low-stock minus dismissed; a dismissed item re-alerts if it clears then recurs.
+  const visibleNotifs = lowStock.filter((it) => !dismissed.has(it.sku));
+  const lowKey = lowStock.map((i) => i.sku).join("|");
+  useEffect(() => {
+    setDismissed((prev) => {
+      const live = new Set(lowKey ? lowKey.split("|") : []);
+      const next = new Set<string>();
+      for (const s of prev) if (live.has(s)) next.add(s);
+      return next.size === prev.size ? prev : next;
+    });
+  }, [lowKey]);
+  const dismissNotif = (sku: string) => setDismissed((prev) => new Set(prev).add(sku));
 
   return (
     <div style={{
@@ -140,14 +167,14 @@ export function DashboardShell({ children }: { children: ReactNode }) {
               style={{ background: "none", border: "none", padding: 0, cursor: "pointer", position: "relative", display: "flex", alignItems: "center" }}
             >
               <Bell size={19} color="#c7cdd8" strokeWidth={2} />
-              {lowStock.length > 0 && (
+              {visibleNotifs.length > 0 && (
                 <span style={{
                   position: "absolute", top: -7, right: -8, minWidth: 16, height: 16,
                   background: "#ef4444", color: "#fff", borderRadius: 999, fontSize: 10, fontWeight: 700,
                   display: "flex", alignItems: "center", justifyContent: "center", padding: "0 4px",
                   border: "1.5px solid #021135",
                 }}>
-                  {lowStock.length}
+                  {visibleNotifs.length}
                 </span>
               )}
             </button>
@@ -162,24 +189,37 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                 }}>
                   <div style={{ padding: "13px 18px", borderBottom: "1px solid #eceef1", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <span style={{ fontSize: 15, fontWeight: 700, color: "#111827" }}>Notifications</span>
-                    <span style={{ fontSize: 12, color: "#6b7280" }}>{lowStock.length} new</span>
+                    <span style={{ fontSize: 12, color: "#6b7280" }}>{visibleNotifs.length} new</span>
                   </div>
                   <div style={{ maxHeight: 340, overflowY: "auto" }}>
-                    {lowStock.length === 0 ? (
+                    {visibleNotifs.length === 0 ? (
                       <div style={{ padding: "24px 18px", textAlign: "center", color: "#9ca3af", fontSize: 14 }}>
                         No notifications.
                       </div>
-                    ) : lowStock.map((it) => (
-                      <div key={it.sku} style={{ display: "flex", gap: 12, padding: "13px 18px", borderBottom: "1px solid #f3f4f6" }}>
+                    ) : visibleNotifs.map((it) => (
+                      <div key={it.sku} style={{ display: "flex", gap: 12, padding: "13px 18px", borderBottom: "1px solid #f3f4f6", alignItems: "center" }}>
                         <div style={{ width: 34, height: 34, borderRadius: 8, background: "#fff7d6", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                           <AlertTriangle size={17} color="#eab308" strokeWidth={2.4} />
                         </div>
-                        <div style={{ minWidth: 0 }}>
+                        <div style={{ minWidth: 0, flex: 1 }}>
                           <div style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>Low stock: {it.sku}</div>
                           <div style={{ fontSize: 12.5, color: "#6b7280", lineHeight: 1.35 }}>
                             {it.description || "Item"} — only {it.qty} unit{it.qty === 1 ? "" : "s"} remaining.
                           </div>
                         </div>
+                        <button
+                          onClick={() => dismissNotif(it.sku)}
+                          aria-label="Dismiss"
+                          title="Dismiss"
+                          style={{
+                            flexShrink: 0, background: "none", border: "none", cursor: "pointer",
+                            color: "#9ca3af", padding: 4, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 6,
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = "#f3f4f6"; e.currentTarget.style.color = "#4b5563"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = "none"; e.currentTarget.style.color = "#9ca3af"; }}
+                        >
+                          <X size={15} />
+                        </button>
                       </div>
                     ))}
                   </div>
@@ -194,16 +234,77 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           }}>
             {now.toLocaleTimeString()}
           </span>
-          <Wifi size={19} color="#c7cdd8" strokeWidth={2} style={{ cursor: "pointer" }} />
+          {/* Network status */}
+          <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+            <button onClick={() => setWifiOpen((o) => !o)} aria-label="Network status"
+              style={{ background: "none", border: "none", padding: 0, cursor: "pointer", display: "flex", alignItems: "center" }}>
+              <Wifi size={19} color="#c7cdd8" strokeWidth={2} />
+            </button>
+            {wifiOpen && (
+              <>
+                <div onClick={() => setWifiOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 40 }} />
+                <div style={{
+                  position: "absolute", top: "calc(100% + 16px)", right: 0, width: 240, zIndex: 50,
+                  background: "#fff", borderRadius: 12, border: "1px solid #e5e7eb",
+                  boxShadow: "0 18px 50px rgba(0,0,0,0.22)", overflow: "hidden",
+                }}>
+                  <div style={{ padding: "12px 16px", borderBottom: "1px solid #eceef1", fontSize: 14, fontWeight: 700, color: "#111827" }}>Network</div>
+                  <div style={{ padding: "6px 16px 12px" }}>
+                    <PopRow label="Connection" value="Connected" dot="#22c55e" />
+                    <PopRow label="Signal" value="Strong" />
+                    <PopRow label="PLC link" value={isRunning ? "Online" : "Offline"} dot={isRunning ? "#22c55e" : "#ef4444"} />
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+
           <div style={{ width: 1, height: 26, background: "#2a3a5c" }} />
-          <div style={{
-            width: 36, height: 36, borderRadius: "50%",
-            background: "radial-gradient(circle at 50% 35%, #5b6b86 0%, #2b3852 70%, #1b2436 100%)",
-            border: "1.5px solid #3a4866",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            cursor: "pointer", overflow: "hidden",
-          }}>
-            <User size={18} color="#d7dce6" />
+
+          {/* Profile */}
+          <div style={{ position: "relative" }}>
+            <button onClick={() => setProfileOpen((o) => !o)} aria-label="Profile"
+              style={{
+                width: 36, height: 36, borderRadius: "50%",
+                background: "radial-gradient(circle at 50% 35%, #5b6b86 0%, #2b3852 70%, #1b2436 100%)",
+                border: "1.5px solid #3a4866",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                cursor: "pointer", overflow: "hidden", padding: 0,
+              }}>
+              <User size={18} color="#d7dce6" />
+            </button>
+            {profileOpen && (
+              <>
+                <div onClick={() => setProfileOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 40 }} />
+                <div style={{
+                  position: "absolute", top: "calc(100% + 16px)", right: 0, width: 248, zIndex: 50,
+                  background: "#fff", borderRadius: 12, border: "1px solid #e5e7eb",
+                  boxShadow: "0 18px 50px rgba(0,0,0,0.22)", overflow: "hidden",
+                }}>
+                  <div style={{ padding: "14px 16px", borderBottom: "1px solid #eceef1", display: "flex", alignItems: "center", gap: 12 }}>
+                    <div style={{ width: 38, height: 38, borderRadius: "50%", background: "#eef3ff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <User size={20} color="#0058f1" />
+                    </div>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: "#111827" }}>Operator</div>
+                      <div style={{ fontSize: 12.5, color: "#6b7280" }}>Trilo Automation</div>
+                    </div>
+                  </div>
+                  <div style={{ padding: "6px 16px 8px" }}>
+                    <PopRow label="System" value={isRunning ? "Running" : "Stopped"} dot={isRunning ? "#22c55e" : "#ef4444"} />
+                    <PopRow label="Access" value="Standard" />
+                  </div>
+                  <div style={{ borderTop: "1px solid #eceef1" }}>
+                    <button onClick={() => { setProfileOpen(false); navigate({ to: "/troubleshoot" }); }}
+                      style={{ width: "100%", textAlign: "left", background: "none", border: "none", cursor: "pointer", padding: "12px 16px", fontSize: 13.5, fontWeight: 600, color: "#0058f1" }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = "#f5f8ff"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}>
+                      Open Manual Control
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </header>
