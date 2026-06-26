@@ -19,10 +19,27 @@ const KEY = "trilo.putaway.records.v2";
 // No demo data — inventory is populated only by real putaways.
 const SEED: PutawayRecord[] = [];
 
+/** Combine any records sharing the same SKU + bin + tray into one (sums qty). */
+function coalesce(list: PutawayRecord[]): PutawayRecord[] {
+  const order: string[] = [];
+  const map = new Map<string, PutawayRecord>();
+  for (const r of list) {
+    const k = `${r.sku.trim().toUpperCase()}|${r.binId.trim().toUpperCase()}|${r.trayId.trim().toUpperCase()}`;
+    const ex = map.get(k);
+    if (ex) {
+      map.set(k, { ...ex, qty: (Number(ex.qty) || 0) + (Number(r.qty) || 0), ts: Math.max(ex.ts, r.ts) });
+    } else {
+      map.set(k, { ...r });
+      order.push(k);
+    }
+  }
+  return order.map((k) => map.get(k)!);
+}
+
 function load(): PutawayRecord[] {
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) return JSON.parse(raw) as PutawayRecord[];
+    if (raw) return coalesce(JSON.parse(raw) as PutawayRecord[]);
   } catch { /* localStorage unavailable */ }
   return [...SEED];
 }
@@ -35,9 +52,37 @@ function persist() {
 }
 function emit() { listeners.forEach((l) => l()); }
 
-/** Record a completed putaway. Called from the Putaway page on KEEP. */
+/** Record a completed putaway. Called from the Putaway page on KEEP.
+ *  If the same SKU is stored in the same bin + tray, the quantities are
+ *  combined into the existing record instead of creating a duplicate. */
 export function addPutaway(rec: Omit<PutawayRecord, "ts">) {
-  records = [{ ...rec, ts: Date.now() }, ...records];
+  const sku = rec.sku.trim().toUpperCase();
+  const bin = rec.binId.trim().toUpperCase();
+  const tray = rec.trayId.trim().toUpperCase();
+
+  const idx = records.findIndex(
+    (r) =>
+      r.sku.trim().toUpperCase() === sku &&
+      r.binId.trim().toUpperCase() === bin &&
+      r.trayId.trim().toUpperCase() === tray,
+  );
+
+  if (idx >= 0) {
+    // Same item, same location → top up the existing stock.
+    const existing = records[idx];
+    const merged: PutawayRecord = {
+      ...existing,
+      qty: (Number(existing.qty) || 0) + (Number(rec.qty) || 0),
+      description: rec.description || existing.description,
+      storingType: rec.storingType,
+      partition: rec.partition,
+      bins: rec.bins && rec.bins.length ? rec.bins : existing.bins,
+      ts: Date.now(),
+    };
+    records = [merged, ...records.slice(0, idx), ...records.slice(idx + 1)];
+  } else {
+    records = [{ ...rec, ts: Date.now() }, ...records];
+  }
   persist();
   emit();
 }
