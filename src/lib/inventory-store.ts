@@ -1,4 +1,5 @@
 import { useMemo, useSyncExternalStore } from "react";
+import { useConfig } from "./config-store";
 
 export type PutawayRecord = {
   sku: string;
@@ -89,12 +90,6 @@ export function addPutaway(rec: Omit<PutawayRecord, "ts">) {
 
 export function getRecords() { return records; }
 
-/**
- * Maximum total units a single bin is allowed to hold.
- * System configuration — adjust to match the real rack/bin spec.
- */
-export const BIN_CAPACITY = 100;
-
 /** Total units currently stored in a given bin (matched case-insensitively). */
 export function getBinUsage(binId: string): number {
   const key = binId.trim().toUpperCase();
@@ -150,14 +145,12 @@ export function usePutawayRecords() {
   return useSyncExternalStore(subscribe, getRecords, getRecords);
 }
 
-/** SKU total units below this surface as low-stock notifications. */
-export const LOW_STOCK_THRESHOLD = 10;
-
 export type LowStockItem = { sku: string; description: string; qty: number };
 
 /** Reactive list of SKUs whose total on-hand quantity is low (0 < qty < threshold). */
 export function useLowStock(): LowStockItem[] {
   const recs = usePutawayRecords();
+  const { lowStockThreshold } = useConfig();
   return useMemo(() => {
     const map = new Map<string, LowStockItem>();
     for (const r of recs) {
@@ -168,6 +161,6 @@ export function useLowStock(): LowStockItem[] {
       if (!cur.description && r.description) cur.description = r.description;
       map.set(key, cur);
     }
-    return [...map.values()].filter((i) => i.qty > 0 && i.qty < LOW_STOCK_THRESHOLD);
-  }, [recs]);
+    return [...map.values()].filter((i) => i.qty > 0 && i.qty < lowStockThreshold);
+  }, [recs, lowStockThreshold]);
 }
