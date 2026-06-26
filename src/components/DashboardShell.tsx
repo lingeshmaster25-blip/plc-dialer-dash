@@ -233,11 +233,17 @@ export function DashboardShell({ children }: { children: ReactNode }) {
               border: "1px solid #edeff2", boxShadow: CARD_SHADOW,
               cursor: "pointer", display: "flex", flexDirection: "column",
               alignItems: "center", justifyContent: "center", gap: 9,
-              padding: "10px 6px", transition: "box-shadow .15s, transform .05s",
+              padding: "10px 6px", transition: "box-shadow .15s, transform .12s",
               textDecoration: "none",
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.boxShadow = "0 4px 12px rgba(16,24,40,0.14)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.boxShadow = CARD_SHADOW; }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.boxShadow = "0 8px 18px rgba(16,24,40,0.18)";
+              e.currentTarget.style.transform = "translateY(-3px)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.boxShadow = CARD_SHADOW;
+              e.currentTarget.style.transform = "translateY(0)";
+            }}
           >
             <div style={{
               width: 56, height: 56, borderRadius: "50%", background: "#a7a7a7",
