@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ChevronUp, ChevronDown } from "lucide-react";
 import { DashboardShell } from "@/components/DashboardShell";
-import { addPutaway } from "@/lib/inventory-store";
+import { addPutaway, getBinUsage, BIN_CAPACITY } from "@/lib/inventory-store";
 
 export const Route = createFileRoute("/putaway")({
   component: PutawayPage,
@@ -155,6 +155,7 @@ function PutawayPage() {
   const [trayId, setTrayId] = useState("");
   const [error, setError] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [capacityWarn, setCapacityWarn] = useState<null | { usage: number; projected: number }>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
   // Clear any selected bins whenever the storing/partition mode changes.
@@ -175,19 +176,33 @@ function PutawayPage() {
     storingType !== null && partition !== null &&
     binId.trim() !== "" && trayId.trim() !== "";
 
-  const handleKeep = () => {
-    if (!isComplete) { setError(true); return; }
-    setError(false);
+  /** Write the record and show the success modal. */
+  const commitPutaway = () => {
     addPutaway({
       sku, description: skuDesc, qty,
       storingType: storingType!, partition: partition!,
       binId, trayId, bins: [...selected],
     });
+    setCapacityWarn(null);
     setShowModal(true);
+  };
+
+  const handleKeep = () => {
+    if (!isComplete) { setError(true); return; }
+    setError(false);
+    // Capacity cross-check: would this push the target bin over its limit?
+    const usage = getBinUsage(binId);
+    const projected = usage + qty;
+    if (projected > BIN_CAPACITY) {
+      setCapacityWarn({ usage, projected });
+      return;
+    }
+    commitPutaway();
   };
 
   const handleOkay = () => {
     setShowModal(false);
+    setCapacityWarn(null);
     setSku("");
     setQty(0);
     setSkuDesc("");
@@ -340,6 +355,58 @@ function PutawayPage() {
           </div>
 
         </div>
+
+        {/* ── CAPACITY WARNING MODAL ── */}
+        {capacityWarn && (
+          <div style={{
+            position: "absolute", inset: 0, zIndex: 60,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            background: "rgba(255,255,255,0.35)",
+            backdropFilter: "blur(7px)", WebkitBackdropFilter: "blur(7px)",
+            borderRadius: 10,
+          }}>
+            <div style={{
+              background: "rgba(255,255,255,0.55)",
+              backdropFilter: "blur(11px)", WebkitBackdropFilter: "blur(11px)",
+              borderRadius: 26, boxShadow: "0 24px 70px rgba(0,0,0,0.20)",
+              border: "1px solid rgba(219,0,0,0.35)",
+              padding: 44, boxSizing: "border-box",
+              width: "min(720px, 90%)", maxHeight: "88%",
+              display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14,
+            }}>
+              <span style={{ fontSize: 26, fontWeight: 700, color: "#b91c1c", textAlign: "center" }}>
+                Bin Over Capacity
+              </span>
+              <span style={{ fontSize: 19, fontWeight: 500, color: "#1a1a1a", textAlign: "center", lineHeight: 1.4 }}>
+                Bin <b>{binId}</b> holds {capacityWarn.usage} of {BIN_CAPACITY} units.
+                Adding {qty} would bring it to {capacityWarn.projected}, over the {BIN_CAPACITY}-unit limit.
+              </span>
+              <div style={{ display: "flex", gap: 16, marginTop: 18 }}>
+                <button
+                  onClick={() => setCapacityWarn(null)}
+                  style={{
+                    background: "#fff", color: "#1f2937", fontSize: 18, fontWeight: 600,
+                    border: "1px solid #d0d4da", borderRadius: 12, padding: "13px 40px", cursor: "pointer",
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={commitPutaway}
+                  style={{
+                    background: "#db0000", color: "#fff", fontSize: 18, fontWeight: 600,
+                    border: "none", borderRadius: 12, padding: "13px 40px", cursor: "pointer",
+                    boxShadow: "0 4px 14px rgba(219,0,0,0.35)", transition: "background .15s",
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "#b00000"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "#db0000"; }}
+                >
+                  Store Anyway
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ── CONFIRMATION MODAL ── */}
         {showModal && (
