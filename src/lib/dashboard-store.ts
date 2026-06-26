@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from "react";
 import { getRecords, usePutawayRecords } from "./inventory-store";
 import { getOrders, useOrders, getPickingOrder } from "./orders-store";
+import { useConfig } from "./config-store";
 
 export type Activity = { time: string; action: string; detail: string };
 
@@ -28,7 +29,6 @@ export function useActivity() {
 }
 
 // ── Warehouse capacity ───────────────────────────────────────────────────────
-export const CAPACITY = { totalTrays: 17, totalBins: 36 };
 
 // ── Uptime ───────────────────────────────────────────────────────────────────
 const BOOT = Date.now();
@@ -58,8 +58,9 @@ export function useDashboardMetrics(): DashboardMetrics {
 
   const skus = new Set(records.map((r) => r.sku.trim().toUpperCase()).filter(Boolean)).size;
   const occupiedBins = new Set(records.map((r) => r.binId.trim().toUpperCase()).filter(Boolean)).size;
-  const totalBins = CAPACITY.totalBins;
-  const totalTrays = CAPACITY.totalTrays;
+  const cfg = useConfig();
+  const totalBins = cfg.totalBins;
+  const totalTrays = cfg.totalTrays;
   const available = Math.max(0, totalBins - occupiedBins);
   const availablePct = totalBins > 0 ? Math.round((available / totalBins) * 1000) / 10 : 0;
 
