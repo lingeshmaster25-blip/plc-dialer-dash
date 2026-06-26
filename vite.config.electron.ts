@@ -5,7 +5,7 @@ import tsconfigPaths from "vite-tsconfig-paths";
 import { TanStackRouterVite } from "@tanstack/router-plugin/vite";
 import path from "path";
 
-const ROOT_SPA = path.resolve(__dirname, "./src/routes/__root.spa.tsx");
+const ROOT_SPA = path.resolve(__dirname, "./src/electron/root-spa.tsx");
 
 export default defineConfig({
   plugins: [
@@ -14,7 +14,7 @@ export default defineConfig({
       autoCodeSplitting: true,
     }),
     // Force every import that resolves to src/routes/__root.tsx
-    // to be served by src/routes/__root.spa.tsx instead. This is the
+    // to be served by src/electron/root-spa.tsx instead. This is the
     // only reliable way to swap the auto-generated route tree's root
     // for the SPA build — Vite's string-form alias never matches the
     // absolute path the router plugin writes, so the original __root
