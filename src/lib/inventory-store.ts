@@ -45,6 +45,21 @@ export function addPutaway(rec: Omit<PutawayRecord, "ts">) {
 export function getRecords() { return records; }
 
 /**
+ * Maximum total units a single bin is allowed to hold.
+ * System configuration — adjust to match the real rack/bin spec.
+ */
+export const BIN_CAPACITY = 100;
+
+/** Total units currently stored in a given bin (matched case-insensitively). */
+export function getBinUsage(binId: string): number {
+  const key = binId.trim().toUpperCase();
+  if (!key) return 0;
+  return records
+    .filter((r) => r.binId.trim().toUpperCase() === key)
+    .reduce((sum, r) => sum + (Number(r.qty) || 0), 0);
+}
+
+/**
  * Decrement stock for a SKU by `qty` when an order is picked.
  * Works by reducing qty on the most-recent matching record(s) in order,
  * removing a record entirely when its qty hits zero.
