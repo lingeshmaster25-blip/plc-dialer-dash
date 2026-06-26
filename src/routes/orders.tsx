@@ -35,7 +35,7 @@ const ROW_COLS = "0.85fr 1.5fr 1fr 1fr";
 
 function OrdersPage() {
   const navigate = useNavigate();
-  const [selected, setSelected] = useState(1);
+  const [selected, setSelected] = useState(0);
   const order = ORDERS[selected];
 
   return (
@@ -121,6 +121,12 @@ function OrdersPage() {
               padding: "22px 26px", display: "flex", flexDirection: "column",
               boxShadow: "0 1px 4px rgba(16,24,40,0.06)",
             }}>
+              {!order ? (
+                <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: "#9ca3af", fontSize: 16 }}>
+                  No order selected.
+                </div>
+              ) : (
+              <>
               {/* card header */}
               <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
                 <span style={{ fontSize: 26, fontWeight: 800, color: "#1a1a1a" }}>Order {order.id}</span>
@@ -167,6 +173,8 @@ function OrdersPage() {
                   Edit
                 </button>
               </div>
+              </>
+              )}
             </div>
           </div>
 
