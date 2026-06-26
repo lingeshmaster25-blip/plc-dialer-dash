@@ -2,8 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useMemo } from "react";
 import { AlertTriangle, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Square } from "lucide-react";
 import { DashboardShell } from "@/components/DashboardShell";
-import { usePutawayRecords, BIN_CAPACITY } from "@/lib/inventory-store";
+import { usePutawayRecords } from "@/lib/inventory-store";
 import { useOrders } from "@/lib/orders-store";
+import { useConfig } from "@/lib/config-store";
 
 export const Route = createFileRoute("/troubleshoot")({
   component: TroubleshootPage,
@@ -19,7 +20,6 @@ const TONE: Record<Alert["tone"], { box: string; icon: string }> = {
 
 // Alerts are derived live from store state (no demo data).
 // Low-stock notifications live on the navbar bell, not here.
-const STALE_ORDER_MS = 2 * 60 * 1000;    // Queued longer than this → awaiting-release alert
 
 const FIELD: React.CSSProperties = {
   width: "100%", background: "#dcdde0", border: "1px solid #d0d1d5",
@@ -54,6 +54,7 @@ function ControlTile({ icon, label }: { icon: React.ReactNode; label: string }) 
 function TroubleshootPage() {
   const records = usePutawayRecords();
   const orders = useOrders();
+  const cfg = useConfig();
   const [acked, setAcked] = useState<Set<string>>(new Set());
   const [tick, setTick] = useState(0);
   const [userId, setUserId] = useState("");
@@ -81,11 +82,11 @@ function TroubleshootPage() {
       binUsage.set(key, cur);
     }
     for (const [key, v] of binUsage) {
-      if (v.qty > BIN_CAPACITY) {
+      if (v.qty > cfg.binCapacity) {
         out.push({
           id: `bin-cap:${key}`, tone: "red",
           title: `Bin ${v.label} over capacity`,
-          detail: `${v.qty} of ${BIN_CAPACITY} units stored — redistribute stock.`,
+          detail: `${v.qty} of ${cfg.binCapacity} units stored — redistribute stock.`,
         });
       }
     }
@@ -93,7 +94,7 @@ function TroubleshootPage() {
     // 2) Stale queued orders
     const now = Date.now();
     for (const o of orders) {
-      if (o.status === "Queued" && now - o.createdAt > STALE_ORDER_MS) {
+      if (o.status === "Queued" && now - o.createdAt > cfg.staleOrderMins * 60000) {
         const mins = Math.max(1, Math.floor((now - o.createdAt) / 60000));
         out.push({
           id: `stale:${o.id}`, tone: "blue",
@@ -104,7 +105,7 @@ function TroubleshootPage() {
     }
 
     return out;
-  }, [records, orders, tick]);
+  }, [records, orders, tick, cfg.binCapacity, cfg.staleOrderMins]);
 
   // Drop acknowledgements for conditions that have cleared, so they re-alert if they recur.
   const derivedKey = derived.map((a) => a.id).join("|");
