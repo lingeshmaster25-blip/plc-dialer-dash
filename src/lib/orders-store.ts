@@ -60,6 +60,26 @@ export function addOrder(
   return id;
 }
 
+/** Edit a Queued order's employee, priority, and items. No-op once released. */
+export function editOrder(
+  id: string,
+  patch: { emp: string; priority: Priority; items: Omit<OrderItem, "picked">[] },
+): boolean {
+  let edited = false;
+  orders = orders.map((o) => {
+    if (o.id !== id || o.status !== "Queued") return o;
+    edited = true;
+    return {
+      ...o,
+      emp: patch.emp,
+      priority: patch.priority,
+      items: patch.items.map((it) => ({ ...it, picked: false })),
+    };
+  });
+  if (edited) emit();
+  return edited;
+}
+
 /** Move a Queued order to Released so it appears as active in Picklist. */
 export function releaseToPicklist(id: string) {
   orders = orders.map((o) =>
