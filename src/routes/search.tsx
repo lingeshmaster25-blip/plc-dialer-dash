@@ -10,15 +10,6 @@ export const Route = createFileRoute("/search")({
 type FilterTab = "All" | "SKU" | "Bin" | "Tray" | "Order";
 
 // Extended seed data to match the reference screenshot
-const EXTRA_ITEMS = [
-  { sku: "SKU-002", description: "Screws",             tray: "T-03", bin: "B07", qty: 124, status: "In Stock"  },
-  { sku: "SKU-003", description: "Household Item",     tray: "T-04", bin: "B05", qty: 53,  status: "In Stock"  },
-  { sku: "SKU-004", description: "Nails",              tray: "T-05", bin: "B09", qty: 72,  status: "In Stock"  },
-  { sku: "SKU-005", description: "PVC tee 25mm",       tray: "T-01", bin: "B02", qty: 15,  status: "Inbound"   },
-  { sku: "SKU-006", description: "Hydraulic seal kit", tray: "T-05", bin: "B08", qty: 34,  status: "Low"       },
-  { sku: "SKU-008", description: "Relay 24V DPDT",     tray: "T-05", bin: "B04", qty: 74,  status: "In Stock"  },
-];
-
 const STATUS_STYLE: Record<string, React.CSSProperties> = {
   "In Stock": { background: "#d1fae5", color: "#065f46", border: "1px solid #6ee7b7" },
   "Inbound":  { background: "#f3f4f6", color: "#6b7280", border: "1px solid #d1d5db" },
@@ -39,9 +30,9 @@ function SearchPage2() {
   const [query, setQuery] = useState("");
   const [tab, setTab] = useState<FilterTab>("All");
 
-  // Build unified rows from store records + extra seed items
+  // Rows come only from real putaway records in the store.
   const allRows = useMemo(() => {
-    const fromStore = records.map((r) => ({
+    return records.map((r) => ({
       sku: r.sku,
       description: r.description,
       tray: r.trayId.replace("Tray ", "T-").replace("T-T", "T-"),
@@ -49,17 +40,6 @@ function SearchPage2() {
       qty: r.qty,
       status: r.qty <= 0 ? "Low" : "In Stock" as string,
     }));
-    // Merge: store records first, then fill in extras not already present
-    const skusInStore = new Set(fromStore.map((r) => r.sku.toUpperCase()));
-    const extras = EXTRA_ITEMS.filter((e) => !skusInStore.has(e.sku.toUpperCase())).map((e) => ({
-      sku: e.sku,
-      description: e.description,
-      tray: e.tray,
-      bin: e.bin,
-      qty: e.qty,
-      status: e.status,
-    }));
-    return [...fromStore, ...extras];
   }, [records]);
 
   const filtered = useMemo(() => {
