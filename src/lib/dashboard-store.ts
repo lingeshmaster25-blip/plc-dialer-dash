@@ -1,17 +1,37 @@
+import { useSyncExternalStore } from "react";
 import { getRecords, usePutawayRecords } from "./inventory-store";
-import { ORDERS, getPickingOrder } from "./orders-store";
+import { getOrders, useOrders, getPickingOrder } from "./orders-store";
 
 export type Activity = { time: string; action: string; detail: string };
 
-// Recent activity feed — populated by real events (picks, returns, calibration…).
-export const RECENT_ACTIVITY: Activity[] = [];
+// ── Recent activity feed ─────────────────────────────────────────────────────
+let RECENT_ACTIVITY: Activity[] = [];
+const activityListeners = new Set<() => void>();
 
-// Warehouse capacity — system configuration (PLC / setup), not live demo data.
+function emitActivity() { activityListeners.forEach((l) => l()); }
+
+export function pushActivity(action: string, detail: string) {
+  const now = new Date();
+  const time = now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+  RECENT_ACTIVITY = [{ time, action, detail }, ...RECENT_ACTIVITY].slice(0, 20);
+  emitActivity();
+}
+
+export function getActivity() { return RECENT_ACTIVITY; }
+
+export function useActivity() {
+  return useSyncExternalStore(
+    (cb) => { activityListeners.add(cb); return () => activityListeners.delete(cb); },
+    getActivity,
+    getActivity,
+  );
+}
+
+// ── Warehouse capacity ───────────────────────────────────────────────────────
 export const CAPACITY = { totalTrays: 17, totalBins: 36 };
 
-// Uptime: a realistic running clock that ticks up from app start.
+// ── Uptime ───────────────────────────────────────────────────────────────────
 const BOOT = Date.now();
-const BASE_UPTIME_MS = 0; // count up from app start
 
 function fmtUptime(ms: number) {
   const totalMin = Math.floor(ms / 60000);
@@ -31,10 +51,11 @@ export type DashboardMetrics = {
 };
 
 export function useDashboardMetrics(): DashboardMetrics {
-  usePutawayRecords(); // re-render when inventory changes
+  usePutawayRecords();
+  useOrders(); // re-render when orders change
   const records = getRecords();
+  const orders = getOrders();
 
-  // Inventory-derived
   const skus = new Set(records.map((r) => r.sku.trim().toUpperCase()).filter(Boolean)).size;
   const occupiedBins = new Set(records.map((r) => r.binId.trim().toUpperCase()).filter(Boolean)).size;
   const totalBins = CAPACITY.totalBins;
@@ -42,15 +63,16 @@ export function useDashboardMetrics(): DashboardMetrics {
   const available = Math.max(0, totalBins - occupiedBins);
   const availablePct = totalBins > 0 ? Math.round((available / totalBins) * 1000) / 10 : 0;
 
-  // Orders-derived
-  const orders = ORDERS.length;
-  const queue = ORDERS.filter((o) => o.status === "Queued").length;
-  const picking = ORDERS.find((o) => o.status === "Picking");
-  const activeOrder = picking?.id ?? getPickingOrder()?.id ?? "—";
+  const activeOrders = orders.filter((o) => o.status !== "Completed");
+  const queue = orders.filter((o) => o.status === "Queued" || o.status === "Released").length;
+  const picking = getPickingOrder();
+  const activeOrder = picking?.id ?? "—";
 
   return {
-    uptime: fmtUptime(BASE_UPTIME_MS + (Date.now() - BOOT)),
-    orders, activeOrder, queue,
+    uptime: fmtUptime(Date.now() - BOOT),
+    orders: activeOrders.length,
+    activeOrder,
+    queue,
     totalTrays, available, totalBins, skus, availablePct,
   };
 }
