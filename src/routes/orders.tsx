@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ArrowRight, Pencil, ChevronUp, ChevronDown, Plus, X } from "lucide-react";
 import { DashboardShell } from "@/components/DashboardShell";
 import { useOrders, releaseToPicklist, editOrder, type Priority, type Status } from "@/lib/orders-store";
@@ -7,6 +7,9 @@ import { lookupBySku, usePutawayRecords } from "@/lib/inventory-store";
 import { pushActivity } from "@/lib/dashboard-store";
 
 export const Route = createFileRoute("/orders")({
+  validateSearch: (search: Record<string, unknown>): { order?: string } => ({
+    order: typeof search.order === "string" ? search.order : undefined,
+  }),
   component: OrdersPage,
 });
 
@@ -69,6 +72,19 @@ function OrdersPage() {
   const [selected, setSelected] = useState(0);
   const order = orders[selected];
 
+  // Pre-select an order when arriving with ?order=#534 (e.g. from Recent Orders).
+  const { order: orderParam } = Route.useSearch();
+  const appliedParam = useRef<string | null>(null);
+  useEffect(() => {
+    if (orderParam && orderParam !== appliedParam.current) {
+      const idx = orders.findIndex((o) => o.id === orderParam);
+      if (idx >= 0) {
+        setSelected(idx);
+        appliedParam.current = orderParam;
+      }
+    }
+  }, [orderParam, orders]);
+
   // ── inline edit state ──
   const [editing, setEditing] = useState(false);
   const [dEmp, setDEmp] = useState("");
@@ -77,7 +93,7 @@ function OrdersPage() {
   const [editErr, setEditErr] = useState("");
 
   const canRelease = order && (order.status === "Queued") && !editing;
-  const canEdit    = order && (order.status === "Queued");
+  const canEdit    = order && (order.status === "Queued" || order.status === "Released");
 
   const selectRow = (i: number) => {
     setSelected(i);
