@@ -312,18 +312,29 @@ export function DashboardShell({ children }: { children: ReactNode }) {
             <span style={{ fontSize: 17, color: "#4b5563", lineHeight: 1.4 }}>
               All operations have been halted. Inspect the system and ensure it is safe before resuming.
             </span>
-            <button
-              onClick={() => setEstop(false)}
-              style={{
-                marginTop: 6, background: "#1e8449", color: "#fff", fontSize: 18, fontWeight: 700,
-                border: "none", borderRadius: 10, padding: "14px 44px", cursor: "pointer",
-                transition: "background .15s",
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "#196e3c"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "#1e8449"; }}
-            >
-              Reset System
-            </button>
+            <div style={{ display: "flex", gap: 14, marginTop: 6 }}>
+              <button
+                onClick={() => setEstop(false)}
+                style={{
+                  background: "#fff", color: "#1f2937", fontSize: 18, fontWeight: 700,
+                  border: "1px solid #d0d4da", borderRadius: 10, padding: "14px 40px", cursor: "pointer",
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => setEstop(false)}
+                style={{
+                  background: "#1e8449", color: "#fff", fontSize: 18, fontWeight: 700,
+                  border: "none", borderRadius: 10, padding: "14px 40px", cursor: "pointer",
+                  transition: "background .15s",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "#196e3c"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "#1e8449"; }}
+              >
+                Reset System
+              </button>
+            </div>
           </div>
         </div>
       )}
