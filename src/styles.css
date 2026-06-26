@@ -131,3 +131,16 @@
   }
   .animate-hmi-scan { animation: hmi-scan 2s linear infinite; }
 }
+
+/* Global hover/press affordance for every button (layers over inline styles) */
+button {
+  transition: filter 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+}
+button:not(:disabled):hover {
+  filter: brightness(0.95);
+  cursor: pointer;
+}
+button:not(:disabled):active {
+  filter: brightness(0.9);
+  transform: translateY(1px);
+}
