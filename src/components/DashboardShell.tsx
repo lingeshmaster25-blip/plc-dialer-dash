@@ -188,7 +188,9 @@ export function DashboardShell({ children }: { children: ReactNode }) {
               <span style={{ color: "#2563eb", fontSize: 12.5, cursor: "pointer", fontWeight: 600 }}>View all activity</span>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>
-              {RECENT_ACTIVITY.map((item, i) => (
+              {RECENT_ACTIVITY.length === 0 ? (
+                <span style={{ fontSize: 11, color: "#9ca3af" }}>No recent activity.</span>
+              ) : RECENT_ACTIVITY.map((item, i) => (
                 <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
                   <CheckCircle2 size={15} color="#fff" fill="#22c55e" style={{ flexShrink: 0 }} />
                   <span style={{ fontSize: 11, color: "#6b7280", width: 52, flexShrink: 0 }}>{item.time}</span>
