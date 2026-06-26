@@ -3,22 +3,15 @@ import { ORDERS, getPickingOrder } from "./orders-store";
 
 export type Activity = { time: string; action: string; detail: string };
 
-// Recent activity feed (would stream from the PLC/event log in production).
-export const RECENT_ACTIVITY: Activity[] = [
-  { time: "10:24 AM", action: "Order #424 Picked", detail: "Tray T12 Bin B5" },
-  { time: "10:18 AM", action: "Tray 14 Returned", detail: "By Operator John" },
-  { time: "10:07 AM", action: "Calibration Finished", detail: "All Systems Normal" },
-  { time: "09:45 AM", action: "Order #422 Picked", detail: "Tray T07 Bin B7" },
-  { time: "09:37 AM", action: "Order #420 Picked", detail: "Tray T08 Bin B3" },
-  { time: "09:32 AM", action: "Tray 10 Picked", detail: "By Operator Bob" },
-];
+// Recent activity feed — populated by real events (picks, returns, calibration…).
+export const RECENT_ACTIVITY: Activity[] = [];
 
 // Warehouse capacity — system configuration (PLC / setup), not live demo data.
 export const CAPACITY = { totalTrays: 17, totalBins: 36 };
 
 // Uptime: a realistic running clock that ticks up from app start.
 const BOOT = Date.now();
-const BASE_UPTIME_MS = (10 * 60 + 25) * 60 * 1000; // start at 10h 25m
+const BASE_UPTIME_MS = 0; // count up from app start
 
 function fmtUptime(ms: number) {
   const totalMin = Math.floor(ms / 60000);
@@ -53,7 +46,7 @@ export function useDashboardMetrics(): DashboardMetrics {
   const orders = ORDERS.length;
   const queue = ORDERS.filter((o) => o.status === "Queued").length;
   const picking = ORDERS.find((o) => o.status === "Picking");
-  const activeOrder = picking ? picking.id : getPickingOrder().id;
+  const activeOrder = picking?.id ?? getPickingOrder()?.id ?? "—";
 
   return {
     uptime: fmtUptime(BASE_UPTIME_MS + (Date.now() - BOOT)),
