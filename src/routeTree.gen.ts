@@ -10,6 +10,8 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as _rootSpaRouteImport } from './routes/__root.spa'
+import { Route as TroubleshootRouteImport } from './routes/troubleshoot'
+import { Route as SearchRouteImport } from './routes/search'
 import { Route as PutawayRouteImport } from './routes/putaway'
 import { Route as PicklistRouteImport } from './routes/picklist'
 import { Route as OrdersRouteImport } from './routes/orders'
@@ -19,6 +21,16 @@ import { Route as IndexRouteImport } from './routes/index'
 const _rootSpaRoute = _rootSpaRouteImport.update({
   id: '/__root/spa',
   path: '/spa',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TroubleshootRoute = TroubleshootRouteImport.update({
+  id: '/troubleshoot',
+  path: '/troubleshoot',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SearchRoute = SearchRouteImport.update({
+  id: '/search',
+  path: '/search',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PutawayRoute = PutawayRouteImport.update({
@@ -53,6 +65,8 @@ export interface FileRoutesByFullPath {
   '/orders': typeof OrdersRoute
   '/picklist': typeof PicklistRoute
   '/putaway': typeof PutawayRoute
+  '/search': typeof SearchRoute
+  '/troubleshoot': typeof TroubleshootRoute
   '/spa': typeof _rootSpaRoute
 }
 export interface FileRoutesByTo {
@@ -61,6 +75,8 @@ export interface FileRoutesByTo {
   '/orders': typeof OrdersRoute
   '/picklist': typeof PicklistRoute
   '/putaway': typeof PutawayRoute
+  '/search': typeof SearchRoute
+  '/troubleshoot': typeof TroubleshootRoute
   '/spa': typeof _rootSpaRoute
 }
 export interface FileRoutesById {
@@ -70,13 +86,31 @@ export interface FileRoutesById {
   '/orders': typeof OrdersRoute
   '/picklist': typeof PicklistRoute
   '/putaway': typeof PutawayRoute
+  '/search': typeof SearchRoute
+  '/troubleshoot': typeof TroubleshootRoute
   '/__root/spa': typeof _rootSpaRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/order-new' | '/orders' | '/picklist' | '/putaway' | '/spa'
+  fullPaths:
+    | '/'
+    | '/order-new'
+    | '/orders'
+    | '/picklist'
+    | '/putaway'
+    | '/search'
+    | '/troubleshoot'
+    | '/spa'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/order-new' | '/orders' | '/picklist' | '/putaway' | '/spa'
+  to:
+    | '/'
+    | '/order-new'
+    | '/orders'
+    | '/picklist'
+    | '/putaway'
+    | '/search'
+    | '/troubleshoot'
+    | '/spa'
   id:
     | '__root__'
     | '/'
@@ -84,6 +118,8 @@ export interface FileRouteTypes {
     | '/orders'
     | '/picklist'
     | '/putaway'
+    | '/search'
+    | '/troubleshoot'
     | '/__root/spa'
   fileRoutesById: FileRoutesById
 }
@@ -93,6 +129,8 @@ export interface RootRouteChildren {
   OrdersRoute: typeof OrdersRoute
   PicklistRoute: typeof PicklistRoute
   PutawayRoute: typeof PutawayRoute
+  SearchRoute: typeof SearchRoute
+  TroubleshootRoute: typeof TroubleshootRoute
   _rootSpaRoute: typeof _rootSpaRoute
 }
 
@@ -103,6 +141,20 @@ declare module '@tanstack/react-router' {
       path: '/spa'
       fullPath: '/spa'
       preLoaderRoute: typeof _rootSpaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/troubleshoot': {
+      id: '/troubleshoot'
+      path: '/troubleshoot'
+      fullPath: '/troubleshoot'
+      preLoaderRoute: typeof TroubleshootRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/search': {
+      id: '/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof SearchRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/putaway': {
@@ -149,18 +201,10 @@ const rootRouteChildren: RootRouteChildren = {
   OrdersRoute: OrdersRoute,
   PicklistRoute: PicklistRoute,
   PutawayRoute: PutawayRoute,
+  SearchRoute: SearchRoute,
+  TroubleshootRoute: TroubleshootRoute,
   _rootSpaRoute: _rootSpaRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
