@@ -20,10 +20,29 @@ export type Order = {
 };
 
 // ── singleton state ──────────────────────────────────────────────────────────
-let orders: Order[] = [];
-let orderSeq = 534;
+const KEY = "trilo.orders.v1";
+
+function load(): { orders: Order[]; seq: number } {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && Array.isArray(parsed.orders)) {
+        return { orders: parsed.orders as Order[], seq: typeof parsed.seq === "number" ? parsed.seq : 534 };
+      }
+    }
+  } catch { /* localStorage unavailable */ }
+  return { orders: [], seq: 534 };
+}
+
+const initial = load();
+let orders: Order[] = initial.orders;
+let orderSeq = initial.seq;
 const listeners = new Set<() => void>();
 
+function persist() {
+  try { localStorage.setItem(KEY, JSON.stringify({ orders, seq: orderSeq })); } catch { /* ignore */ }
+}
 function emit() { listeners.forEach((l) => l()); }
 
 function subscribe(cb: () => void) {
@@ -56,6 +75,7 @@ export function addOrder(
     { id, emp, priority, status: "Queued", items: items.map((it) => ({ ...it, picked: false })), createdAt: Date.now() },
     ...orders,
   ];
+  persist();
   emit();
   return id;
 }
@@ -76,7 +96,7 @@ export function editOrder(
       items: patch.items.map((it) => ({ ...it, picked: false })),
     };
   });
-  if (edited) emit();
+  if (edited) { persist(); emit(); }
   return edited;
 }
 
@@ -85,6 +105,7 @@ export function releaseToPicklist(id: string) {
   orders = orders.map((o) =>
     o.id === id && (o.status === "Queued") ? { ...o, status: "Released" as Status } : o,
   );
+  persist();
   emit();
 }
 
@@ -100,6 +121,7 @@ export function toggleItemPicked(orderId: string, itemIndex: number) {
     const status: Status = anyPicked && o.status === "Released" ? "Picking" : o.status;
     return { ...o, items, status };
   });
+  persist();
   emit();
 }
 
@@ -117,6 +139,7 @@ export function confirmPick(orderId: string): boolean {
   if (completed) {
     pickedItems.forEach((it) => decrementSku(it.sku, it.qty));
   }
+  persist();
   emit();
   return completed;
 }
