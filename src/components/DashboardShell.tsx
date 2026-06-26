@@ -2,6 +2,7 @@ import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { hmiApi, type PlcStatus } from "@/lib/hmi-api";
 import { useActivity, useDashboardMetrics } from "@/lib/dashboard-store";
+import { useLowStock } from "@/lib/inventory-store";
 import {
   Bell, Clock, Wifi, User, Home, Upload, Download, Package,
   Search, AlertTriangle, Settings, CheckCircle2,
@@ -66,6 +67,8 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const [estop, setEstop] = useState(false);
   const m = useDashboardMetrics();
   const activity = useActivity();
+  const lowStock = useLowStock();
+  const [notifOpen, setNotifOpen] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   const triggerEstop = () => {
@@ -130,7 +133,60 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         <div style={{ display: "flex", alignItems: "center", gap: 26 }}>
           <Home size={19} color="#c7cdd8" strokeWidth={2} style={{ cursor: "pointer" }}
             onClick={() => navigate({ to: "/" })} />
-          <Bell size={19} color="#c7cdd8" strokeWidth={2} style={{ cursor: "pointer" }} />
+          <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+            <button
+              onClick={() => setNotifOpen((o) => !o)}
+              aria-label="Notifications"
+              style={{ background: "none", border: "none", padding: 0, cursor: "pointer", position: "relative", display: "flex", alignItems: "center" }}
+            >
+              <Bell size={19} color="#c7cdd8" strokeWidth={2} />
+              {lowStock.length > 0 && (
+                <span style={{
+                  position: "absolute", top: -7, right: -8, minWidth: 16, height: 16,
+                  background: "#ef4444", color: "#fff", borderRadius: 999, fontSize: 10, fontWeight: 700,
+                  display: "flex", alignItems: "center", justifyContent: "center", padding: "0 4px",
+                  border: "1.5px solid #021135",
+                }}>
+                  {lowStock.length}
+                </span>
+              )}
+            </button>
+
+            {notifOpen && (
+              <>
+                <div onClick={() => setNotifOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 40 }} />
+                <div style={{
+                  position: "absolute", top: "calc(100% + 16px)", right: 0, width: 344, zIndex: 50,
+                  background: "#fff", borderRadius: 12, border: "1px solid #e5e7eb",
+                  boxShadow: "0 18px 50px rgba(0,0,0,0.22)", overflow: "hidden",
+                }}>
+                  <div style={{ padding: "13px 18px", borderBottom: "1px solid #eceef1", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span style={{ fontSize: 15, fontWeight: 700, color: "#111827" }}>Notifications</span>
+                    <span style={{ fontSize: 12, color: "#6b7280" }}>{lowStock.length} new</span>
+                  </div>
+                  <div style={{ maxHeight: 340, overflowY: "auto" }}>
+                    {lowStock.length === 0 ? (
+                      <div style={{ padding: "24px 18px", textAlign: "center", color: "#9ca3af", fontSize: 14 }}>
+                        No notifications.
+                      </div>
+                    ) : lowStock.map((it) => (
+                      <div key={it.sku} style={{ display: "flex", gap: 12, padding: "13px 18px", borderBottom: "1px solid #f3f4f6" }}>
+                        <div style={{ width: 34, height: 34, borderRadius: 8, background: "#fff7d6", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                          <AlertTriangle size={17} color="#eab308" strokeWidth={2.4} />
+                        </div>
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>Low stock: {it.sku}</div>
+                          <div style={{ fontSize: 12.5, color: "#6b7280", lineHeight: 1.35 }}>
+                            {it.description || "Item"} — only {it.qty} unit{it.qty === 1 ? "" : "s"} remaining.
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
           <span style={{
             color: "#dbe0ea", fontSize: 14, fontWeight: 600,
             fontVariantNumeric: "tabular-nums", letterSpacing: "0.5px",
