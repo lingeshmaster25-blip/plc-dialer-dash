@@ -1,8 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { ArrowRight, Pencil } from "lucide-react";
+import { ArrowRight, Pencil, ChevronUp, ChevronDown, Plus, X } from "lucide-react";
 import { DashboardShell } from "@/components/DashboardShell";
-import { useOrders, releaseToPicklist, type Priority, type Status } from "@/lib/orders-store";
+import { useOrders, releaseToPicklist, editOrder, type Priority, type Status } from "@/lib/orders-store";
+import { lookupBySku, usePutawayRecords } from "@/lib/inventory-store";
 import { pushActivity } from "@/lib/dashboard-store";
 
 export const Route = createFileRoute("/orders")({
@@ -36,14 +37,90 @@ function Pill({ text, bg, color }: { text: string; bg: string; color: string }) 
 const ROW_COLS = "0.85fr 1.5fr 1fr 1fr";
 const HCELL: React.CSSProperties = { fontSize: 14, fontWeight: 600, color: "#4b5563", letterSpacing: "0.5px" };
 
+const FIELD: React.CSSProperties = {
+  width: "100%", background: "#e6e7ea", border: "1px solid #dadbdf",
+  borderRadius: 8, padding: "10px 12px", fontSize: 14, color: "#111827",
+  outline: "none", boxSizing: "border-box",
+};
+
+type DraftRow = { sku: string; desc: string; qty: number };
+const emptyDraftRow = (): DraftRow => ({ sku: "", desc: "", qty: 0 });
+
+function QtyField({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  return (
+    <div style={{ position: "relative" }}>
+      <input
+        style={FIELD} type="number" placeholder="Qty"
+        value={value === 0 ? "" : value}
+        onChange={(e) => onChange(Number(e.target.value) || 0)}
+      />
+      <div style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", display: "flex", flexDirection: "column" }}>
+        <ChevronUp size={14} color="#374151" style={{ cursor: "pointer" }} onClick={() => onChange(value + 1)} />
+        <ChevronDown size={14} color="#374151" style={{ cursor: "pointer" }} onClick={() => onChange(Math.max(0, value - 1))} />
+      </div>
+    </div>
+  );
+}
+
 function OrdersPage() {
   const navigate = useNavigate();
   const orders = useOrders();
+  usePutawayRecords(); // re-render lookups when inventory changes
   const [selected, setSelected] = useState(0);
   const order = orders[selected];
 
-  const canRelease = order && (order.status === "Queued");
+  // ── inline edit state ──
+  const [editing, setEditing] = useState(false);
+  const [dEmp, setDEmp] = useState("");
+  const [dPriority, setDPriority] = useState<Priority>("Medium");
+  const [dItems, setDItems] = useState<DraftRow[]>([emptyDraftRow()]);
+  const [editErr, setEditErr] = useState("");
+
+  const canRelease = order && (order.status === "Queued") && !editing;
   const canEdit    = order && (order.status === "Queued");
+
+  const selectRow = (i: number) => {
+    setSelected(i);
+    setEditing(false);
+    setEditErr("");
+  };
+
+  const startEdit = () => {
+    if (!order || !canEdit) return;
+    setDEmp(order.emp);
+    setDPriority(order.priority);
+    setDItems(order.items.map((it) => ({ sku: it.sku, desc: it.item, qty: it.qty })));
+    setEditErr("");
+    setEditing(true);
+  };
+
+  const updateDItem = (idx: number, patch: Partial<DraftRow>) =>
+    setDItems((prev) => prev.map((r, i) => (i === idx ? { ...r, ...patch } : r)));
+  const addDRow = () => setDItems((prev) => [...prev, emptyDraftRow()]);
+  const removeDRow = (idx: number) =>
+    setDItems((prev) => (prev.length > 1 ? prev.filter((_, i) => i !== idx) : prev));
+
+  const saveEdit = () => {
+    if (!order) return;
+    const valid = dItems.filter((r) => r.sku.trim() && r.qty > 0);
+    if (!dEmp.trim()) { setEditErr("Enter an employee name."); return; }
+    if (valid.length === 0) { setEditErr("Add at least one item with a SKU and qty."); return; }
+    const items = valid.map((r) => {
+      const info = lookupBySku(r.sku);
+      return {
+        sku: r.sku.trim().toUpperCase(),
+        item: r.desc.trim() || info?.description || r.sku.trim().toUpperCase(),
+        bin: info?.bin ?? "—",
+        qty: r.qty,
+      };
+    });
+    editOrder(order.id, { emp: dEmp.trim(), priority: dPriority, items });
+    pushActivity("Order Edited", `Order ${order.id}`);
+    setEditing(false);
+    setEditErr("");
+  };
+
+  const cancelEdit = () => { setEditing(false); setEditErr(""); };
 
   const handleRelease = () => {
     if (!order || !canRelease) return;
@@ -110,7 +187,7 @@ function OrdersPage() {
                   </div>
                 ) : orders.map((o, i) => (
                   <div key={o.id}
-                    onClick={() => setSelected(i)}
+                    onClick={() => selectRow(i)}
                     style={{
                       display: "grid", gridTemplateColumns: ROW_COLS, alignItems: "center",
                       padding: "7px 18px", borderBottom: "1px solid #f0f1f3", cursor: "pointer",
@@ -145,6 +222,82 @@ function OrdersPage() {
                 <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: "#9ca3af", fontSize: 16 }}>
                   No order selected.
                 </div>
+              ) : editing ? (
+                <>
+                  {/* edit header */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                    <span style={{ fontSize: 24, fontWeight: 800, color: "#1a1a1a" }}>Editing {order.id}</span>
+                    <Pill text={order.status} {...STATUS_STYLE[order.status]} />
+                  </div>
+                  <div style={{ height: 1, background: "#e5e7eb", margin: "14px 0 16px" }} />
+
+                  {/* employee + priority */}
+                  <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 14, marginBottom: 14 }}>
+                    <input style={FIELD} placeholder="Employee Name"
+                      value={dEmp} onChange={(e) => setDEmp(e.target.value)} />
+                    <div style={{ position: "relative" }}>
+                      <select value={dPriority} onChange={(e) => setDPriority(e.target.value as Priority)}
+                        style={{ ...FIELD, appearance: "none", cursor: "pointer" }}>
+                        <option>High</option>
+                        <option>Medium</option>
+                        <option>Low</option>
+                      </select>
+                      <ChevronDown size={15} color="#374151" style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }} />
+                    </div>
+                  </div>
+
+                  {/* item rows */}
+                  <div style={{ ...HCELL, marginBottom: 8 }}>ITEMS</div>
+                  <div style={{ flex: 1, minHeight: 0, overflowY: "auto", display: "flex", flexDirection: "column", gap: 10 }}>
+                    {dItems.map((row, idx) => (
+                      <div key={idx} style={{ display: "grid", gridTemplateColumns: "1fr 1.2fr 0.7fr 28px", gap: 10, alignItems: "center" }}>
+                        <input style={FIELD} placeholder="*SKU"
+                          value={row.sku} onChange={(e) => updateDItem(idx, { sku: e.target.value })} />
+                        <input style={FIELD} placeholder="Description"
+                          value={row.desc} onChange={(e) => updateDItem(idx, { desc: e.target.value })} />
+                        <QtyField value={row.qty} onChange={(v) => updateDItem(idx, { qty: v })} />
+                        {dItems.length > 1 ? (
+                          <button onClick={() => removeDRow(idx)} style={{
+                            background: "none", border: "none", cursor: "pointer", padding: 2, color: "#9ca3af",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                          }}>
+                            <X size={16} />
+                          </button>
+                        ) : <div />}
+                      </div>
+                    ))}
+                  </div>
+
+                  <div style={{ textAlign: "right", marginTop: 10 }}>
+                    <span onClick={addDRow}
+                      style={{ color: "#1068ff", fontSize: 15, fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 4 }}>
+                      <Plus size={15} /> Add Items
+                    </span>
+                  </div>
+
+                  {editErr ? (
+                    <div style={{ color: "#d11f1f", fontSize: 13, marginTop: 8 }}>{editErr}</div>
+                  ) : null}
+
+                  {/* save / cancel */}
+                  <div style={{ display: "flex", gap: 14, marginTop: 14, flexShrink: 0 }}>
+                    <button onClick={saveEdit} style={{
+                      flex: 1, fontSize: 15, fontWeight: 600, border: "none", borderRadius: 8, padding: "13px 0",
+                      cursor: "pointer", background: "#28954a", color: "#fff", transition: "background .15s",
+                    }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = "#21813f"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = "#28954a"; }}
+                    >
+                      Save Changes
+                    </button>
+                    <button onClick={cancelEdit} style={{
+                      width: 110, fontSize: 15, fontWeight: 600, border: "1px solid #d0d4da", borderRadius: 8,
+                      padding: "13px 0", cursor: "pointer", background: "#fff", color: "#1f2937",
+                    }}>
+                      Cancel
+                    </button>
+                  </div>
+                </>
               ) : (
                 <>
                   {/* card header */}
@@ -196,6 +349,7 @@ function OrdersPage() {
                        "Release To Picklist"}
                     </button>
                     <button
+                      onClick={startEdit}
                       disabled={!canEdit}
                       style={{
                         width: 90, fontSize: 15, fontWeight: 600,
