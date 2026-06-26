@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { hmiApi, type PlcStatus } from "@/lib/hmi-api";
 import { RECENT_ACTIVITY, useDashboardMetrics } from "@/lib/dashboard-store";
@@ -64,6 +64,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const prevRef = useRef<PlcStatus | null>(null);
   const [now, setNow] = useState(new Date());
   const m = useDashboardMetrics();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 1000);
@@ -225,12 +226,15 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         display: "flex", flexShrink: 0, gap: 10,
         height: 150, padding: "10px",
       }}>
-        {NAV_BUTTONS.map(({ label, sub, Icon, to }) => (
+        {NAV_BUTTONS.map(({ label, sub, Icon, to }) => {
+          const active = to !== "/" && pathname === to;
+          const restShadow = active ? "0 3px 12px rgba(0,88,241,0.22)" : CARD_SHADOW;
+          return (
           <Link key={label}
             to={to}
             style={{
-              flex: 1, background: "#fff", borderRadius: 10,
-              border: "1px solid #edeff2", boxShadow: CARD_SHADOW,
+              flex: 1, background: active ? "#eef3ff" : "#fff", borderRadius: 10,
+              border: active ? "1.5px solid #0058f1" : "1px solid #edeff2", boxShadow: restShadow,
               cursor: "pointer", display: "flex", flexDirection: "column",
               alignItems: "center", justifyContent: "center", gap: 9,
               padding: "10px 6px", transition: "box-shadow .15s, transform .12s",
@@ -241,22 +245,23 @@ export function DashboardShell({ children }: { children: ReactNode }) {
               e.currentTarget.style.transform = "translateY(-3px)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.boxShadow = CARD_SHADOW;
+              e.currentTarget.style.boxShadow = restShadow;
               e.currentTarget.style.transform = "translateY(0)";
             }}
           >
             <div style={{
-              width: 56, height: 56, borderRadius: "50%", background: "#a7a7a7",
+              width: 56, height: 56, borderRadius: "50%", background: active ? "#0058f1" : "#a7a7a7",
               display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
             }}>
               <Icon size={26} color="#fff" strokeWidth={2} />
             </div>
-            <span style={{ fontWeight: 700, fontSize: 14, color: "#111827", letterSpacing: "0.3px", whiteSpace: "nowrap" }}>
+            <span style={{ fontWeight: 700, fontSize: 14, color: active ? "#0058f1" : "#111827", letterSpacing: "0.3px", whiteSpace: "nowrap" }}>
               {label}
             </span>
-            <span style={{ fontSize: 12, color: "#6b7280", whiteSpace: "nowrap" }}>{sub}</span>
+            <span style={{ fontSize: 12, color: active ? "#3b6fd4" : "#6b7280", whiteSpace: "nowrap" }}>{sub}</span>
           </Link>
-        ))}
+          );
+        })}
 
         {/* E-STOP */}
         <button style={{
