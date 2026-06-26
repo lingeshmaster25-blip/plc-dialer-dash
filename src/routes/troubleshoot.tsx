@@ -15,11 +15,8 @@ const TONE: Record<Alert["tone"], { box: string; icon: string }> = {
   blue: { box: "#dbeeff", icon: "#2b8fff" },
 };
 
-const INITIAL_ALERTS: Alert[] = [
-  { id: 1, tone: "red", title: "Front photocell drift", detail: "Front-left bay sensor reads 4 mm off target — fault word bit 4. Run bay calibration." },
-  { id: 2, tone: "yellow", title: "Air pressure below setpoint", detail: "Live tag DB1.AirPressure 6.1 bar vs 6.5 setpoint." },
-  { id: 3, tone: "blue", title: "Tray T-51 capacity low", detail: "3 of 24 bins free — schedule put-away." },
-];
+// No demo alerts — alerts arrive from real fault events.
+const INITIAL_ALERTS: Alert[] = [];
 
 const FIELD: React.CSSProperties = {
   width: "100%", background: "#dcdde0", border: "1px solid #d0d1d5",
