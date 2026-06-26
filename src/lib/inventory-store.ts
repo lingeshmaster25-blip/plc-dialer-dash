@@ -14,14 +14,10 @@ export type PutawayRecord = {
 
 export type Availability = { bin: string; tray: string; available: number; description: string };
 
-const KEY = "trilo.putaway.records";
+const KEY = "trilo.putaway.records.v2";
 
-// Seed: items considered already stored in the system. New putaways append to this.
-const SEED: PutawayRecord[] = [
-  { sku: "SKU-001", description: "Automotive Part", qty: 56, storingType: "Bin", partition: "Single", binId: "Bin B4", trayId: "Tray T2", bins: [], ts: 0 },
-  { sku: "SKU-007", description: "Automotive Part", qty: 40, storingType: "Bin", partition: "Single", binId: "Bin B7", trayId: "Tray T07", bins: [], ts: 0 },
-  { sku: "SKU-053", description: "Screws", qty: 18, storingType: "Bin", partition: "Single", binId: "Bin B5", trayId: "Tray T12", bins: [], ts: 0 },
-];
+// No demo data — inventory is populated only by real putaways.
+const SEED: PutawayRecord[] = [];
 
 function load(): PutawayRecord[] {
   try {
