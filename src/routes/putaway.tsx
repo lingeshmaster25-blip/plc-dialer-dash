@@ -10,13 +10,13 @@ export const Route = createFileRoute("/putaway")({
 });
 
 const LABEL: React.CSSProperties = {
-  display: "block", fontSize: 14, fontWeight: 700,
-  color: "#111827", marginBottom: 4,
+  display: "block", fontSize: 13, fontWeight: 700,
+  color: "#111827", marginBottom: 2,
 };
 
 const FIELD: React.CSSProperties = {
   width: "100%", background: "#e8eaec", border: "1px solid #e2e4e7",
-  borderRadius: 8, padding: "8px 13px", fontSize: 14, color: "#111827",
+  borderRadius: 8, padding: "6px 12px", fontSize: 14, color: "#111827",
   outline: "none", boxSizing: "border-box",
   MozAppearance: "textfield",
 } as React.CSSProperties;
@@ -43,7 +43,7 @@ function Toggle({ label, active, onClick }: { label: string; active: boolean; on
     <button
       onClick={onClick}
       style={{
-        flex: 1, padding: "8px 16px", fontSize: 15, fontWeight: 500,
+        flex: 1, padding: "6px 16px", fontSize: 14, fontWeight: 500,
         borderRadius: 8, cursor: "pointer",
         background: active ? "#3f3f3f" : "#fff",
         border: active ? "1.5px solid #3f3f3f" : "1px solid #d0d4da",
@@ -57,7 +57,7 @@ function Toggle({ label, active, onClick }: { label: string; active: boolean; on
 }
 
 const segBtn: React.CSSProperties = {
-  width: 30, height: 30, display: "flex", alignItems: "center", justifyContent: "center",
+  width: 26, height: 26, display: "flex", alignItems: "center", justifyContent: "center",
   background: "#fff", border: "none", cursor: "pointer", color: "#374151",
 };
 
@@ -67,7 +67,7 @@ function SegDim({ value, onChange, label }: { value: number; onChange: (v: numbe
       <span style={{ fontSize: 12, color: "#6b7280" }}>{label}</span>
       <div style={{ display: "flex", alignItems: "center", border: "1px solid #d0d4da", borderRadius: 8, overflow: "hidden" }}>
         <button onClick={() => onChange(value - 1)} style={segBtn}><Minus size={15} /></button>
-        <span style={{ width: 30, textAlign: "center", fontSize: 16, fontWeight: 700, color: "#111827" }}>{value}</span>
+        <span style={{ width: 30, textAlign: "center", fontSize: 15, fontWeight: 700, color: "#111827" }}>{value}</span>
         <button onClick={() => onChange(value + 1)} style={segBtn}><Plus size={15} /></button>
       </div>
     </div>
@@ -277,19 +277,19 @@ function PutawayPage() {
       <div style={{ flex: 1, minWidth: 0, overflow: "hidden", padding: "18px 32px", display: "flex", flexDirection: "column", position: "relative" }}>
 
         {/* Header */}
-        <h1 style={{ fontSize: 30, fontWeight: 800, color: "#1a1a1a", margin: 0, letterSpacing: "-0.5px" }}>
+        <h1 style={{ fontSize: 24, fontWeight: 800, color: "#1a1a1a", margin: 0, letterSpacing: "-0.5px" }}>
           Putaway Overview
         </h1>
-        <p style={{ fontSize: 15, color: "#6b7280", margin: "4px 0 0" }}>
+        <p style={{ fontSize: 13, color: "#6b7280", margin: "2px 0 0" }}>
           Store Items into the module
         </p>
-        <div style={{ height: 1, background: "#e5e7eb", margin: "12px 0 16px", flexShrink: 0 }} />
+        <div style={{ height: 1, background: "#e5e7eb", margin: "8px 0 10px", flexShrink: 0 }} />
 
         {/* Two columns: form | preview */}
         <div style={{ display: "flex", gap: 32, alignItems: "stretch", flex: 1, minHeight: 0 }}>
 
           {/* ── FORM ── */}
-          <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 9 }}>
+          <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 6 }}>
 
             {/* SKUs + Quantity */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
@@ -355,7 +355,7 @@ function PutawayPage() {
                   value={binId}
                   onChange={(e) => setBinId(e.target.value)}
                   onBlur={() => setBinId(parseBins(binId).join(", "))} />
-                <span style={{ display: "block", fontSize: 11.5, color: "#9ca3af", marginTop: 4 }}>
+                <span style={{ display: "block", fontSize: 10.5, color: "#9ca3af", marginTop: 2 }}>
                   Space-separate for multiple bins (B001 B002)
                 </span>
               </div>
@@ -384,7 +384,7 @@ function PutawayPage() {
             )}
 
             {/* KEEP (bottom-right of the form) */}
-            <div style={{ marginTop: "auto", paddingTop: 10, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
+            <div style={{ marginTop: "auto", paddingTop: 4, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
               {error && (
                 <span style={{ fontSize: 13, color: "#dc2626", fontWeight: 500 }}>
                   Please fill in all fields and select both types.
@@ -393,9 +393,9 @@ function PutawayPage() {
               <button
                 onClick={handleKeep}
                 style={{
-                  background: "#15803d", color: "#fff", fontWeight: 700, fontSize: 17,
+                  background: "#15803d", color: "#fff", fontWeight: 700, fontSize: 16,
                   letterSpacing: "1px", border: "none", borderRadius: 8,
-                  padding: "11px 0", width: 240, cursor: "pointer",
+                  padding: "9px 0", width: 210, cursor: "pointer",
                   boxShadow: "0 2px 6px rgba(21,128,61,0.3)", transition: "background .15s",
                 }}
                 onMouseEnter={(e) => { e.currentTarget.style.background = "#13702f"; }}
