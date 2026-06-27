@@ -356,7 +356,7 @@ function PutawayPage() {
                 <label style={LABEL}>BIN ID</label>
                 <input style={FIELD} placeholder="B001"
                   value={binId}
-                  onChange={(e) => setBinId(e.target.value)}
+                  onChange={(e) => setBinId(e.target.value.replace(/[^bB0-9,\s]/g, "").toUpperCase())}
                   onBlur={() => setBinId(parseBins(binId).join(", "))} />
                 <span style={{ display: "block", fontSize: 11.5, color: "#9ca3af", marginTop: 4 }}>
                   Space-separate for multiple bins (B001 B002)
@@ -366,7 +366,7 @@ function PutawayPage() {
                 <label style={LABEL}>TRAY ID</label>
                 <input style={FIELD} placeholder="T001"
                   value={trayId}
-                  onChange={(e) => setTrayId(e.target.value)}
+                  onChange={(e) => setTrayId(e.target.value.replace(/[^tT0-9]/g, "").toUpperCase())}
                   onBlur={() => setTrayId(padId("T", trayId))} />
               </div>
             </div>
