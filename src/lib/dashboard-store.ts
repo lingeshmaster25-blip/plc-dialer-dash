@@ -6,7 +6,21 @@ import { useConfig } from "./config-store";
 export type Activity = { time: string; action: string; detail: string };
 
 // ── Recent activity feed ─────────────────────────────────────────────────────
-let RECENT_ACTIVITY: Activity[] = [];
+const ACTIVITY_KEY = "trilo.activity.v1";
+
+function loadActivity(): Activity[] {
+  try {
+    const raw = localStorage.getItem(ACTIVITY_KEY);
+    if (raw) return JSON.parse(raw) as Activity[];
+  } catch { /* ignore */ }
+  return [];
+}
+
+function persistActivity(feed: Activity[]) {
+  try { localStorage.setItem(ACTIVITY_KEY, JSON.stringify(feed)); } catch { /* ignore */ }
+}
+
+let RECENT_ACTIVITY: Activity[] = loadActivity();
 const activityListeners = new Set<() => void>();
 
 function emitActivity() { activityListeners.forEach((l) => l()); }
@@ -15,6 +29,7 @@ export function pushActivity(action: string, detail: string) {
   const now = new Date();
   const time = now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
   RECENT_ACTIVITY = [{ time, action, detail }, ...RECENT_ACTIVITY].slice(0, 20);
+  persistActivity(RECENT_ACTIVITY);
   emitActivity();
 }
 
@@ -27,8 +42,6 @@ export function useActivity() {
     getActivity,
   );
 }
-
-// ── Warehouse capacity ───────────────────────────────────────────────────────
 
 // ── Uptime ───────────────────────────────────────────────────────────────────
 const BOOT = Date.now();
@@ -52,7 +65,7 @@ export type DashboardMetrics = {
 
 export function useDashboardMetrics(): DashboardMetrics {
   usePutawayRecords();
-  useOrders(); // re-render when orders change
+  useOrders();
   const records = getRecords();
   const orders = getOrders();
 
