@@ -60,6 +60,8 @@ function subscribe(cb: () => void) {
 export function getOrders() { return orders; }
 
 export function getPickingOrder(): Order | undefined {
+  // Only orders that have been released to the picklist (or are actively being
+  // picked) belong here. Queued orders must NOT appear until "Release To Picklist".
   return (
     orders.find((o) => o.status === "Picking") ??
     orders.find((o) => o.status === "Released")
