@@ -105,7 +105,7 @@ function TrayBlocks({ trays, selected, onToggle }: {
   );
 }
 
-function BinCell({ green, onClick }: { green: boolean; onClick: () => void }) {
+function BinCell({ label, green, onClick }: { label: string; green: boolean; onClick: () => void }) {
   return (
     <div
       onClick={onClick}
@@ -117,7 +117,7 @@ function BinCell({ green, onClick }: { green: boolean; onClick: () => void }) {
         padding: "12px 14px", transition: "background .12s",
       }}
     >
-      <span style={{ fontSize: 19, fontWeight: 600, color: "#1f2937" }}>B1</span>
+      <span style={{ fontSize: 19, fontWeight: 600, color: "#1f2937" }}>{label}</span>
     </div>
   );
 }
@@ -142,7 +142,7 @@ function BinTrays({ trays, binsPerTray, selected, onToggle }: {
           }}>
             {Array.from({ length: binsPerTray }).map((_, i) => {
               const id = `${tray.name}-bin-${i}`;
-              return <BinCell key={i} green={selected.has(id)} onClick={() => onToggle(id)} />;
+              return <BinCell key={i} label={`B${i + 1}`} green={selected.has(id)} onClick={() => onToggle(id)} />;
             })}
           </div>
         </div>
