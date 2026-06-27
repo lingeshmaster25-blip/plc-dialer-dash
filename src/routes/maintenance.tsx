@@ -74,7 +74,7 @@ function SignalRow({ s }: { s: Signal }) {
       display: "flex", alignItems: "center", gap: 12,
       background: s.on ? "#ffffff" : "#e8eaed",
       border: s.on ? "1px solid #e2e4e7" : "1px solid #dfe1e4",
-      borderRadius: 9, padding: "4px 13px", minWidth: 0,
+      borderRadius: 9, padding: "4px 13px", minWidth: 0, minHeight: 44,
     }}>
       <span style={{
         width: 9, height: 9, borderRadius: "50%", flexShrink: 0,
@@ -97,7 +97,7 @@ function RegisterRow({ r }: { r: Register }) {
     <div style={{
       display: "flex", alignItems: "center", gap: 12,
       background: "#ffffff", border: "1px solid #e2e4e7",
-      borderRadius: 9, padding: "4px 13px", minWidth: 0,
+      borderRadius: 9, padding: "4px 13px", minWidth: 0, minHeight: 44,
     }}>
       <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
         <span style={{ fontSize: 13, fontWeight: 700, color: "#1a1a1a", lineHeight: 1.15 }}>{r.name}</span>
