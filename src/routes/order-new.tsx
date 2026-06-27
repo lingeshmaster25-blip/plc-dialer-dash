@@ -39,16 +39,18 @@ function Field({ label, value, sub }: { label: string; value: string | number; s
 type ItemRow = { sku: string; desc: string; qty: number };
 const emptyRow = (): ItemRow => ({ sku: "", desc: "", qty: 0 });
 
-function QtyInput({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+function QtyInput({ value, onChange, max }: { value: number; onChange: (v: number) => void; max?: number }) {
+  const cap = (v: number) => (max !== undefined ? Math.min(v, max) : v);
   return (
     <div style={{ position: "relative" }}>
       <input
-        style={FIELD} type="number" placeholder="Qty"
+        style={{ ...FIELD, borderColor: max !== undefined && value > max ? "#ef4444" : undefined }}
+        type="number" placeholder="Qty"
         value={value === 0 ? "" : value}
-        onChange={(e) => onChange(Number(e.target.value) || 0)}
+        onChange={(e) => onChange(cap(Number(e.target.value) || 0))}
       />
       <div style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", display: "flex", flexDirection: "column" }}>
-        <ChevronUp size={15} color="#374151" style={{ cursor: "pointer" }} onClick={() => onChange(value + 1)} />
+        <ChevronUp size={15} color="#374151" style={{ cursor: "pointer" }} onClick={() => onChange(cap(value + 1))} />
         <ChevronDown size={15} color="#374151" style={{ cursor: "pointer" }} onClick={() => onChange(Math.max(0, value - 1))} />
       </div>
     </div>
@@ -91,6 +93,18 @@ function OrderNewPage() {
         : "Please add at least one item with a SKU and qty.";
       setModal({ kind: "error", msg });
       return;
+    }
+    // Stock validation — block if any item exceeds available qty
+    for (const r of validItems) {
+      const info = lookupBySku(r.sku);
+      const available = info?.available ?? 0;
+      if (r.qty > available) {
+        setModal({
+          kind: "error",
+          msg: `Insufficient stock for ${r.sku.toUpperCase()}: requested ${r.qty}, only ${available} available.`,
+        });
+        return;
+      }
     }
     const orderItems = validItems.map((r) => {
       const info = lookupBySku(r.sku);
@@ -164,7 +178,7 @@ function OrderNewPage() {
                         value={row.sku} onChange={(e) => updateItem(idx, { sku: e.target.value })} />
                       <input style={FIELD} placeholder="Description"
                         value={row.desc} onChange={(e) => updateItem(idx, { desc: e.target.value })} />
-                      <QtyInput value={row.qty} onChange={(v) => updateItem(idx, { qty: v })} />
+                      <QtyInput value={row.qty} max={lookupBySku(row.sku)?.available} onChange={(v) => updateItem(idx, { qty: v })} />
                       {items.length > 1 ? (
                         <button onClick={() => removeRow(idx)} style={{
                           background: "none", border: "none", cursor: "pointer", padding: 4, color: "#9ca3af",
