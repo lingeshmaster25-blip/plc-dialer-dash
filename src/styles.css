@@ -144,3 +144,14 @@ button:not(:disabled):active {
   filter: brightness(0.9);
   transform: translateY(1px);
 }
+
+/* Hide native number-input spinners (we render our own chevron steppers) */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
