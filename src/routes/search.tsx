@@ -107,6 +107,19 @@ function SearchPage2() {
           >
             Search
           </button>
+          <button
+            onClick={() => { setQuery(""); setTab("All"); }}
+            style={{
+              height: 44, padding: "0 28px", borderRadius: 8,
+              background: "#fff", color: "#374151", fontSize: 15,
+              fontWeight: 600, border: "1.5px solid #d1d5db", cursor: "pointer",
+              transition: "all .15s",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "#f3f4f6"; e.currentTarget.style.borderColor = "#9ca3af"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "#fff"; e.currentTarget.style.borderColor = "#d1d5db"; }}
+          >
+            Clear
+          </button>
         </div>
 
         {/* Filter tabs */}
