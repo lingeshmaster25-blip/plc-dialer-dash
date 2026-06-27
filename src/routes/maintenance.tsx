@@ -108,17 +108,22 @@ function RegisterRow({ r }: { r: Register }) {
   );
 }
 
-function IOCard({ title, children }: { title: string; children: React.ReactNode }) {
+function IOCard({ title, children, grow }: { title: string; children: React.ReactNode; grow?: boolean }) {
   return (
-    <div style={{ border: "1px solid #e5e7eb", borderRadius: 12, padding: "9px 14px", boxShadow: "0 1px 3px rgba(16,24,40,0.06)" }}>
-      <span style={{ fontSize: 13, fontWeight: 700, color: "#374151", letterSpacing: "0.04em" }}>{title}</span>
-      <div style={{ marginTop: 7 }}>{children}</div>
+    <div style={{
+      border: "1px solid #e5e7eb", borderRadius: 12, padding: "9px 14px",
+      boxShadow: "0 1px 3px rgba(16,24,40,0.06)",
+      display: "flex", flexDirection: "column", minHeight: 0,
+      ...(grow ? { flex: 1 } : { flexShrink: 0 }),
+    }}>
+      <span style={{ fontSize: 13, fontWeight: 700, color: "#374151", letterSpacing: "0.04em", flexShrink: 0 }}>{title}</span>
+      <div style={{ marginTop: 7, flex: 1, minHeight: 0 }}>{children}</div>
     </div>
   );
 }
 
-const grid2: React.CSSProperties = { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 };
-const col1: React.CSSProperties = { display: "flex", flexDirection: "column", gap: 6 };
+const grid2: React.CSSProperties = { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, height: "100%", gridAutoRows: "1fr" };
+const col1: React.CSSProperties = { display: "grid", gridTemplateColumns: "1fr", gap: 6, height: "100%", gridAutoRows: "1fr" };
 
 /** Maintenance icon (person + wrench) for the credential gate. */
 function MaintIllustration() {
@@ -236,20 +241,20 @@ function MaintenancePage() {
             </div>
 
             {/* tab content */}
-            <div style={{ flex: 1, minHeight: 0, overflowY: "auto", paddingTop: 8, paddingRight: 4 }}>
+            <div style={{ flex: 1, minHeight: 0, overflow: "hidden", paddingTop: 8, paddingRight: 4, display: "flex", flexDirection: "column" }}>
 
               {tab === "output" && (
-                <div style={{ display: "flex", gap: 18, alignItems: "flex-start" }}>
-                  <div style={{ flex: 1.3, minWidth: 0, display: "flex", flexDirection: "column", gap: 10 }}>
+                <div style={{ display: "flex", gap: 18, alignItems: "stretch", flex: 1, minHeight: 0 }}>
+                  <div style={{ flex: 1.3, minWidth: 0, display: "flex", flexDirection: "column", gap: 10, minHeight: 0 }}>
                     <IOCard title="DOOR COMMANDS">
                       <div style={grid2}>{DOOR_CMDS.map((s) => <SignalRow key={s.addr} s={s} />)}</div>
                     </IOCard>
-                    <IOCard title="AXIS DRIVE">
+                    <IOCard title="AXIS DRIVE" grow>
                       <div style={grid2}>{AXIS_DRIVE.map((s) => <SignalRow key={s.addr} s={s} />)}</div>
                     </IOCard>
                   </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <IOCard title="SYSTEM">
+                  <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", minHeight: 0 }}>
+                    <IOCard title="SYSTEM" grow>
                       <div style={col1}>{SYSTEM.map((s) => <SignalRow key={s.addr} s={s} />)}</div>
                     </IOCard>
                   </div>
@@ -257,17 +262,17 @@ function MaintenancePage() {
               )}
 
               {tab === "sensor" && (
-                <div style={{ display: "flex", gap: 18, alignItems: "flex-start" }}>
-                  <div style={{ flex: 1.3, minWidth: 0, display: "flex", flexDirection: "column", gap: 10 }}>
+                <div style={{ display: "flex", gap: 18, alignItems: "stretch", flex: 1, minHeight: 0 }}>
+                  <div style={{ flex: 1.3, minWidth: 0, display: "flex", flexDirection: "column", gap: 10, minHeight: 0 }}>
                     <IOCard title="DOOR SENSORS">
                       <div style={grid2}>{DOOR_SENSORS.map((s) => <SignalRow key={s.addr} s={s} />)}</div>
                     </IOCard>
-                    <IOCard title="POSITION SENSORS">
+                    <IOCard title="POSITION SENSORS" grow>
                       <div style={grid2}>{POSITION_SENSORS.map((s) => <SignalRow key={s.addr} s={s} />)}</div>
                     </IOCard>
                   </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <IOCard title="SAFETY">
+                  <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", minHeight: 0 }}>
+                    <IOCard title="SAFETY" grow>
                       <div style={col1}>{SAFETY_SENSORS.map((s) => <SignalRow key={s.addr} s={s} />)}</div>
                     </IOCard>
                   </div>
@@ -275,11 +280,11 @@ function MaintenancePage() {
               )}
 
               {tab === "live" && (
-                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                  <IOCard title="LIVE REGISTERS">
+                <div style={{ display: "flex", flexDirection: "column", gap: 16, flex: 1, minHeight: 0 }}>
+                  <IOCard title="LIVE REGISTERS" grow>
                     <div style={grid2}>{LIVE_REGISTERS.map((r) => <RegisterRow key={r.addr} r={r} />)}</div>
                   </IOCard>
-                  <p style={{ fontSize: 13, color: "#9ca3af", margin: 0 }}>
+                  <p style={{ fontSize: 13, color: "#9ca3af", margin: 0, flexShrink: 0 }}>
                     Live register values are simulated in this build. Connect the PLC link to stream real-time data.
                   </p>
                 </div>
