@@ -74,7 +74,7 @@ function SignalRow({ s }: { s: Signal }) {
       display: "flex", alignItems: "center", gap: 12,
       background: s.on ? "#ffffff" : "#e8eaed",
       border: s.on ? "1px solid #e2e4e7" : "1px solid #dfe1e4",
-      borderRadius: 9, padding: "6px 14px", minWidth: 0,
+      borderRadius: 9, padding: "4px 13px", minWidth: 0,
     }}>
       <span style={{
         width: 9, height: 9, borderRadius: "50%", flexShrink: 0,
@@ -82,8 +82,8 @@ function SignalRow({ s }: { s: Signal }) {
         boxShadow: s.on ? "0 0 8px 1px rgba(30,215,96,0.6)" : "none",
       }} />
       <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
-        <span style={{ fontSize: 13, fontWeight: 700, color: "#1a1a1a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{s.name}</span>
-        <span style={{ fontSize: 10.5, color: "#9ca3af" }}>{s.addr}</span>
+        <span style={{ fontSize: 13, fontWeight: 700, color: "#1a1a1a", lineHeight: 1.15, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{s.name}</span>
+        <span style={{ fontSize: 10.5, color: "#9ca3af", lineHeight: 1 }}>{s.addr}</span>
       </div>
       <span style={{ marginLeft: "auto", fontSize: 16, fontWeight: 600, color: s.on ? "#1a1a1a" : "#9ca3af" }}>
         {s.on ? 1 : 0}
@@ -97,11 +97,11 @@ function RegisterRow({ r }: { r: Register }) {
     <div style={{
       display: "flex", alignItems: "center", gap: 12,
       background: "#ffffff", border: "1px solid #e2e4e7",
-      borderRadius: 9, padding: "6px 14px", minWidth: 0,
+      borderRadius: 9, padding: "4px 13px", minWidth: 0,
     }}>
       <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
-        <span style={{ fontSize: 13, fontWeight: 700, color: "#1a1a1a" }}>{r.name}</span>
-        <span style={{ fontSize: 10.5, color: "#9ca3af" }}>{r.addr}</span>
+        <span style={{ fontSize: 13, fontWeight: 700, color: "#1a1a1a", lineHeight: 1.15 }}>{r.name}</span>
+        <span style={{ fontSize: 10.5, color: "#9ca3af", lineHeight: 1 }}>{r.addr}</span>
       </div>
       <span style={{ marginLeft: "auto", fontSize: 16, fontWeight: 700, color: "#0058f1" }}>{r.value}</span>
     </div>
@@ -110,15 +110,15 @@ function RegisterRow({ r }: { r: Register }) {
 
 function IOCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div style={{ border: "1px solid #e5e7eb", borderRadius: 12, padding: "12px 16px", boxShadow: "0 1px 3px rgba(16,24,40,0.06)" }}>
+    <div style={{ border: "1px solid #e5e7eb", borderRadius: 12, padding: "9px 14px", boxShadow: "0 1px 3px rgba(16,24,40,0.06)" }}>
       <span style={{ fontSize: 13, fontWeight: 700, color: "#374151", letterSpacing: "0.04em" }}>{title}</span>
-      <div style={{ marginTop: 9 }}>{children}</div>
+      <div style={{ marginTop: 7 }}>{children}</div>
     </div>
   );
 }
 
-const grid2: React.CSSProperties = { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 };
-const col1: React.CSSProperties = { display: "flex", flexDirection: "column", gap: 8 };
+const grid2: React.CSSProperties = { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 };
+const col1: React.CSSProperties = { display: "flex", flexDirection: "column", gap: 6 };
 
 /** Maintenance icon (person + wrench) for the credential gate. */
 function MaintIllustration() {
@@ -164,13 +164,13 @@ function MaintenancePage() {
     <DashboardShell>
       <div style={{ flex: 1, minWidth: 0, overflow: "hidden", padding: "18px 32px", display: "flex", flexDirection: "column" }}>
 
-        <h1 style={{ fontSize: 30, fontWeight: 800, color: "#1a1a1a", margin: 0, letterSpacing: "-0.5px" }}>
+        <h1 style={{ fontSize: 26, fontWeight: 800, color: "#1a1a1a", margin: 0, letterSpacing: "-0.5px" }}>
           Maintenance Overview
         </h1>
-        <p style={{ fontSize: 15, color: "#6b7280", margin: "4px 0 0" }}>
+        <p style={{ fontSize: 13.5, color: "#6b7280", margin: "3px 0 0" }}>
           Machine vitals, calibration &amp; live PLC I/O
         </p>
-        <div style={{ height: 1, background: "#e5e7eb", margin: "10px 0 12px", flexShrink: 0 }} />
+        <div style={{ height: 1, background: "#e5e7eb", margin: "8px 0 10px", flexShrink: 0 }} />
 
         {!unlocked ? (
           /* ── CREDENTIAL GATE ── */
@@ -236,11 +236,11 @@ function MaintenancePage() {
             </div>
 
             {/* tab content */}
-            <div style={{ flex: 1, minHeight: 0, overflowY: "auto", paddingTop: 12, paddingRight: 4 }}>
+            <div style={{ flex: 1, minHeight: 0, overflowY: "auto", paddingTop: 8, paddingRight: 4 }}>
 
               {tab === "output" && (
                 <div style={{ display: "flex", gap: 18, alignItems: "flex-start" }}>
-                  <div style={{ flex: 1.3, minWidth: 0, display: "flex", flexDirection: "column", gap: 12 }}>
+                  <div style={{ flex: 1.3, minWidth: 0, display: "flex", flexDirection: "column", gap: 10 }}>
                     <IOCard title="DOOR COMMANDS">
                       <div style={grid2}>{DOOR_CMDS.map((s) => <SignalRow key={s.addr} s={s} />)}</div>
                     </IOCard>
@@ -258,7 +258,7 @@ function MaintenancePage() {
 
               {tab === "sensor" && (
                 <div style={{ display: "flex", gap: 18, alignItems: "flex-start" }}>
-                  <div style={{ flex: 1.3, minWidth: 0, display: "flex", flexDirection: "column", gap: 12 }}>
+                  <div style={{ flex: 1.3, minWidth: 0, display: "flex", flexDirection: "column", gap: 10 }}>
                     <IOCard title="DOOR SENSORS">
                       <div style={grid2}>{DOOR_SENSORS.map((s) => <SignalRow key={s.addr} s={s} />)}</div>
                     </IOCard>
