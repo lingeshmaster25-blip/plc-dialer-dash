@@ -117,7 +117,7 @@ function OrderNewPage() {
 
   return (
     <DashboardShell>
-      <div style={{ flex: 1, minWidth: 0, overflow: "hidden", padding: "18px 32px", display: "flex", flexDirection: "column", position: "relative" }}>
+      <div style={{ flex: 1, minWidth: 0, minHeight: 0, overflowY: "auto", overflowX: "hidden", padding: "18px 32px", display: "flex", flexDirection: "column", position: "relative" }}>
 
         {/* Header */}
         <h1 style={{ fontSize: 30, fontWeight: 800, color: "#1a1a1a", margin: 0, letterSpacing: "-0.5px" }}>
@@ -130,10 +130,10 @@ function OrderNewPage() {
         <h2 style={{ fontSize: 28, fontWeight: 800, color: "#1a1a1a", margin: "0 0 14px" }}>Order Picking</h2>
 
         {/* Body */}
-        <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", gap: 20 }}>
+        <div style={{ flexShrink: 0, display: "flex", flexDirection: "column", gap: 20 }}>
 
           {/* TOP: form + item availability */}
-          <div style={{ display: "flex", gap: 28, alignItems: "stretch", flex: 0.92, minHeight: 0, overflow: "hidden" }}>
+          <div style={{ display: "flex", gap: 28, alignItems: "stretch", height: 300, flexShrink: 0, overflow: "hidden" }}>
 
             {/* form */}
             <div style={{ flex: 1, minWidth: 0, minHeight: 0, display: "flex", flexDirection: "column", gap: 14, overflow: "hidden" }}>
@@ -207,7 +207,7 @@ function OrderNewPage() {
           </div>
 
           {/* BOTTOM: recent orders + preview + confirm */}
-          <div style={{ display: "flex", gap: 24, flex: 1, minHeight: 0, alignItems: "stretch", overflow: "hidden" }}>
+          <div style={{ display: "flex", gap: 24, height: 250, flexShrink: 0, alignItems: "stretch", overflow: "hidden" }}>
 
             {/* recent orders */}
             <div style={{ flex: 0.92, minWidth: 0, display: "flex", flexDirection: "column", minHeight: 0 }}>
