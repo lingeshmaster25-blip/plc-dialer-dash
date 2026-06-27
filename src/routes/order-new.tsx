@@ -175,7 +175,8 @@ function OrderNewPage() {
                   {items.map((row, idx) => (
                     <div key={idx} style={{ display: "grid", gridTemplateColumns: "1fr 1.2fr 0.7fr 36px", gap: 12, alignItems: "center", flexShrink: 0 }}>
                       <input style={FIELD} placeholder="*SKU Code"
-                        value={row.sku} onChange={(e) => updateItem(idx, { sku: e.target.value })} />
+                        value={row.sku}
+                        onChange={(e) => updateItem(idx, { sku: e.target.value.toUpperCase() })} />
                       <input style={FIELD} placeholder="Description"
                         value={row.desc} onChange={(e) => updateItem(idx, { desc: e.target.value })} />
                       <QtyInput value={row.qty} max={lookupBySku(row.sku)?.available} onChange={(v) => updateItem(idx, { qty: v })} />
