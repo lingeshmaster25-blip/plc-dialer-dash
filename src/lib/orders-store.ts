@@ -20,7 +20,13 @@ export type Order = {
 };
 
 // ── singleton state ──────────────────────────────────────────────────────────
-const KEY = "trilo.orders.v1";
+const KEY = "trilo.orders.v2";
+const START_SEQ = 1;
+
+/** Format an order number as #001, #002, … */
+function fmtId(n: number): string {
+  return `#${String(n).padStart(3, "0")}`;
+}
 
 function load(): { orders: Order[]; seq: number } {
   try {
@@ -28,11 +34,11 @@ function load(): { orders: Order[]; seq: number } {
     if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed && Array.isArray(parsed.orders)) {
-        return { orders: parsed.orders as Order[], seq: typeof parsed.seq === "number" ? parsed.seq : 534 };
+        return { orders: parsed.orders as Order[], seq: typeof parsed.seq === "number" ? parsed.seq : START_SEQ };
       }
     }
   } catch { /* localStorage unavailable */ }
-  return { orders: [], seq: 534 };
+  return { orders: [], seq: START_SEQ };
 }
 
 const initial = load();
@@ -69,8 +75,8 @@ export function addOrder(
   priority: Priority,
   items: Omit<OrderItem, "picked">[],
 ): string {
-  const id = `#${orderSeq}`;
-  orderSeq += 2;
+  const id = fmtId(orderSeq);
+  orderSeq += 1;
   orders = [
     { id, emp, priority, status: "Queued", items: items.map((it) => ({ ...it, picked: false })), createdAt: Date.now() },
     ...orders,
@@ -150,4 +156,4 @@ export function useOrders() {
 }
 
 // ── next order id preview (for UI display before creation) ───────────────────
-export function peekNextOrderId() { return `#${orderSeq}`; }
+export function peekNextOrderId() { return fmtId(orderSeq); }
