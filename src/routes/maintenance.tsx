@@ -214,12 +214,23 @@ function MaintenancePage() {
   const [error, setError] = useState(false);
   const [tab, setTab] = useState<"output" | "sensor" | "live">("output");
   const [tags, setTags] = useState<Tags>({});
+  const [plcLive, setPlcLive] = useState(false);
 
   useEffect(() => {
     if (!unlocked) return;
     let alive = true;
     const poll = async () => {
-      try { const st = await hmiApi.status(); if (alive) setTags(st.tags ?? {}); } catch { /* keep last values */ }
+      try {
+        const st = await hmiApi.status();
+        if (!alive) return;
+        // Only surface values coming from a real, connected PLC.
+        // The hmi-api simulator (used when the backend is unreachable) is ignored.
+        const live = st.simulated !== true && st.connected === true;
+        setPlcLive(live);
+        setTags(live ? (st.tags ?? {}) : {});
+      } catch {
+        if (alive) { setPlcLive(false); setTags({}); }
+      }
     };
     poll();
     const id = window.setInterval(poll, 700);
@@ -305,10 +316,18 @@ function MaintenancePage() {
           </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
-            <div style={{ display: "flex", gap: 36, borderBottom: "1px solid #e5e7eb", flexShrink: 0 }}>
+            <div style={{ display: "flex", gap: 36, borderBottom: "1px solid #e5e7eb", flexShrink: 0, alignItems: "center" }}>
               <TabBtn id="output" label="OUTPUT STATUS" />
               <TabBtn id="sensor" label="SENSOR STATUS" />
               <TabBtn id="live" label="LIVE MONITOR" />
+              <span style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 7, fontSize: 12.5, fontWeight: 600, color: plcLive ? "#0a8f2e" : "#9ca3af", paddingBottom: 9 }}>
+                <span style={{
+                  width: 9, height: 9, borderRadius: "50%",
+                  background: plcLive ? "#1ed760" : "#c2c6cc",
+                  boxShadow: plcLive ? "0 0 7px 1px rgba(30,215,96,0.6)" : "none",
+                }} />
+                {plcLive ? "PLC Connected" : "PLC Not Connected"}
+              </span>
             </div>
 
             <div style={{ flex: 1, minHeight: 0, overflowY: "auto", paddingTop: 8, paddingRight: 4, display: "flex", flexDirection: "column" }}>
