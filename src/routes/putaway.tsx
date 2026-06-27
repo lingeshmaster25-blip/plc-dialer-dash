@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { ChevronUp, ChevronDown } from "lucide-react";
+import { useState } from "react";
+import { ChevronUp, ChevronDown, Minus, Plus } from "lucide-react";
 import { DashboardShell } from "@/components/DashboardShell";
 import { addPutaway, getBinUsage } from "@/lib/inventory-store";
 import { useConfig } from "@/lib/config-store";
@@ -21,6 +21,23 @@ const FIELD: React.CSSProperties = {
   MozAppearance: "textfield",
 } as React.CSSProperties;
 
+/** Normalise an id to PREFIX + 3-digit number, e.g. "b1" -> "B001". */
+function padId(prefix: "B" | "T", raw: string): string {
+  const digits = raw.replace(/\D/g, "");
+  if (!digits) return "";
+  return prefix + digits.padStart(3, "0");
+}
+
+/** Parse the BIN ID field (space/comma separated) into distinct formatted bins. */
+function parseBins(raw: string): string[] {
+  const out: string[] = [];
+  for (const part of raw.split(/[\s,]+/)) {
+    const id = padId("B", part);
+    if (id && !out.includes(id)) out.push(id);
+  }
+  return out;
+}
+
 function Toggle({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
   return (
     <button
@@ -36,6 +53,24 @@ function Toggle({ label, active, onClick }: { label: string; active: boolean; on
     >
       {label}
     </button>
+  );
+}
+
+const segBtn: React.CSSProperties = {
+  width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center",
+  background: "#fff", border: "none", cursor: "pointer", color: "#374151",
+};
+
+function SegDim({ value, onChange, label }: { value: number; onChange: (v: number) => void; label: string }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+      <span style={{ fontSize: 12, color: "#6b7280" }}>{label}</span>
+      <div style={{ display: "flex", alignItems: "center", border: "1px solid #d0d4da", borderRadius: 8, overflow: "hidden" }}>
+        <button onClick={() => onChange(value - 1)} style={segBtn}><Minus size={15} /></button>
+        <span style={{ width: 34, textAlign: "center", fontSize: 16, fontWeight: 700, color: "#111827" }}>{value}</span>
+        <button onClick={() => onChange(value + 1)} style={segBtn}><Plus size={15} /></button>
+      </div>
+    </div>
   );
 }
 
@@ -116,9 +151,9 @@ function BinTrays({ trays, binsPerTray, selected, onToggle }: {
   );
 }
 
-function BinGrid({ rows, cols, label, selected, onToggle }: {
-  rows: number; cols: number; label: string;
-  selected: Set<string>; onToggle: (id: string) => void;
+/** Matrix of segments for a Bin / Multi putaway, sized by the entered rows x cols. */
+function SegmentGrid({ rows, cols, selected, onToggle }: {
+  rows: number; cols: number; selected: Set<string>; onToggle: (id: string) => void;
 }) {
   const cells = Array.from({ length: rows * cols });
   return (
@@ -131,14 +166,15 @@ function BinGrid({ rows, cols, label, selected, onToggle }: {
       border: "1.5px solid #9aa1a9", borderRadius: 8, overflow: "hidden",
     }}>
       {cells.map((_, i) => {
-        const id = `grid-${i}`;
+        const id = `seg-${i}`;
         const green = selected.has(id);
         return (
           <div key={i} onClick={() => onToggle(id)} style={{
             background: green ? "#b5f09c" : "#c5c5c5",
             padding: "12px 14px", cursor: "pointer", transition: "background .12s",
+            display: "flex", alignItems: "flex-start",
           }}>
-            <span style={{ fontSize: 20, fontWeight: 600, color: "#1f2937" }}>{label}</span>
+            <span style={{ fontSize: 18, fontWeight: 600, color: "#1f2937" }}>S{i + 1}</span>
           </div>
         );
       })}
@@ -155,17 +191,16 @@ function PutawayPage() {
   const [skuDesc, setSkuDesc] = useState("");
   const [binId, setBinId] = useState("");
   const [trayId, setTrayId] = useState("");
+  const [segRows, setSegRows] = useState(2);
+  const [segCols, setSegCols] = useState(2);
   const [error, setError] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [capacityWarn, setCapacityWarn] = useState<null | { usage: number; projected: number }>(null);
+  const [capacityWarn, setCapacityWarn] = useState<null | { bin: string; usage: number; projected: number }>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
-  // Clear any selected bins whenever the storing/partition mode changes.
-  useEffect(() => {
-    setSelected(new Set());
-  }, [storingType, partition]);
+  const isMultiBin = storingType === "Bin" && partition === "Multi";
 
-  const toggleBin = (id: string) => {
+  const toggleSeg = (id: string) => {
     setSelected((prev) => {
       const next = new Set(prev);
       next.has(id) ? next.delete(id) : next.add(id);
@@ -173,17 +208,35 @@ function PutawayPage() {
     });
   };
 
+  // Constrain the matrix to a maximum of 2x3 or 3x2 (max 6 segments, no 3x3).
+  const setRowsClamped = (v: number) => {
+    const r = Math.max(1, Math.min(3, v));
+    setSegRows(r);
+    if (r * segCols > 6) setSegCols(Math.max(1, Math.floor(6 / r)));
+  };
+  const setColsClamped = (v: number) => {
+    const c = Math.max(1, Math.min(3, v));
+    setSegCols(c);
+    if (segRows * c > 6) setSegRows(Math.max(1, Math.floor(6 / c)));
+  };
+
+  const binList = parseBins(binId);
+  const trayFmt = padId("T", trayId);
+
   const isComplete =
     sku.trim() !== "" && qty > 0 && skuDesc.trim() !== "" &&
     storingType !== null && partition !== null &&
-    binId.trim() !== "" && trayId.trim() !== "";
+    binList.length > 0 && trayFmt !== "";
 
-  /** Write the record and show the success modal. */
+  /** Write a record per bin and show the success modal. */
   const commitPutaway = () => {
-    addPutaway({
-      sku, description: skuDesc, qty,
-      storingType: storingType!, partition: partition!,
-      binId, trayId, bins: [...selected],
+    const tray = padId("T", trayId);
+    parseBins(binId).forEach((b) => {
+      addPutaway({
+        sku, description: skuDesc, qty,
+        storingType: storingType!, partition: partition!,
+        binId: b, trayId: tray, bins: [...selected],
+      });
     });
     setCapacityWarn(null);
     setShowModal(true);
@@ -192,12 +245,13 @@ function PutawayPage() {
   const handleKeep = () => {
     if (!isComplete) { setError(true); return; }
     setError(false);
-    // Capacity cross-check: would this push the target bin over its limit?
-    const usage = getBinUsage(binId);
-    const projected = usage + qty;
-    if (projected > cfg.binCapacity) {
-      setCapacityWarn({ usage, projected });
-      return;
+    // Capacity cross-check per bin: would any target bin go over its limit?
+    for (const b of parseBins(binId)) {
+      const usage = getBinUsage(b);
+      if (usage + qty > cfg.binCapacity) {
+        setCapacityWarn({ bin: b, usage, projected: usage + qty });
+        return;
+      }
     }
     commitPutaway();
   };
@@ -212,6 +266,8 @@ function PutawayPage() {
     setPartition(null);
     setBinId("");
     setTrayId("");
+    setSegRows(2);
+    setSegCols(2);
     setError(false);
     setSelected(new Set());
   };
@@ -233,7 +289,7 @@ function PutawayPage() {
         <div style={{ display: "flex", gap: 32, alignItems: "stretch", flex: 1, minHeight: 0 }}>
 
           {/* ── FORM ── */}
-          <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 12, overflowY: "auto" }}>
 
             {/* SKUs + Quantity */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
@@ -295,18 +351,69 @@ function PutawayPage() {
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
               <div>
                 <label style={LABEL}>BIN ID</label>
-                <input style={FIELD} placeholder="Enter or Scan BIN ID"
-                  value={binId} onChange={(e) => setBinId(e.target.value)} />
+                <input style={FIELD} placeholder="B001"
+                  value={binId}
+                  onChange={(e) => setBinId(e.target.value)}
+                  onBlur={() => setBinId(parseBins(binId).join(", "))} />
+                <span style={{ display: "block", fontSize: 11.5, color: "#9ca3af", marginTop: 4 }}>
+                  Space-separate for multiple bins (B001 B002)
+                </span>
               </div>
               <div>
                 <label style={LABEL}>TRAY ID</label>
-                <input style={FIELD} placeholder="Enter or Scan TRAY ID"
-                  value={trayId} onChange={(e) => setTrayId(e.target.value)} />
+                <input style={FIELD} placeholder="T001"
+                  value={trayId}
+                  onChange={(e) => setTrayId(e.target.value)}
+                  onBlur={() => setTrayId(padId("T", trayId))} />
               </div>
             </div>
 
-            {/* KEEP */}
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: "auto", paddingTop: 8, gap: 6 }}>
+            {/* Segments (Bin + Multi only) */}
+            {isMultiBin && (
+              <div>
+                <label style={LABEL}>Segments</label>
+                <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                  <SegDim value={segRows} onChange={setRowsClamped} label="Rows" />
+                  <span style={{ fontSize: 18, fontWeight: 600, color: "#6b7280", alignSelf: "flex-end", paddingBottom: 6 }}>×</span>
+                  <SegDim value={segCols} onChange={setColsClamped} label="Columns" />
+                  <span style={{ fontSize: 12.5, color: "#9ca3af", alignSelf: "flex-end", paddingBottom: 8, marginLeft: 4 }}>
+                    max 2×3 or 3×2
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* ── STORAGE PREVIEW + KEEP ── */}
+          <div style={{
+            flex: 1, minWidth: 0, border: "1px solid #d0d4da", borderRadius: 10,
+            padding: "18px 22px", display: "flex", flexDirection: "column",
+          }}>
+            <span style={{ fontSize: 19, fontWeight: 600, color: "#1a1a1a" }}>Storage Preview</span>
+
+            {isMultiBin ? (
+              <SegmentGrid rows={segRows} cols={segCols} selected={selected} onToggle={toggleSeg} />
+            ) : storingType === "Bin" && partition === "Single" ? (
+              <BinTrays
+                binsPerTray={4}
+                trays={[{ name: "Tray1" }, { name: "Tray2" }]}
+                selected={selected}
+                onToggle={toggleSeg}
+              />
+            ) : storingType === "Tray" && partition === "Single" ? (
+              <TrayBlocks
+                trays={[{ name: "Tray1" }, { name: "Tray2" }]}
+                selected={selected}
+                onToggle={toggleSeg}
+              />
+            ) : (
+              <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", minHeight: 0 }}>
+                <span style={{ fontSize: 26, color: "#6b7280" }}>No Preview Selected</span>
+              </div>
+            )}
+
+            {/* KEEP (moved to the right) */}
+            <div style={{ flexShrink: 0, paddingTop: 14, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
               {error && (
                 <span style={{ fontSize: 13, color: "#dc2626", fontWeight: 500 }}>
                   Please fill in all fields and select both types.
@@ -317,7 +424,7 @@ function PutawayPage() {
                 style={{
                   background: "#15803d", color: "#fff", fontWeight: 700, fontSize: 17,
                   letterSpacing: "1px", border: "none", borderRadius: 8,
-                  padding: "11px 0", width: 280, cursor: "pointer",
+                  padding: "11px 0", width: 240, cursor: "pointer",
                   boxShadow: "0 2px 6px rgba(21,128,61,0.3)", transition: "background .15s",
                 }}
                 onMouseEnter={(e) => { e.currentTarget.style.background = "#13702f"; }}
@@ -326,34 +433,6 @@ function PutawayPage() {
                 KEEP
               </button>
             </div>
-          </div>
-
-          {/* ── STORAGE PREVIEW ── */}
-          <div style={{
-            flex: 1, minWidth: 0, border: "1px solid #d0d4da", borderRadius: 10,
-            padding: "18px 22px", display: "flex", flexDirection: "column",
-          }}>
-            <span style={{ fontSize: 19, fontWeight: 600, color: "#1a1a1a" }}>Storage Preview</span>
-            {storingType === "Bin" && partition === "Multi" ? (
-              <BinGrid rows={2} cols={2} label="B1" selected={selected} onToggle={toggleBin} />
-            ) : storingType === "Bin" && partition === "Single" ? (
-              <BinTrays
-                binsPerTray={4}
-                trays={[{ name: "Tray1" }, { name: "Tray2" }]}
-                selected={selected}
-                onToggle={toggleBin}
-              />
-            ) : storingType === "Tray" && partition === "Single" ? (
-              <TrayBlocks
-                trays={[{ name: "Tray1" }, { name: "Tray2" }]}
-                selected={selected}
-                onToggle={toggleBin}
-              />
-            ) : (
-              <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", minHeight: 0 }}>
-                <span style={{ fontSize: 26, color: "#6b7280" }}>No Preview Selected</span>
-              </div>
-            )}
           </div>
 
         </div>
@@ -380,7 +459,7 @@ function PutawayPage() {
                 Bin Over Capacity
               </span>
               <span style={{ fontSize: 19, fontWeight: 500, color: "#1a1a1a", textAlign: "center", lineHeight: 1.4 }}>
-                Bin <b>{binId}</b> holds {capacityWarn.usage} of {cfg.binCapacity} units.
+                Bin <b>{capacityWarn.bin}</b> holds {capacityWarn.usage} of {cfg.binCapacity} units.
                 Adding {qty} would bring it to {capacityWarn.projected}, over the {cfg.binCapacity}-unit limit.
               </span>
               <div style={{ display: "flex", gap: 16, marginTop: 18 }}>
