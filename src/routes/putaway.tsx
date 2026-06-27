@@ -174,7 +174,7 @@ function SegmentGrid({ rows, cols, selected, onToggle }: {
             padding: "12px 14px", cursor: "pointer", transition: "background .12s",
             display: "flex", alignItems: "flex-start",
           }}>
-            <span style={{ fontSize: 18, fontWeight: 600, color: "#1f2937" }}>S{i + 1}</span>
+            <span style={{ fontSize: 18, fontWeight: 600, color: "#1f2937" }}>B{i + 1}</span>
           </div>
         );
       })}
@@ -289,7 +289,10 @@ function PutawayPage() {
         <div style={{ display: "flex", gap: 32, alignItems: "stretch", flex: 1, minHeight: 0 }}>
 
           {/* ── FORM ── */}
-          <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 6 }}>
+          <div style={{ flex: 1, minWidth: 0, minHeight: 0, display: "flex", flexDirection: "column" }}>
+
+            {/* form fields (compact; KEEP stays pinned below) */}
+            <div style={{ flex: 1, minHeight: 0, overflow: "hidden", display: "flex", flexDirection: "column", gap: 6 }}>
 
             {/* SKUs + Quantity */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
@@ -329,21 +332,21 @@ function PutawayPage() {
                 value={skuDesc} onChange={(e) => setSkuDesc(e.target.value)} />
             </div>
 
-            {/* Choose Storing Type */}
-            <div>
-              <label style={LABEL}>Choose Storing Type</label>
-              <div style={{ display: "flex", gap: 20 }}>
-                <Toggle label="Tray" active={storingType === "Tray"} onClick={() => setStoringType("Tray")} />
-                <Toggle label="Bin" active={storingType === "Bin"} onClick={() => setStoringType("Bin")} />
+            {/* Storing Type + Partition Type (side by side) */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+              <div>
+                <label style={LABEL}>Choose Storing Type</label>
+                <div style={{ display: "flex", gap: 12 }}>
+                  <Toggle label="Tray" active={storingType === "Tray"} onClick={() => setStoringType("Tray")} />
+                  <Toggle label="Bin" active={storingType === "Bin"} onClick={() => setStoringType("Bin")} />
+                </div>
               </div>
-            </div>
-
-            {/* Partition Type */}
-            <div>
-              <label style={LABEL}>Partition Type</label>
-              <div style={{ display: "flex", gap: 20 }}>
-                <Toggle label="Single" active={partition === "Single"} onClick={() => setPartition("Single")} />
-                <Toggle label="Multi" active={partition === "Multi"} onClick={() => setPartition("Multi")} />
+              <div>
+                <label style={LABEL}>Partition Type</label>
+                <div style={{ display: "flex", gap: 12 }}>
+                  <Toggle label="Single" active={partition === "Single"} onClick={() => setPartition("Single")} />
+                  <Toggle label="Multi" active={partition === "Multi"} onClick={() => setPartition("Multi")} />
+                </div>
               </div>
             </div>
 
@@ -382,9 +385,10 @@ function PutawayPage() {
                 </div>
               </div>
             )}
+            </div>
 
-            {/* KEEP (bottom-right of the form) */}
-            <div style={{ marginTop: "auto", paddingTop: 4, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
+            {/* KEEP (always-visible footer) */}
+            <div style={{ flexShrink: 0, paddingTop: 8, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
               {error && (
                 <span style={{ fontSize: 13, color: "#dc2626", fontWeight: 500 }}>
                   Please fill in all fields and select both types.
