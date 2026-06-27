@@ -12,11 +12,11 @@ export const Route = createFileRoute("/order-new")({
 
 const FIELD: React.CSSProperties = {
   width: "100%", background: "#e6e7ea", border: "1px solid #dadbdf",
-  borderRadius: 8, padding: "12px 16px", fontSize: 15, color: "#111827",
+  borderRadius: 8, padding: "10px 14px", fontSize: 15, color: "#111827",
   outline: "none", boxSizing: "border-box",
 };
 const SECTION: React.CSSProperties = {
-  display: "block", fontSize: 18, fontWeight: 600, color: "#1a1a1a", marginBottom: 8,
+  display: "block", fontSize: 16, fontWeight: 600, color: "#1a1a1a", marginBottom: 6,
 };
 const BOX: React.CSSProperties = {
   flex: 1, minHeight: 0, border: "1px solid #d0d4da", borderRadius: 10, background: "#fff",
@@ -117,23 +117,23 @@ function OrderNewPage() {
 
   return (
     <DashboardShell>
-      <div style={{ flex: 1, minWidth: 0, minHeight: 0, overflowY: "auto", overflowX: "hidden", padding: "18px 32px", display: "flex", flexDirection: "column", position: "relative" }}>
+      <div style={{ flex: 1, minWidth: 0, minHeight: 0, overflow: "hidden", padding: "16px 32px", display: "flex", flexDirection: "column", position: "relative" }}>
 
         {/* Header */}
-        <h1 style={{ fontSize: 30, fontWeight: 800, color: "#1a1a1a", margin: 0, letterSpacing: "-0.5px" }}>
+        <h1 style={{ fontSize: 26, fontWeight: 800, color: "#1a1a1a", margin: 0, letterSpacing: "-0.5px" }}>
           Orders Overview
         </h1>
-        <p style={{ fontSize: 15, color: "#6b7280", margin: "4px 0 0" }}>
+        <p style={{ fontSize: 14, color: "#6b7280", margin: "3px 0 0" }}>
           Manage and release picking orders
         </p>
-        <div style={{ height: 1, background: "#e5e7eb", margin: "14px 0 14px", flexShrink: 0 }} />
-        <h2 style={{ fontSize: 28, fontWeight: 800, color: "#1a1a1a", margin: "0 0 14px" }}>Order Picking</h2>
+        <div style={{ height: 1, background: "#e5e7eb", margin: "10px 0 10px", flexShrink: 0 }} />
+        <h2 style={{ fontSize: 22, fontWeight: 800, color: "#1a1a1a", margin: "0 0 10px" }}>Order Picking</h2>
 
         {/* Body */}
-        <div style={{ flexShrink: 0, display: "flex", flexDirection: "column", gap: 20 }}>
+        <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", gap: 14 }}>
 
           {/* TOP: form + item availability */}
-          <div style={{ display: "flex", gap: 28, alignItems: "stretch", height: 300, flexShrink: 0, overflow: "hidden" }}>
+          <div style={{ display: "flex", gap: 24, alignItems: "stretch", flex: 1, minHeight: 0, overflow: "hidden" }}>
 
             {/* form */}
             <div style={{ flex: 1, minWidth: 0, minHeight: 0, display: "flex", flexDirection: "column", gap: 14, overflow: "hidden" }}>
@@ -157,7 +157,7 @@ function OrderNewPage() {
 
               <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
                 <label style={SECTION}>Enter Order Details</label>
-                <div style={{ flex: 1, minHeight: 0, overflowY: "auto", display: "flex", flexDirection: "column", gap: 10, paddingRight: 4 }}>
+                <div style={{ flex: 1, minHeight: 56, overflowY: "auto", display: "flex", flexDirection: "column", gap: 10, paddingRight: 4 }}>
                   {items.map((row, idx) => (
                     <div key={idx} style={{ display: "grid", gridTemplateColumns: "1fr 1.2fr 0.7fr 36px", gap: 12, alignItems: "center", flexShrink: 0 }}>
                       <input style={FIELD} placeholder="*SKU Code"
@@ -181,16 +181,16 @@ function OrderNewPage() {
               <div style={{ textAlign: "right", flexShrink: 0 }}>
                 <span
                   onClick={addRow}
-                  style={{ color: "#1068ff", fontSize: 16, fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 4 }}
+                  style={{ color: "#1068ff", fontSize: 15, fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 4 }}
                 >
-                  <Plus size={16} /> Add Items
+                  <Plus size={15} /> Add Items
                 </span>
               </div>
             </div>
 
             {/* item availability */}
             <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
-              <label style={{ ...SECTION, fontWeight: 500, fontSize: 20 }}>Item Availability</label>
+              <label style={{ ...SECTION, fontWeight: 500, fontSize: 17 }}>Item Availability</label>
               <div style={BOX}>
                 {avail ? (
                   <div style={{ padding: "20px 24px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", gap: 18, overflow: "auto" }}>
@@ -207,12 +207,12 @@ function OrderNewPage() {
           </div>
 
           {/* BOTTOM: recent orders + preview + confirm */}
-          <div style={{ display: "flex", gap: 24, height: 250, flexShrink: 0, alignItems: "stretch", overflow: "hidden" }}>
+          <div style={{ display: "flex", gap: 20, flex: 1, minHeight: 0, alignItems: "stretch", overflow: "hidden" }}>
 
             {/* recent orders */}
             <div style={{ flex: 0.92, minWidth: 0, display: "flex", flexDirection: "column", minHeight: 0 }}>
-              <label style={{ ...SECTION, fontWeight: 700, fontSize: 22 }}>Recent Orders</label>
-              <div style={{ flex: 1, minHeight: 0, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, alignContent: "start" }}>
+              <label style={{ ...SECTION, fontWeight: 700, fontSize: 18 }}>Recent Orders</label>
+              <div style={{ flex: 1, minHeight: 0, overflowY: "auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, alignContent: "start" }}>
                 {recentOrders.length === 0 ? (
                   <span style={{ fontSize: 15, color: "#9ca3af", gridColumn: "1/-1" }}>No orders yet.</span>
                 ) : recentOrders.map((o) => (
@@ -234,7 +234,7 @@ function OrderNewPage() {
 
             {/* order preview */}
             <div style={{ flex: 1.55, minWidth: 0, display: "flex", flexDirection: "column", minHeight: 0 }}>
-              <label style={{ ...SECTION, fontWeight: 500, fontSize: 22 }}>Order Preview</label>
+              <label style={{ ...SECTION, fontWeight: 500, fontSize: 18 }}>Order Preview</label>
               <div style={BOX}>
                 {previewReady ? (
                   <div style={{ padding: "20px 24px", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", gap: 16, overflow: "auto" }}>
@@ -265,7 +265,7 @@ function OrderNewPage() {
 
             {/* confirm */}
             <div style={{ flex: 0.58, minWidth: 0, display: "flex", flexDirection: "column", minHeight: 0 }}>
-              <label style={{ ...SECTION, fontWeight: 500, fontSize: 22, visibility: "hidden" }}>Confirm</label>
+              <label style={{ ...SECTION, fontWeight: 500, fontSize: 18, visibility: "hidden" }}>Confirm</label>
               <button
                 onClick={handleConfirm}
                 style={{
