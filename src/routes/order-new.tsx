@@ -133,7 +133,7 @@ function OrderNewPage() {
         <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", gap: 14 }}>
 
           {/* TOP: form + item availability */}
-          <div style={{ display: "flex", gap: 24, alignItems: "stretch", flex: 1, minHeight: 0, overflow: "hidden" }}>
+          <div style={{ display: "flex", gap: 24, alignItems: "stretch", flex: 1.7, minHeight: 0, overflow: "hidden" }}>
 
             {/* form */}
             <div style={{ flex: 1, minWidth: 0, minHeight: 0, display: "flex", flexDirection: "column", gap: 14, overflow: "hidden" }}>
@@ -207,7 +207,7 @@ function OrderNewPage() {
           </div>
 
           {/* BOTTOM: recent orders + preview + confirm */}
-          <div style={{ display: "flex", gap: 20, flex: 1, minHeight: 0, alignItems: "stretch", overflow: "hidden" }}>
+          <div style={{ display: "flex", gap: 20, flex: 0.8, minHeight: 0, alignItems: "stretch", overflow: "hidden" }}>
 
             {/* recent orders */}
             <div style={{ flex: 0.92, minWidth: 0, display: "flex", flexDirection: "column", minHeight: 0 }}>
