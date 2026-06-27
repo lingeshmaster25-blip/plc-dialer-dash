@@ -133,11 +133,11 @@ function OrderNewPage() {
         <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", gap: 20 }}>
 
           {/* TOP: form + item availability */}
-          <div style={{ display: "flex", gap: 28, alignItems: "stretch", flex: 0.92, minHeight: 0 }}>
+          <div style={{ display: "flex", gap: 28, alignItems: "stretch", flex: 0.92, minHeight: 0, overflow: "hidden" }}>
 
             {/* form */}
-            <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 14 }}>
-              <div>
+            <div style={{ flex: 1, minWidth: 0, minHeight: 0, display: "flex", flexDirection: "column", gap: 14, overflow: "hidden" }}>
+              <div style={{ flexShrink: 0 }}>
                 <label style={SECTION}>Order Created by</label>
                 <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 18 }}>
                   <input style={FIELD} placeholder="Enter Employee Name"
@@ -155,11 +155,11 @@ function OrderNewPage() {
                 </div>
               </div>
 
-              <div>
+              <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
                 <label style={SECTION}>Enter Order Details</label>
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                <div style={{ flex: 1, minHeight: 0, overflowY: "auto", display: "flex", flexDirection: "column", gap: 10, paddingRight: 4 }}>
                   {items.map((row, idx) => (
-                    <div key={idx} style={{ display: "grid", gridTemplateColumns: "1fr 1.2fr 0.7fr 36px", gap: 12, alignItems: "center" }}>
+                    <div key={idx} style={{ display: "grid", gridTemplateColumns: "1fr 1.2fr 0.7fr 36px", gap: 12, alignItems: "center", flexShrink: 0 }}>
                       <input style={FIELD} placeholder="*SKU Code"
                         value={row.sku} onChange={(e) => updateItem(idx, { sku: e.target.value })} />
                       <input style={FIELD} placeholder="Description"
@@ -178,7 +178,7 @@ function OrderNewPage() {
                 </div>
               </div>
 
-              <div style={{ textAlign: "right" }}>
+              <div style={{ textAlign: "right", flexShrink: 0 }}>
                 <span
                   onClick={addRow}
                   style={{ color: "#1068ff", fontSize: 16, fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 4 }}
@@ -207,7 +207,7 @@ function OrderNewPage() {
           </div>
 
           {/* BOTTOM: recent orders + preview + confirm */}
-          <div style={{ display: "flex", gap: 24, flex: 1, minHeight: 0, alignItems: "stretch" }}>
+          <div style={{ display: "flex", gap: 24, flex: 1, minHeight: 0, alignItems: "stretch", overflow: "hidden" }}>
 
             {/* recent orders */}
             <div style={{ flex: 0.92, minWidth: 0, display: "flex", flexDirection: "column", minHeight: 0 }}>
