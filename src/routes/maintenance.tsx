@@ -42,20 +42,35 @@ const SYSTEM: Signal[] = [
 ];
 
 // ── SENSOR STATUS ──
-const DOOR_SENSORS: Signal[] = [
-  { name: "DOOR OPENED", addr: "I0.0", on: true },
-  { name: "DOOR CLOSED", addr: "I0.1", on: false },
+type Sensor = { name: string; addr: string; def: 0 | 1 };
+const SENSOR_DOORS: Sensor[] = [
+  { name: "DOOR OPEN LS", addr: "I0.3", def: 1 },
+  { name: "DOOR CLOSE LS", addr: "I0.4", def: 0 },
 ];
-const POSITION_SENSORS: Signal[] = [
-  { name: "Y HOME", addr: "I0.2", on: true }, { name: "Y LIMIT", addr: "I0.3", on: false },
-  { name: "X HOME", addr: "I0.4", on: true }, { name: "X LIMIT", addr: "I0.5", on: false },
-  { name: "Z HOME", addr: "I0.6", on: true }, { name: "Z LIMIT", addr: "I0.7", on: false },
+const SENSOR_MODE: Sensor[] = [
+  { name: "M RUN", addr: "M0.5", def: 1 },
+  { name: "SIDE SELECT", addr: "M0.6", def: 0 },
 ];
-const SAFETY_SENSORS: Signal[] = [
-  { name: "LIGHT CURTAIN", addr: "I1.0", on: true },
-  { name: "E-STOP OK", addr: "I1.1", on: true },
-  { name: "AIR PRESSURE", addr: "I1.2", on: true },
-  { name: "TRAY PRESENT", addr: "I1.3", on: false },
+const SENSOR_TRAY: Sensor[] = [
+  { name: "TRAY OUT LS", addr: "I0.6", def: 1 }, { name: "TRAY POS S1", addr: "I1.3", def: 0 },
+  { name: "TRAY POS S2", addr: "I1.4", def: 1 }, { name: "TRAY MISALIGN", addr: "M2.3", def: 0 },
+];
+const SENSOR_AISLE: Sensor[] = [
+  { name: "AISLE S1", addr: "I0.5", def: 1 }, { name: "AISLE S2", addr: "I0.7", def: 0 },
+  { name: "AISLE S3", addr: "I1.6", def: 1 }, { name: "AISLE S4", addr: "I1.7", def: 0 },
+];
+const SENSOR_LOADBIN: Sensor[] = [
+  { name: "BIN SPA LEFT", addr: "I0.0", def: 1 },
+  { name: "BIN SPA RIGHT", addr: "I0.1", def: 0 },
+  { name: "LOAD OVERLOAD", addr: "I1.1", def: 0 },
+  { name: "LIGHT GRID MAX", addr: "I1.2", def: 0 },
+  { name: "BIN CONFIRM", addr: "I1.5", def: 1 },
+];
+const SENSOR_SAFETY: Sensor[] = [
+  { name: "EMERGENCY STOP", addr: "I1.0", def: 1 },
+];
+const ALL_SENSORS: Sensor[] = [
+  ...SENSOR_DOORS, ...SENSOR_MODE, ...SENSOR_TRAY, ...SENSOR_AISLE, ...SENSOR_LOADBIN, ...SENSOR_SAFETY,
 ];
 
 // ── LIVE MONITOR ──
@@ -108,6 +123,42 @@ function RegisterRow({ r }: { r: Register }) {
   );
 }
 
+function SensorRow({ s, value, onChange }: { s: Sensor; value: number; onChange: (v: string) => void }) {
+  const on = value === 1;
+  return (
+    <div style={{
+      display: "flex", alignItems: "center", gap: 12,
+      background: on ? "#ffffff" : "#e8eaed",
+      border: on ? "1px solid #e2e4e7" : "1px solid #dfe1e4",
+      borderRadius: 9, padding: "4px 13px", minWidth: 0, minHeight: 40,
+    }}>
+      <span style={{
+        width: 9, height: 9, borderRadius: "50%", flexShrink: 0,
+        background: on ? "#1ed760" : "#b6bbc2",
+        boxShadow: on ? "0 0 8px 1px rgba(30,215,96,0.6)" : "none",
+      }} />
+      <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+        <span style={{ fontSize: 13, fontWeight: 700, color: "#1a1a1a", lineHeight: 1.15, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{s.name}</span>
+        <span style={{ fontSize: 10.5, color: "#9ca3af", lineHeight: 1 }}>{s.addr}</span>
+      </div>
+      <select
+        value={String(value)}
+        onChange={(e) => onChange(e.target.value)}
+        style={{
+          marginLeft: "auto", flexShrink: 0,
+          background: "#fff", border: "1px solid #cfd2d7", borderRadius: 8,
+          padding: "5px 8px", fontSize: 14, fontWeight: 600, color: "#1a1a1a",
+          cursor: "pointer", outline: "none",
+        }}
+      >
+        <option value="1">1</option>
+        <option value="0">0</option>
+        <option value="reset">reset</option>
+      </select>
+    </div>
+  );
+}
+
 function IOCard({ title, children, grow }: { title: string; children: React.ReactNode; grow?: boolean }) {
   return (
     <div style={{
@@ -124,6 +175,8 @@ function IOCard({ title, children, grow }: { title: string; children: React.Reac
 
 const grid2: React.CSSProperties = { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, height: "100%", gridAutoRows: "1fr" };
 const col1: React.CSSProperties = { display: "grid", gridTemplateColumns: "1fr", gap: 6, height: "100%", gridAutoRows: "1fr" };
+const sgrid2: React.CSSProperties = { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 };
+const scol1: React.CSSProperties = { display: "flex", flexDirection: "column", gap: 8 };
 
 /** Maintenance icon (person + wrench) for the credential gate. */
 function MaintIllustration() {
@@ -141,6 +194,12 @@ function MaintenancePage() {
   const [unlocked, setUnlocked] = useState(false);
   const [error, setError] = useState(false);
   const [tab, setTab] = useState<"output" | "sensor" | "live">("output");
+  const [sensorVals, setSensorVals] = useState<Record<string, number>>(
+    () => Object.fromEntries(ALL_SENSORS.map((s) => [s.addr, s.def as number]))
+  );
+  const setSensor = (sen: Sensor, v: string) => {
+    setSensorVals((prev) => ({ ...prev, [sen.addr]: v === "reset" ? sen.def : v === "1" ? 1 : 0 }));
+  };
 
   const grantAccess = () => {
     const idOk = userId.trim().toLowerCase() === MASTER_USER.toLowerCase();
@@ -241,7 +300,7 @@ function MaintenancePage() {
             </div>
 
             {/* tab content */}
-            <div style={{ flex: 1, minHeight: 0, overflow: "hidden", paddingTop: 8, paddingRight: 4, display: "flex", flexDirection: "column" }}>
+            <div style={{ flex: 1, minHeight: 0, overflowY: "auto", paddingTop: 8, paddingRight: 4, display: "flex", flexDirection: "column" }}>
 
               {tab === "output" && (
                 <div style={{ display: "flex", gap: 18, alignItems: "stretch", flex: 1, minHeight: 0 }}>
@@ -263,17 +322,26 @@ function MaintenancePage() {
 
               {tab === "sensor" && (
                 <div style={{ display: "flex", gap: 18, alignItems: "stretch", flex: 1, minHeight: 0 }}>
-                  <div style={{ flex: 1.3, minWidth: 0, display: "flex", flexDirection: "column", gap: 10, minHeight: 0 }}>
-                    <IOCard title="DOOR SENSORS">
-                      <div style={grid2}>{DOOR_SENSORS.map((s) => <SignalRow key={s.addr} s={s} />)}</div>
+                  <div style={{ flex: 1.3, minWidth: 0, display: "flex", flexDirection: "column", minHeight: 0, justifyContent: "space-between" }}>
+                    <IOCard title="DOORS">
+                      <div style={sgrid2}>{SENSOR_DOORS.map((s) => <SensorRow key={s.addr} s={s} value={sensorVals[s.addr]} onChange={(v) => setSensor(s, v)} />)}</div>
                     </IOCard>
-                    <IOCard title="POSITION SENSORS" grow>
-                      <div style={grid2}>{POSITION_SENSORS.map((s) => <SignalRow key={s.addr} s={s} />)}</div>
+                    <IOCard title="MODE">
+                      <div style={sgrid2}>{SENSOR_MODE.map((s) => <SensorRow key={s.addr} s={s} value={sensorVals[s.addr]} onChange={(v) => setSensor(s, v)} />)}</div>
+                    </IOCard>
+                    <IOCard title="TRAY">
+                      <div style={sgrid2}>{SENSOR_TRAY.map((s) => <SensorRow key={s.addr} s={s} value={sensorVals[s.addr]} onChange={(v) => setSensor(s, v)} />)}</div>
+                    </IOCard>
+                    <IOCard title="EXTERNAL AISLE">
+                      <div style={sgrid2}>{SENSOR_AISLE.map((s) => <SensorRow key={s.addr} s={s} value={sensorVals[s.addr]} onChange={(v) => setSensor(s, v)} />)}</div>
                     </IOCard>
                   </div>
-                  <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", minHeight: 0 }}>
-                    <IOCard title="SAFETY" grow>
-                      <div style={col1}>{SAFETY_SENSORS.map((s) => <SignalRow key={s.addr} s={s} />)}</div>
+                  <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", minHeight: 0, justifyContent: "space-between" }}>
+                    <IOCard title="LOAD / BIN">
+                      <div style={scol1}>{SENSOR_LOADBIN.map((s) => <SensorRow key={s.addr} s={s} value={sensorVals[s.addr]} onChange={(v) => setSensor(s, v)} />)}</div>
+                    </IOCard>
+                    <IOCard title="SAFETY">
+                      <div style={scol1}>{SENSOR_SAFETY.map((s) => <SensorRow key={s.addr} s={s} value={sensorVals[s.addr]} onChange={(v) => setSensor(s, v)} />)}</div>
                     </IOCard>
                   </div>
                 </div>
