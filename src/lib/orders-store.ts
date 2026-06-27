@@ -62,8 +62,7 @@ export function getOrders() { return orders; }
 export function getPickingOrder(): Order | undefined {
   return (
     orders.find((o) => o.status === "Picking") ??
-    orders.find((o) => o.status === "Released") ??
-    orders.find((o) => o.status === "Queued")
+    orders.find((o) => o.status === "Released")
   );
 }
 
