@@ -11,12 +11,12 @@ export const Route = createFileRoute("/putaway")({
 
 const LABEL: React.CSSProperties = {
   display: "block", fontSize: 14, fontWeight: 700,
-  color: "#111827", marginBottom: 5,
+  color: "#111827", marginBottom: 4,
 };
 
 const FIELD: React.CSSProperties = {
   width: "100%", background: "#e8eaec", border: "1px solid #e2e4e7",
-  borderRadius: 8, padding: "9px 14px", fontSize: 14, color: "#111827",
+  borderRadius: 8, padding: "8px 13px", fontSize: 14, color: "#111827",
   outline: "none", boxSizing: "border-box",
   MozAppearance: "textfield",
 } as React.CSSProperties;
@@ -43,7 +43,7 @@ function Toggle({ label, active, onClick }: { label: string; active: boolean; on
     <button
       onClick={onClick}
       style={{
-        flex: 1, padding: "9px 16px", fontSize: 15, fontWeight: 500,
+        flex: 1, padding: "8px 16px", fontSize: 15, fontWeight: 500,
         borderRadius: 8, cursor: "pointer",
         background: active ? "#3f3f3f" : "#fff",
         border: active ? "1.5px solid #3f3f3f" : "1px solid #d0d4da",
@@ -57,7 +57,7 @@ function Toggle({ label, active, onClick }: { label: string; active: boolean; on
 }
 
 const segBtn: React.CSSProperties = {
-  width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center",
+  width: 30, height: 30, display: "flex", alignItems: "center", justifyContent: "center",
   background: "#fff", border: "none", cursor: "pointer", color: "#374151",
 };
 
@@ -67,7 +67,7 @@ function SegDim({ value, onChange, label }: { value: number; onChange: (v: numbe
       <span style={{ fontSize: 12, color: "#6b7280" }}>{label}</span>
       <div style={{ display: "flex", alignItems: "center", border: "1px solid #d0d4da", borderRadius: 8, overflow: "hidden" }}>
         <button onClick={() => onChange(value - 1)} style={segBtn}><Minus size={15} /></button>
-        <span style={{ width: 34, textAlign: "center", fontSize: 16, fontWeight: 700, color: "#111827" }}>{value}</span>
+        <span style={{ width: 30, textAlign: "center", fontSize: 16, fontWeight: 700, color: "#111827" }}>{value}</span>
         <button onClick={() => onChange(value + 1)} style={segBtn}><Plus size={15} /></button>
       </div>
     </div>
@@ -289,7 +289,7 @@ function PutawayPage() {
         <div style={{ display: "flex", gap: 32, alignItems: "stretch", flex: 1, minHeight: 0 }}>
 
           {/* ── FORM ── */}
-          <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 12, overflowY: "auto" }}>
+          <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 9 }}>
 
             {/* SKUs + Quantity */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
@@ -382,9 +382,31 @@ function PutawayPage() {
                 </div>
               </div>
             )}
+
+            {/* KEEP (bottom-right of the form) */}
+            <div style={{ marginTop: "auto", paddingTop: 10, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
+              {error && (
+                <span style={{ fontSize: 13, color: "#dc2626", fontWeight: 500 }}>
+                  Please fill in all fields and select both types.
+                </span>
+              )}
+              <button
+                onClick={handleKeep}
+                style={{
+                  background: "#15803d", color: "#fff", fontWeight: 700, fontSize: 17,
+                  letterSpacing: "1px", border: "none", borderRadius: 8,
+                  padding: "11px 0", width: 240, cursor: "pointer",
+                  boxShadow: "0 2px 6px rgba(21,128,61,0.3)", transition: "background .15s",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "#13702f"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "#15803d"; }}
+              >
+                KEEP
+              </button>
+            </div>
           </div>
 
-          {/* ── STORAGE PREVIEW + KEEP ── */}
+          {/* ── STORAGE PREVIEW ── */}
           <div style={{
             flex: 1, minWidth: 0, border: "1px solid #d0d4da", borderRadius: 10,
             padding: "18px 22px", display: "flex", flexDirection: "column",
@@ -411,28 +433,6 @@ function PutawayPage() {
                 <span style={{ fontSize: 26, color: "#6b7280" }}>No Preview Selected</span>
               </div>
             )}
-
-            {/* KEEP (moved to the right) */}
-            <div style={{ flexShrink: 0, paddingTop: 14, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
-              {error && (
-                <span style={{ fontSize: 13, color: "#dc2626", fontWeight: 500 }}>
-                  Please fill in all fields and select both types.
-                </span>
-              )}
-              <button
-                onClick={handleKeep}
-                style={{
-                  background: "#15803d", color: "#fff", fontWeight: 700, fontSize: 17,
-                  letterSpacing: "1px", border: "none", borderRadius: 8,
-                  padding: "11px 0", width: 240, cursor: "pointer",
-                  boxShadow: "0 2px 6px rgba(21,128,61,0.3)", transition: "background .15s",
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = "#13702f"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = "#15803d"; }}
-              >
-                KEEP
-              </button>
-            </div>
           </div>
 
         </div>
