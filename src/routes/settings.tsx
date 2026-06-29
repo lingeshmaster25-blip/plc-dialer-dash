@@ -161,13 +161,13 @@ function PlcTab() {
   };
 
   return (
-    <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", gap: 16 }}>
+    <div style={{ flex: 1, minHeight: 0, display: "flex", gap: 18 }}>
 
-      {/* Top section: [Protocol | IP | Port] left + Connection Log right */}
-      <div style={{ display: "flex", gap: 18, alignItems: "flex-start", flexShrink: 0 }}>
+      {/* LEFT column: field cards on top + tag map below */}
+      <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 14 }}>
 
-        {/* Left: 3 field cards — only as tall as their content */}
-        <div style={{ flex: 1, minWidth: 0, display: "grid", gridTemplateColumns: "1fr 1.4fr 1fr", gap: 14 }}>
+        {/* 3 field cards */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1.4fr 1fr", gap: 14, flexShrink: 0 }}>
           <div style={{ ...CARD, padding: "14px 16px" }}>
             <div style={SECTION_LABEL}>PROTOCOL</div>
             <div style={{ position: "relative" }}>
@@ -192,61 +192,62 @@ function PlcTab() {
           </div>
         </div>
 
-        {/* Right: Connection Log — fixed width, self-contained height */}
-        <div style={{ width: 260, flexShrink: 0, ...CARD, display: "flex", flexDirection: "column", gap: 10, padding: "14px 16px" }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: "#1a1a1a" }}>Connection Log</div>
-          <div style={{
-            background: "#0f172a", borderRadius: 8, padding: "10px 12px",
-            height: 140, overflowY: "auto",
-            display: "flex", flexDirection: "column", gap: 6,
-          }}>
-            {log.map((e, i) => (
-              <span key={i} style={{ fontSize: 12, color: e.color, lineHeight: 1.5 }}>• {e.text}</span>
-            ))}
+        {/* Tag map — takes all remaining height in left column */}
+        <div style={{ ...CARD, flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
+          <div style={SECTION_LABEL}>TAG MAP</div>
+          <div style={{ display: "grid", gridTemplateColumns: "1.8fr 80px 1.4fr 1fr" }}>
+            <span style={TH}>TAG</span>
+            <span style={{ ...TH, textAlign: "center" }}>DIR</span>
+            <span style={TH}>ADDRESS</span>
+            <span style={{ ...TH, textAlign: "right" }}>VALUE</span>
           </div>
-          <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={handleDisconnect} disabled={connState === "disconnected"} style={{
-              flex: 1, padding: "9px 0", borderRadius: 8, border: "none", fontWeight: 700,
-              fontSize: 13, cursor: connState === "disconnected" ? "not-allowed" : "pointer",
-              background: connState === "disconnected" ? "#fca5a5" : "#ef4444", color: "#fff",
-            }}>Disconnect</button>
-            <button onClick={handleConnect} disabled={connState === "connected"} style={{
-              flex: 1, padding: "9px 0", borderRadius: 8, border: "none", fontWeight: 700,
-              fontSize: 13, cursor: connState === "connected" ? "not-allowed" : "pointer",
-              background: connState === "connected" ? "#6ee7b7" : "#16a34a", color: "#fff",
-            }}>{connState === "connecting" ? "Connecting…" : "Connect"}</button>
+          <div style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
+            {TAG_MAP.map((row, i) => (
+              <div key={i} style={{
+                display: "grid", gridTemplateColumns: "1.8fr 80px 1.4fr 1fr",
+                padding: "11px 0", alignItems: "center",
+                borderBottom: i < TAG_MAP.length - 1 ? "1px solid #f3f4f6" : "none",
+              }}>
+                <span style={{ fontSize: 14, color: "#1f2937", fontWeight: 500 }}>{row.tag}</span>
+                <span style={{ textAlign: "center" }}>
+                  <span style={{ background: "#bfdbfe", color: "#1d4ed8", fontSize: 12, fontWeight: 700, padding: "3px 10px", borderRadius: 6 }}>
+                    {row.dir}
+                  </span>
+                </span>
+                <span style={{ fontSize: 13, color: "#6b7280" }}>{row.address}</span>
+                <span style={{ fontSize: 14, color: "#1a1a1a", fontWeight: 600, textAlign: "right" }}>{row.value}</span>
+              </div>
+            ))}
           </div>
         </div>
       </div>
 
-      {/* Tag map — full width below, takes all remaining vertical space */}
-      <div style={{ ...CARD, flex: 1, minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-        <div style={SECTION_LABEL}>TAG MAP</div>
-        <div style={{ display: "grid", gridTemplateColumns: "1.8fr 80px 1.4fr 1fr" }}>
-          <span style={TH}>TAG</span>
-          <span style={{ ...TH, textAlign: "center" }}>DIR</span>
-          <span style={TH}>ADDRESS</span>
-          <span style={{ ...TH, textAlign: "right" }}>VALUE</span>
-        </div>
-        <div style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
-          {TAG_MAP.map((row, i) => (
-            <div key={i} style={{
-              display: "grid", gridTemplateColumns: "1.8fr 80px 1.4fr 1fr",
-              padding: "12px 0", alignItems: "center",
-              borderBottom: i < TAG_MAP.length - 1 ? "1px solid #f3f4f6" : "none",
-            }}>
-              <span style={{ fontSize: 15, color: "#1f2937", fontWeight: 500 }}>{row.tag}</span>
-              <span style={{ textAlign: "center" }}>
-                <span style={{ background: "#bfdbfe", color: "#1d4ed8", fontSize: 12, fontWeight: 700, padding: "3px 10px", borderRadius: 6 }}>
-                  {row.dir}
-                </span>
-              </span>
-              <span style={{ fontSize: 14, color: "#6b7280" }}>{row.address}</span>
-              <span style={{ fontSize: 15, color: "#1a1a1a", fontWeight: 600, textAlign: "right" }}>{row.value}</span>
-            </div>
+      {/* RIGHT column: Connection Log — full height, parallel to left */}
+      <div style={{ width: 260, flexShrink: 0, ...CARD, display: "flex", flexDirection: "column", gap: 12, padding: "16px 18px" }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: "#1a1a1a" }}>Connection Log</div>
+        <div style={{
+          background: "#0f172a", borderRadius: 8, padding: "12px 14px",
+          flex: 1, minHeight: 0, overflowY: "auto",
+          display: "flex", flexDirection: "column", gap: 7,
+        }}>
+          {log.map((e, i) => (
+            <span key={i} style={{ fontSize: 13, color: e.color, lineHeight: 1.5 }}>• {e.text}</span>
           ))}
         </div>
+        <div style={{ display: "flex", gap: 10, flexShrink: 0 }}>
+          <button onClick={handleDisconnect} disabled={connState === "disconnected"} style={{
+            flex: 1, padding: "11px 0", borderRadius: 8, border: "none", fontWeight: 700,
+            fontSize: 14, cursor: connState === "disconnected" ? "not-allowed" : "pointer",
+            background: connState === "disconnected" ? "#fca5a5" : "#ef4444", color: "#fff",
+          }}>Disconnect</button>
+          <button onClick={handleConnect} disabled={connState === "connected"} style={{
+            flex: 1, padding: "11px 0", borderRadius: 8, border: "none", fontWeight: 700,
+            fontSize: 14, cursor: connState === "connected" ? "not-allowed" : "pointer",
+            background: connState === "connected" ? "#6ee7b7" : "#16a34a", color: "#fff",
+          }}>{connState === "connecting" ? "Connecting…" : "Connect"}</button>
+        </div>
       </div>
+
     </div>
   );
 }
