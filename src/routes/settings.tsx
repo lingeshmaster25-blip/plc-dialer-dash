@@ -242,6 +242,57 @@ function PlcTab() {
   );
 }
 
+// ── Trays & Columns tab ──────────────────────────────────────────────────────
+const TRAY_ROWS = [
+  { tray: "T-07", column: "Front", partition: "24-bin grid", bins: 24, free: 5,  height: "75 mm"  },
+  { tray: "T-15", column: "Back",  partition: "12-bin wide", bins: 12, free: 3,  height: "150 mm" },
+  { tray: "T-12", column: "Back",  partition: "6-bin deep",  bins: 6,  free: 2,  height: "225 mm" },
+];
+
+function TraysTab() {
+  return (
+    <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
+      <div style={{ border: "1px solid #e5e7eb", borderRadius: 12, overflow: "hidden" }}>
+        {/* card header */}
+        <div style={{
+          display: "flex", justifyContent: "space-between", alignItems: "center",
+          padding: "16px 22px", borderBottom: "1px solid #e5e7eb",
+        }}>
+          <span style={{ fontSize: 17, fontWeight: 700, color: "#1a1a1a" }}>Tray definitions</span>
+          <span style={{ fontSize: 14, color: "#6b7280" }}>{TRAY_ROWS.length * 17 - 34} active</span>
+        </div>
+
+        {/* table header */}
+        <div style={{
+          display: "grid", gridTemplateColumns: "1fr 1fr 1.4fr 0.8fr 0.8fr 1fr",
+          padding: "10px 22px", borderBottom: "1px solid #e5e7eb", background: "#fafafa",
+        }}>
+          {["TRAY", "COLUMN", "PARTITION", "BINS", "FREE", "HEIGHT"].map((h) => (
+            <span key={h} style={{ fontSize: 12, fontWeight: 700, color: "#9ca3af", letterSpacing: "0.5px" }}>{h}</span>
+          ))}
+        </div>
+
+        {/* rows */}
+        {TRAY_ROWS.map((row, i) => (
+          <div key={row.tray} style={{
+            display: "grid", gridTemplateColumns: "1fr 1fr 1.4fr 0.8fr 0.8fr 1fr",
+            padding: "14px 22px", alignItems: "center",
+            borderBottom: i < TRAY_ROWS.length - 1 ? "1px solid #f3f4f6" : "none",
+            background: "#fff",
+          }}>
+            <span style={{ fontSize: 15, color: "#1f2937", fontWeight: 500 }}>{row.tray}</span>
+            <span style={{ fontSize: 15, color: "#1f2937" }}>{row.column}</span>
+            <span style={{ fontSize: 15, color: "#1f2937" }}>{row.partition}</span>
+            <span style={{ fontSize: 15, color: "#1f2937" }}>{row.bins}</span>
+            <span style={{ fontSize: 15, color: "#1f2937" }}>{row.free}</span>
+            <span style={{ fontSize: 15, color: "#1f2937" }}>{row.height}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 function SettingsPage() {
   const [activeTab, setActiveTab] = useState<Tab>("PLC Connection");
@@ -273,9 +324,10 @@ function SettingsPage() {
 
         {activeTab === "PLC Connection" && <PlcTab />}
         {activeTab === "Machine"        && <MachineTab />}
-        {(activeTab === "Trays & Columns" || activeTab === "Users") && (
+        {activeTab === "Trays & Columns" && <TraysTab />}
+        {activeTab === "Users" && (
           <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: "#9ca3af", fontSize: 16 }}>
-            {activeTab} configuration coming soon.
+            Users configuration coming soon.
           </div>
         )}
       </div>
