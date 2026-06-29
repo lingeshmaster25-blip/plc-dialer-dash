@@ -289,15 +289,23 @@ function TroubleshootPage() {
                 </div>
               </div>
 
-              {/* D-pad */}
+              {/* Controls: Door = vertical Open/Stop/Close stack; axes = d-pad */}
               <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", justifyContent: "center", gap: 14, padding: "8px 0" }}>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, maxWidth: 520, width: "100%", margin: "0 auto" }}>
-                  <div /><ControlTile gray={vActive} disabled={!vActive} icon={<ArrowUp size={20} color="#111827" />} label={cfg.up} jogTag={DIR[axis].fwd} /><div />
-                  <ControlTile gray={hActive} disabled={!hActive} icon={<ArrowLeft size={20} color="#111827" />} label={cfg.left} jogTag={DIR[axis].rev} />
-                  <ControlTile icon={<Square size={18} color="#111827" fill="#111827" />} label="Stop" onTap={stopAll} />
-                  <ControlTile gray={hActive} disabled={!hActive} icon={<ArrowRight size={20} color="#111827" />} label={cfg.right} jogTag={DIR[axis].fwd} />
-                  <div /><ControlTile gray={vActive} disabled={!vActive} icon={<ArrowDown size={20} color="#111827" />} label={cfg.down} jogTag={DIR[axis].rev} /><div />
-                </div>
+                {axis === "Door" ? (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 16, maxWidth: 300, width: "100%", margin: "0 auto" }}>
+                    <ControlTile icon={<ArrowUp size={20} color="#111827" />} label="Open Door" jogTag="Door_Open_CMD" />
+                    <ControlTile icon={<Square size={18} color="#111827" fill="#111827" />} label="Stop" onTap={stopAll} />
+                    <ControlTile icon={<ArrowDown size={20} color="#111827" />} label="Close Door" jogTag="Door_Close_CMD" />
+                  </div>
+                ) : (
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, maxWidth: 520, width: "100%", margin: "0 auto" }}>
+                    <div /><ControlTile gray={vActive} disabled={!vActive} icon={<ArrowUp size={20} color="#111827" />} label={cfg.up} jogTag={DIR[axis].fwd} /><div />
+                    <ControlTile gray={hActive} disabled={!hActive} icon={<ArrowLeft size={20} color="#111827" />} label={cfg.left} jogTag={DIR[axis].rev} />
+                    <ControlTile icon={<Square size={18} color="#111827" fill="#111827" />} label="Stop" onTap={stopAll} />
+                    <ControlTile gray={hActive} disabled={!hActive} icon={<ArrowRight size={20} color="#111827" />} label={cfg.right} jogTag={DIR[axis].fwd} />
+                    <div /><ControlTile gray={vActive} disabled={!vActive} icon={<ArrowDown size={20} color="#111827" />} label={cfg.down} jogTag={DIR[axis].rev} /><div />
+                  </div>
+                )}
               </div>
 
               {/* footer */}
