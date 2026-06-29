@@ -50,10 +50,16 @@ const AXIS_OPTS: { value: string; label: string }[] = [
   { value: "B", label: "B - Axis" },
   { value: "Door", label: "Door" },
 ];
-// Which jog pair a selection drives (and highlights):
-//   "v" = Lift Up / Lift Down,  "h" = Move Left / Move Right.
-const ORIENT: Record<string, "v" | "h"> = {
-  X: "v", Y: "h", Z: "h", A: "h", B: "h", Door: "h",
+// Per-selection jog config: which pair is active/highlighted ("v" = Lift/top-bottom,
+// "h" = Move Left/Right) plus the label shown on each of the four direction buttons.
+type AxisCfg = { active: "v" | "h"; up: string; down: string; left: string; right: string };
+const AXIS_CFG: Record<string, AxisCfg> = {
+  X:    { active: "v", up: "Lift Up",      down: "Lift Down",     left: "Move Left", right: "Move Right" },
+  Y:    { active: "h", up: "Lift Up",      down: "Lift Down",     left: "Move Left", right: "Move Right" },
+  Z:    { active: "h", up: "Lift Up",      down: "Lift Down",     left: "Move Left", right: "Move Right" },
+  A:    { active: "h", up: "Move Forward", down: "Move Downward", left: "Move Left", right: "Move Right" },
+  B:    { active: "h", up: "Move Forward", down: "Move Downward", left: "Move Left", right: "Move Right" },
+  Door: { active: "h", up: "Lift Up",      down: "Lift Down",     left: "Move Left", right: "Move Right" },
 };
 
 function ControlTile({ icon, label, gray, disabled, jogTag, onTap }: { icon: React.ReactNode; label: string; gray?: boolean; disabled?: boolean; jogTag?: string; onTap?: () => void }) {
@@ -130,6 +136,10 @@ function TroubleshootPage() {
     window.setTimeout(() => hmiApi.writeTag("Home_Button", false), 400);
   };
   const quitManual = () => { stopAll(); setUnlocked(false); setUserId(""); setPasskey(""); };
+
+  const cfg = AXIS_CFG[axis] ?? AXIS_CFG.X;
+  const vActive = cfg.active === "v";
+  const hActive = cfg.active === "h";
 
   return (
     <DashboardShell>
@@ -282,11 +292,11 @@ function TroubleshootPage() {
               {/* D-pad */}
               <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", justifyContent: "center", gap: 14, padding: "8px 0" }}>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, maxWidth: 520, width: "100%", margin: "0 auto" }}>
-                  <div /><ControlTile gray={ORIENT[axis] === "v"} disabled={ORIENT[axis] !== "v"} icon={<ArrowUp size={20} color="#111827" />} label="Lift Up" jogTag={DIR[axis].fwd} /><div />
-                  <ControlTile gray={ORIENT[axis] === "h"} disabled={ORIENT[axis] !== "h"} icon={<ArrowLeft size={20} color="#111827" />} label="Move Left" jogTag={DIR[axis].rev} />
+                  <div /><ControlTile gray={vActive} disabled={!vActive} icon={<ArrowUp size={20} color="#111827" />} label={cfg.up} jogTag={DIR[axis].fwd} /><div />
+                  <ControlTile gray={hActive} disabled={!hActive} icon={<ArrowLeft size={20} color="#111827" />} label={cfg.left} jogTag={DIR[axis].rev} />
                   <ControlTile icon={<Square size={18} color="#111827" fill="#111827" />} label="Stop" onTap={stopAll} />
-                  <ControlTile gray={ORIENT[axis] === "h"} disabled={ORIENT[axis] !== "h"} icon={<ArrowRight size={20} color="#111827" />} label="Move Right" jogTag={DIR[axis].fwd} />
-                  <div /><ControlTile gray={ORIENT[axis] === "v"} disabled={ORIENT[axis] !== "v"} icon={<ArrowDown size={20} color="#111827" />} label="Lift Down" jogTag={DIR[axis].rev} /><div />
+                  <ControlTile gray={hActive} disabled={!hActive} icon={<ArrowRight size={20} color="#111827" />} label={cfg.right} jogTag={DIR[axis].fwd} />
+                  <div /><ControlTile gray={vActive} disabled={!vActive} icon={<ArrowDown size={20} color="#111827" />} label={cfg.down} jogTag={DIR[axis].rev} /><div />
                 </div>
               </div>
 
