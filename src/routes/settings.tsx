@@ -195,7 +195,7 @@ function PlcTab() {
         {/* Tag map — takes all remaining height in left column */}
         <div style={{ ...CARD, flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
           <div style={SECTION_LABEL}>TAG MAP</div>
-          <div style={{ display: "grid", gridTemplateColumns: "1.8fr 80px 1.4fr 1fr" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr" }}>
             <span style={TH}>TAG</span>
             <span style={{ ...TH, textAlign: "center" }}>DIR</span>
             <span style={TH}>ADDRESS</span>
@@ -204,7 +204,7 @@ function PlcTab() {
           <div style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
             {TAG_MAP.map((row, i) => (
               <div key={i} style={{
-                display: "grid", gridTemplateColumns: "1.8fr 80px 1.4fr 1fr",
+                display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr",
                 padding: "11px 0", alignItems: "center",
                 borderBottom: i < TAG_MAP.length - 1 ? "1px solid #f3f4f6" : "none",
               }}>
