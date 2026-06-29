@@ -50,19 +50,24 @@ const AXIS_OPTS: { value: string; label: string }[] = [
   { value: "B", label: "B - Axis" },
   { value: "Door", label: "Door" },
 ];
+// Which jog pair a selection drives (and highlights):
+//   "v" = Lift Up / Lift Down,  "h" = Move Left / Move Right.
+const ORIENT: Record<string, "v" | "h"> = {
+  X: "v", Y: "h", Z: "v", A: "h", B: "h", Door: "h",
+};
 
-function ControlTile({ icon, label, gray, jogTag, onTap }: { icon: React.ReactNode; label: string; gray?: boolean; jogTag?: string; onTap?: () => void }) {
-  const press = () => { if (jogTag) hmiApi.writeTag(jogTag, true); };
-  const release = () => { if (jogTag) hmiApi.writeTag(jogTag, false); };
+function ControlTile({ icon, label, gray, disabled, jogTag, onTap }: { icon: React.ReactNode; label: string; gray?: boolean; disabled?: boolean; jogTag?: string; onTap?: () => void }) {
+  const press = () => { if (!disabled && jogTag) hmiApi.writeTag(jogTag, true); };
+  const release = () => { if (!disabled && jogTag) hmiApi.writeTag(jogTag, false); };
   return (
     <button
-      onClick={onTap}
+      onClick={disabled ? undefined : onTap}
       onMouseDown={press} onMouseUp={release} onMouseLeave={release}
       onTouchStart={press} onTouchEnd={release}
       style={{
         width: "100%", height: "100%", minHeight: 78,
         background: gray ? "#c8cace" : "#fff", border: gray ? "1px solid #b9bcc1" : "1px solid #d0d4da",
-        borderRadius: 12, cursor: "pointer", display: "flex", flexDirection: "column",
+        borderRadius: 12, cursor: disabled ? "default" : "pointer", display: "flex", flexDirection: "column",
         alignItems: "center", justifyContent: "center", gap: 6, transition: "filter .12s",
       }}
     >
@@ -277,11 +282,11 @@ function TroubleshootPage() {
               {/* D-pad */}
               <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", justifyContent: "center", gap: 14, padding: "8px 0" }}>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, maxWidth: 520, width: "100%", margin: "0 auto" }}>
-                  <div /><ControlTile gray icon={<ArrowUp size={20} color="#111827" />} label="Lift Up" jogTag="Z_Up" /><div />
-                  <ControlTile icon={<ArrowLeft size={20} color="#111827" />} label="Move Left" jogTag={DIR[axis].rev} />
+                  <div /><ControlTile gray={ORIENT[axis] === "v"} disabled={ORIENT[axis] !== "v"} icon={<ArrowUp size={20} color="#111827" />} label="Lift Up" jogTag={DIR[axis].fwd} /><div />
+                  <ControlTile gray={ORIENT[axis] === "h"} disabled={ORIENT[axis] !== "h"} icon={<ArrowLeft size={20} color="#111827" />} label="Move Left" jogTag={DIR[axis].rev} />
                   <ControlTile icon={<Square size={18} color="#111827" fill="#111827" />} label="Stop" onTap={stopAll} />
-                  <ControlTile icon={<ArrowRight size={20} color="#111827" />} label="Move Right" jogTag={DIR[axis].fwd} />
-                  <div /><ControlTile gray icon={<ArrowDown size={20} color="#111827" />} label="Lift Down" jogTag="Z_Down" /><div />
+                  <ControlTile gray={ORIENT[axis] === "h"} disabled={ORIENT[axis] !== "h"} icon={<ArrowRight size={20} color="#111827" />} label="Move Right" jogTag={DIR[axis].fwd} />
+                  <div /><ControlTile gray={ORIENT[axis] === "v"} disabled={ORIENT[axis] !== "v"} icon={<ArrowDown size={20} color="#111827" />} label="Lift Down" jogTag={DIR[axis].rev} /><div />
                 </div>
               </div>
 
