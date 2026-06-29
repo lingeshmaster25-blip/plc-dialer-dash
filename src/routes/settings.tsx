@@ -199,7 +199,7 @@ function PlcTab() {
             <span style={TH}>TAG</span>
             <span style={{ ...TH, textAlign: "center" }}>DIR</span>
             <span style={TH}>ADDRESS</span>
-            <span style={{ ...TH, textAlign: "right" }}>VALUE</span>
+            <span style={TH}>VALUE</span>
           </div>
           <div style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
             {TAG_MAP.map((row, i) => (
@@ -215,7 +215,7 @@ function PlcTab() {
                   </span>
                 </span>
                 <span style={{ fontSize: 13, color: "#6b7280" }}>{row.address}</span>
-                <span style={{ fontSize: 14, color: "#1a1a1a", fontWeight: 600, textAlign: "right" }}>{row.value}</span>
+                <span style={{ fontSize: 14, color: "#1a1a1a", fontWeight: 600 }}>{row.value}</span>
               </div>
             ))}
           </div>
