@@ -161,49 +161,57 @@ function PlcTab() {
   };
 
   return (
-    <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", gap: 20 }}>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1.4fr 1fr 1.1fr", gap: 18, alignItems: "start" }}>
-        <div style={CARD}>
-          <div style={SECTION_LABEL}>PROTOCOL</div>
-          <div style={{ position: "relative" }}>
-            <select value={protocol} onChange={(e) => setProtocol(e.target.value)}
-              style={{ ...FIELD, appearance: "none", cursor: "pointer", color: protocol ? "#111827" : "#9ca3af" }}>
-              <option value="" disabled>Select Protocol</option>
-              <option>Modbus TCP</option>
-              <option>S7 (Siemens)</option>
-              <option>EtherNet/IP</option>
-              <option>OPC-UA</option>
-            </select>
-            <ChevronDown size={16} color="#6b7280" style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }} />
+    <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", gap: 16 }}>
+
+      {/* Top section: [Protocol | IP | Port] left + Connection Log right */}
+      <div style={{ display: "flex", gap: 18, alignItems: "stretch" }}>
+
+        {/* Left: 3 field cards in a grid */}
+        <div style={{ flex: 1, minWidth: 0, display: "grid", gridTemplateColumns: "1fr 1.4fr 1fr", gap: 18 }}>
+          <div style={{ ...CARD, padding: "22px 22px 28px" }}>
+            <div style={SECTION_LABEL}>PROTOCOL</div>
+            <div style={{ position: "relative" }}>
+              <select value={protocol} onChange={(e) => setProtocol(e.target.value)}
+                style={{ ...FIELD, appearance: "none", cursor: "pointer", color: protocol ? "#111827" : "#9ca3af" }}>
+                <option value="" disabled>Select Protocol</option>
+                <option>Modbus TCP</option>
+                <option>S7 (Siemens)</option>
+                <option>EtherNet/IP</option>
+                <option>OPC-UA</option>
+              </select>
+              <ChevronDown size={16} color="#6b7280" style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }} />
+            </div>
+          </div>
+          <div style={{ ...CARD, padding: "22px 22px 28px" }}>
+            <div style={SECTION_LABEL}>CONTROLLER IP</div>
+            <input style={FIELD} placeholder="Enter IP Address" value={ip} onChange={(e) => setIp(e.target.value)} />
+          </div>
+          <div style={{ ...CARD, padding: "22px 22px 28px" }}>
+            <div style={SECTION_LABEL}>PORT</div>
+            <input style={FIELD} placeholder="Enter Port Address" value={port} onChange={(e) => setPort(e.target.value)} />
           </div>
         </div>
-        <div style={CARD}>
-          <div style={SECTION_LABEL}>CONTROLLER IP</div>
-          <input style={FIELD} placeholder="Enter IP Address" value={ip} onChange={(e) => setIp(e.target.value)} />
-        </div>
-        <div style={CARD}>
-          <div style={SECTION_LABEL}>PORT</div>
-          <input style={FIELD} placeholder="Enter Port Address" value={port} onChange={(e) => setPort(e.target.value)} />
-        </div>
-        <div style={{ ...CARD, display: "flex", flexDirection: "column", gap: 10 }}>
+
+        {/* Right: Connection Log — tall panel */}
+        <div style={{ width: 280, flexShrink: 0, ...CARD, display: "flex", flexDirection: "column", gap: 12, padding: "18px 20px" }}>
           <div style={{ fontSize: 15, fontWeight: 700, color: "#1a1a1a" }}>Connection Log</div>
           <div style={{
             background: "#0f172a", borderRadius: 8, padding: "12px 14px",
-            minHeight: 120, maxHeight: 160, overflowY: "auto",
-            display: "flex", flexDirection: "column", gap: 6,
+            flex: 1, minHeight: 140, overflowY: "auto",
+            display: "flex", flexDirection: "column", gap: 7,
           }}>
             {log.map((e, i) => (
-              <span key={i} style={{ fontSize: 13, color: e.color, lineHeight: 1.4 }}>• {e.text}</span>
+              <span key={i} style={{ fontSize: 13, color: e.color, lineHeight: 1.5 }}>• {e.text}</span>
             ))}
           </div>
-          <div style={{ display: "flex", gap: 10 }}>
+          <div style={{ display: "flex", gap: 10, flexShrink: 0 }}>
             <button onClick={handleDisconnect} disabled={connState === "disconnected"} style={{
-              flex: 1, padding: "10px 0", borderRadius: 8, border: "none", fontWeight: 700,
+              flex: 1, padding: "11px 0", borderRadius: 8, border: "none", fontWeight: 700,
               fontSize: 14, cursor: connState === "disconnected" ? "not-allowed" : "pointer",
               background: connState === "disconnected" ? "#fca5a5" : "#ef4444", color: "#fff",
             }}>Disconnect</button>
             <button onClick={handleConnect} disabled={connState === "connected"} style={{
-              flex: 1, padding: "10px 0", borderRadius: 8, border: "none", fontWeight: 700,
+              flex: 1, padding: "11px 0", borderRadius: 8, border: "none", fontWeight: 700,
               fontSize: 14, cursor: connState === "connected" ? "not-allowed" : "pointer",
               background: connState === "connected" ? "#6ee7b7" : "#16a34a", color: "#fff",
             }}>{connState === "connecting" ? "Connecting…" : "Connect"}</button>
@@ -211,6 +219,7 @@ function PlcTab() {
         </div>
       </div>
 
+      {/* Tag map — full width below */}
       <div style={{ ...CARD, flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
         <div style={SECTION_LABEL}>TAG MAP</div>
         <div style={{ display: "grid", gridTemplateColumns: "1.8fr 80px 1.4fr 1fr" }}>
