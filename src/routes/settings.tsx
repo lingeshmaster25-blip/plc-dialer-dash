@@ -242,6 +242,80 @@ function PlcTab() {
   );
 }
 
+// ── Users tab ────────────────────────────────────────────────────────────────
+type User = { name: string; role: string; badge: string; lastActive: string };
+
+const SEED_USERS: User[] = [
+  { name: "Kumar",  role: "Operator",   badge: "B-2041", lastActive: "now"       },
+  { name: "Sharma", role: "Supervisor", badge: "B-1180", lastActive: "2h ago"    },
+  { name: "Iyer",   role: "Technician", badge: "B-0033", lastActive: "yesterday" },
+];
+
+function UsersTab() {
+  const [users, setUsers] = useState<User[]>(SEED_USERS);
+  const [adding, setAdding] = useState(false);
+  const [draft, setDraft] = useState<User>({ name: "", role: "", badge: "", lastActive: "now" });
+
+  const handleAdd = () => {
+    if (!draft.name.trim() || !draft.role.trim() || !draft.badge.trim()) return;
+    setUsers((prev) => [...prev, { ...draft, lastActive: "now" }]);
+    setDraft({ name: "", role: "", badge: "", lastActive: "now" });
+    setAdding(false);
+  };
+
+  return (
+    <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
+      <div style={{ border: "1px solid #e5e7eb", borderRadius: 12, overflow: "hidden" }}>
+        {/* card header */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 22px", borderBottom: "1px solid #e5e7eb" }}>
+          <span style={{ fontSize: 17, fontWeight: 700, color: "#1a1a1a" }}>Operators & access</span>
+          <button onClick={() => setAdding(true)} style={{
+            background: "#2563eb", color: "#fff", fontSize: 14, fontWeight: 600,
+            border: "none", borderRadius: 8, padding: "9px 20px", cursor: "pointer",
+          }}>Add User</button>
+        </div>
+
+        {/* table header */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", padding: "10px 22px", borderBottom: "1px solid #e5e7eb", background: "#fafafa" }}>
+          {["NAME", "ROLE", "BADGE", "LAST ACTIVE"].map((h) => (
+            <span key={h} style={{ fontSize: 12, fontWeight: 700, color: "#9ca3af", letterSpacing: "0.5px" }}>{h}</span>
+          ))}
+        </div>
+
+        {/* rows */}
+        {users.map((u, i) => (
+          <div key={i} style={{
+            display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr",
+            padding: "14px 22px", alignItems: "center",
+            borderBottom: i < users.length - 1 ? "1px solid #f3f4f6" : "none",
+            background: "#fff",
+          }}>
+            <span style={{ fontSize: 15, color: "#1f2937", fontWeight: 500 }}>{u.name}</span>
+            <span style={{ fontSize: 15, color: "#1f2937" }}>{u.role}</span>
+            <span style={{ fontSize: 15, color: "#1f2937" }}>{u.badge}</span>
+            <span style={{ fontSize: 15, color: "#6b7280" }}>{u.lastActive}</span>
+          </div>
+        ))}
+
+        {/* inline add row */}
+        {adding && (
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", padding: "10px 22px", gap: 12, borderTop: "1px solid #e5e7eb", background: "#f9fafb" }}>
+            {(["name", "role", "badge"] as const).map((field) => (
+              <input key={field} placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
+                value={draft[field]} onChange={(e) => setDraft((d) => ({ ...d, [field]: e.target.value }))}
+                style={{ background: "#fff", border: "1px solid #d1d5db", borderRadius: 7, padding: "8px 12px", fontSize: 14, outline: "none" }} />
+            ))}
+            <div style={{ display: "flex", gap: 8 }}>
+              <button onClick={handleAdd} style={{ flex: 1, background: "#16a34a", color: "#fff", border: "none", borderRadius: 7, fontSize: 14, fontWeight: 600, cursor: "pointer", padding: "8px 0" }}>Save</button>
+              <button onClick={() => setAdding(false)} style={{ flex: 1, background: "#fff", color: "#374151", border: "1px solid #d1d5db", borderRadius: 7, fontSize: 14, fontWeight: 600, cursor: "pointer", padding: "8px 0" }}>Cancel</button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── Trays & Columns tab ──────────────────────────────────────────────────────
 const TRAY_ROWS = [
   { tray: "T-07", column: "Front", partition: "24-bin grid", bins: 24, free: 5,  height: "75 mm"  },
@@ -325,11 +399,7 @@ function SettingsPage() {
         {activeTab === "PLC Connection" && <PlcTab />}
         {activeTab === "Machine"        && <MachineTab />}
         {activeTab === "Trays & Columns" && <TraysTab />}
-        {activeTab === "Users" && (
-          <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: "#9ca3af", fontSize: 16 }}>
-            Users configuration coming soon.
-          </div>
-        )}
+        {activeTab === "Users" && <UsersTab />}
       </div>
     </DashboardShell>
   );
