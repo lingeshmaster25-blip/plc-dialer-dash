@@ -71,19 +71,19 @@ function ControlTile({ icon, label, gray, disabled, jogTag, onTap }: { icon: Rea
       onMouseDown={press} onMouseUp={release} onMouseLeave={release}
       onTouchStart={press} onTouchEnd={release}
       style={{
-        width: "100%", height: "100%", minHeight: 78,
+        width: "100%", height: "100%", minHeight: 44,
         background: gray ? "#c8cace" : "#fff", border: gray ? "1px solid #b9bcc1" : "1px solid #d0d4da",
         borderRadius: 12, cursor: disabled ? "default" : "pointer", display: "flex", flexDirection: "column",
-        alignItems: "center", justifyContent: "center", gap: 6, transition: "filter .12s",
+        alignItems: "center", justifyContent: "center", gap: 4, transition: "filter .12s",
       }}
     >
       <span style={{
-        width: 38, height: 38, borderRadius: "50%", border: "2px solid #111827",
+        width: 32, height: 32, borderRadius: "50%", border: "2px solid #111827",
         display: "flex", alignItems: "center", justifyContent: "center",
       }}>
         {icon}
       </span>
-      <span style={{ fontSize: 15, fontWeight: 600, color: "#1a1a1a" }}>{label}</span>
+      <span style={{ fontSize: 14, fontWeight: 600, color: "#1a1a1a" }}>{label}</span>
     </button>
   );
 }
@@ -252,13 +252,13 @@ function TroubleshootPage() {
             {/* Manual Control */}
             <div style={{
               flex: 1, minWidth: 0, border: "1px solid #e5e7eb", borderRadius: 16,
-              boxShadow: "0 1px 4px rgba(16,24,40,0.06)", padding: "20px 24px",
+              boxShadow: "0 1px 4px rgba(16,24,40,0.06)", padding: "14px 20px",
               display: "flex", flexDirection: "column", minHeight: 0,
             }}>
-              <span style={{ fontSize: 25, fontWeight: 800, color: "#1a1a1a", flexShrink: 0 }}>Manual Control</span>
+              <span style={{ fontSize: 22, fontWeight: 800, color: "#1a1a1a", flexShrink: 0 }}>Manual Control</span>
 
               {/* axis + actual position */}
-              <div style={{ display: "flex", alignItems: "flex-start", marginTop: 16, flexShrink: 0 }}>
+              <div style={{ display: "flex", alignItems: "flex-start", marginTop: 10, flexShrink: 0 }}>
                 <div style={{ position: "relative" }}>
                   <select
                     value={axis}
@@ -278,11 +278,11 @@ function TroubleshootPage() {
                 <div style={{ marginLeft: "auto", textAlign: "right" }}>
                   <div style={{ fontSize: 15, fontWeight: 600, color: "#374151", letterSpacing: "0.03em" }}>ACTUAL POSITIONS</div>
                   <div style={{
-                    marginTop: 6, minWidth: 150, background: "#e8eaed", border: "1px solid #dadce0",
-                    borderRadius: 10, padding: "10px 16px", textAlign: "left",
+                    marginTop: 5, minWidth: 130, background: "#e8eaed", border: "1px solid #dadce0",
+                    borderRadius: 10, padding: "8px 14px", textAlign: "left",
                   }}>
                     <div style={{ fontSize: 14, fontWeight: 700, color: "#1a1a1a" }}>{axis}</div>
-                    <div style={{ fontSize: 26, fontWeight: 600, color: "#6b7280", lineHeight: 1.1 }}>
+                    <div style={{ fontSize: 22, fontWeight: 600, color: "#6b7280", lineHeight: 1.1 }}>
                       {plcLive && actual !== null ? actual.toFixed(1) : "--"}
                     </div>
                   </div>
@@ -290,29 +290,29 @@ function TroubleshootPage() {
               </div>
 
               {/* Controls: Door = vertical Open/Stop/Close stack; axes = d-pad */}
-              <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", justifyContent: "center", gap: 14, padding: "8px 0" }}>
+              <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", padding: "4px 0" }}>
                 {axis === "Door" ? (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 16, maxWidth: 300, width: "100%", margin: "0 auto" }}>
-                    <ControlTile icon={<ArrowUp size={20} color="#111827" />} label="Open Door" jogTag="Door_Open_CMD" />
-                    <ControlTile icon={<Square size={18} color="#111827" fill="#111827" />} label="Stop" onTap={stopAll} />
-                    <ControlTile icon={<ArrowDown size={20} color="#111827" />} label="Close Door" jogTag="Door_Close_CMD" />
+                  <div style={{ flex: 1, minHeight: 0, display: "grid", gridTemplateRows: "1fr 1fr 1fr", gap: 12, maxWidth: 300, width: "100%", margin: "0 auto" }}>
+                    <ControlTile icon={<ArrowUp size={18} color="#111827" />} label="Open Door" jogTag="Door_Open_CMD" />
+                    <ControlTile icon={<Square size={16} color="#111827" fill="#111827" />} label="Stop" onTap={stopAll} />
+                    <ControlTile icon={<ArrowDown size={18} color="#111827" />} label="Close Door" jogTag="Door_Close_CMD" />
                   </div>
                 ) : (
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, maxWidth: 520, width: "100%", margin: "0 auto" }}>
-                    <div /><ControlTile gray={vActive} disabled={!vActive} icon={<ArrowUp size={20} color="#111827" />} label={cfg.up} jogTag={DIR[axis].fwd} /><div />
-                    <ControlTile gray={hActive} disabled={!hActive} icon={<ArrowLeft size={20} color="#111827" />} label={cfg.left} jogTag={DIR[axis].rev} />
-                    <ControlTile icon={<Square size={18} color="#111827" fill="#111827" />} label="Stop" onTap={stopAll} />
-                    <ControlTile gray={hActive} disabled={!hActive} icon={<ArrowRight size={20} color="#111827" />} label={cfg.right} jogTag={DIR[axis].fwd} />
-                    <div /><ControlTile gray={vActive} disabled={!vActive} icon={<ArrowDown size={20} color="#111827" />} label={cfg.down} jogTag={DIR[axis].rev} /><div />
+                  <div style={{ flex: 1, minHeight: 0, display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gridTemplateRows: "1fr 1fr 1fr", gap: 12, maxWidth: 520, width: "100%", margin: "0 auto" }}>
+                    <div /><ControlTile gray={vActive} disabled={!vActive} icon={<ArrowUp size={18} color="#111827" />} label={cfg.up} jogTag={DIR[axis].fwd} /><div />
+                    <ControlTile gray={hActive} disabled={!hActive} icon={<ArrowLeft size={18} color="#111827" />} label={cfg.left} jogTag={DIR[axis].rev} />
+                    <ControlTile icon={<Square size={16} color="#111827" fill="#111827" />} label="Stop" onTap={stopAll} />
+                    <ControlTile gray={hActive} disabled={!hActive} icon={<ArrowRight size={18} color="#111827" />} label={cfg.right} jogTag={DIR[axis].fwd} />
+                    <div /><ControlTile gray={vActive} disabled={!vActive} icon={<ArrowDown size={18} color="#111827" />} label={cfg.down} jogTag={DIR[axis].rev} /><div />
                   </div>
                 )}
               </div>
 
               {/* footer */}
-              <div style={{ display: "flex", gap: 16, flexShrink: 0 }}>
+              <div style={{ display: "flex", gap: 16, flexShrink: 0, marginTop: 6 }}>
                 <button
                   onClick={sendHome}
-                  style={{ flex: 1, background: "#fff", border: "1px solid #d0d4da", borderRadius: 10, padding: "13px 0", fontSize: 16, fontWeight: 600, color: "#1a1a1a", cursor: "pointer" }}
+                  style={{ flex: 1, background: "#fff", border: "1px solid #d0d4da", borderRadius: 10, padding: "11px 0", fontSize: 16, fontWeight: 600, color: "#1a1a1a", cursor: "pointer" }}
                   onMouseEnter={(e) => { e.currentTarget.style.background = "#f5f6f8"; }}
                   onMouseLeave={(e) => { e.currentTarget.style.background = "#fff"; }}
                 >
@@ -320,7 +320,7 @@ function TroubleshootPage() {
                 </button>
                 <button
                   onClick={quitManual}
-                  style={{ flex: 1, background: "#db0000", border: "none", borderRadius: 10, padding: "13px 0", fontSize: 16, fontWeight: 700, color: "#fff", cursor: "pointer", boxShadow: "0 3px 10px rgba(219,0,0,0.28)" }}
+                  style={{ flex: 1, background: "#db0000", border: "none", borderRadius: 10, padding: "11px 0", fontSize: 16, fontWeight: 700, color: "#fff", cursor: "pointer", boxShadow: "0 3px 10px rgba(219,0,0,0.28)" }}
                   onMouseEnter={(e) => { e.currentTarget.style.background = "#b00000"; }}
                   onMouseLeave={(e) => { e.currentTarget.style.background = "#db0000"; }}
                 >
