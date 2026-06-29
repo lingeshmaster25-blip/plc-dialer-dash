@@ -153,184 +153,181 @@ function TroubleshootPage() {
         </p>
         <div style={{ height: 1, background: "#e5e7eb", margin: "14px 0 16px", flexShrink: 0 }} />
 
-        {!unlocked ? (
-          /* ── CREDENTIAL GATE ── */
-          <div style={{ flex: 1, minHeight: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <div style={{
-              width: "min(560px, 92%)", border: "1px solid #e5e7eb", borderRadius: 16,
-              boxShadow: "0 1px 6px rgba(16,24,40,0.08)", padding: "34px 40px",
-              display: "flex", flexDirection: "column",
-            }}>
-              <span style={{ fontSize: 22, fontWeight: 700, color: "#1a1a1a", marginBottom: 6 }}>Manual Control Access</span>
-              <span style={{ fontSize: 15, color: "#6b7280", marginBottom: 24 }}>
-                Enter User Credentials to access Troubleshoot mode
-              </span>
+        <div style={{ flex: 1, minHeight: 0, display: "flex", gap: 28, alignItems: "stretch" }}>
 
-              <label style={{ fontSize: 16, fontWeight: 600, color: "#1a1a1a", marginBottom: 7 }}>User ID</label>
-              <input style={FIELD} placeholder="Enter user ID" value={userId}
-                onChange={(e) => { setUserId(e.target.value); setError(false); }}
-                onKeyDown={(e) => { if (e.key === "Enter") grantAccess(); }} />
+          {/* Active Alerts (always visible) */}
+          <div style={{
+            flex: 1, minWidth: 0, border: "1px solid #e5e7eb", borderRadius: 16,
+            boxShadow: "0 1px 4px rgba(16,24,40,0.06)", padding: "20px 24px",
+            display: "flex", flexDirection: "column", minHeight: 0,
+          }}>
+            <div style={{ display: "flex", alignItems: "center", marginBottom: 16, flexShrink: 0 }}>
+              <span style={{ fontSize: 25, fontWeight: 800, color: "#1a1a1a" }}>Active Alerts</span>
+              <span style={{
+                marginLeft: "auto", background: "#eef0f3", color: "#374151",
+                fontSize: 13, fontWeight: 600, borderRadius: 999, padding: "5px 14px",
+              }}>{alerts.length} {alerts.length === 1 ? "Alert" : "Alerts"}</span>
+            </div>
 
-              <label style={{ fontSize: 16, fontWeight: 600, color: "#1a1a1a", margin: "18px 0 7px" }}>Passkey</label>
-              <input style={FIELD} type="password" placeholder="Enter passkey" value={passkey}
-                onChange={(e) => { setPasskey(e.target.value); setError(false); }}
-                onKeyDown={(e) => { if (e.key === "Enter") grantAccess(); }} />
-
-              {error && (
-                <span style={{ fontSize: 14, color: "#dc2626", fontWeight: 600, marginTop: 12 }}>
-                  Invalid User ID or Passkey.
-                </span>
-              )}
-
-              <button onClick={grantAccess}
-                style={{
-                  marginTop: 26, alignSelf: "flex-end",
-                  background: "#28954b", color: "#fff", fontWeight: 700, fontSize: 18,
-                  border: "none", borderRadius: 10, padding: "13px 38px", cursor: "pointer",
-                  boxShadow: "0 3px 10px rgba(40,149,75,0.30)",
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = "#1e8449"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = "#28954b"; }}
-              >
-                Grant Access
-              </button>
+            <div style={{ flex: 1, minHeight: 0, overflowY: "auto", display: "flex", flexDirection: "column", gap: 16 }}>
+              {alerts.length === 0 ? (
+                <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <span style={{ fontSize: 16, color: "#6b7280" }}>No active alerts.</span>
+                </div>
+              ) : alerts.map((a) => (
+                <div key={a.id} style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
+                  <span style={{
+                    width: 44, height: 44, flexShrink: 0, borderRadius: 10,
+                    background: TONE[a.tone].box, display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>
+                    {a.tone === "blue"
+                      ? <Info size={22} color={TONE[a.tone].icon} />
+                      : <AlertTriangle size={22} color={TONE[a.tone].icon} />}
+                  </span>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: "#1a1a1a" }}>{a.title}</div>
+                    <div style={{ fontSize: 13.5, color: "#6b7280", marginTop: 2, lineHeight: 1.4 }}>{a.detail}</div>
+                  </div>
+                  <button
+                    onClick={() => acknowledge(a.id)}
+                    style={{
+                      flexShrink: 0, background: "#fff", border: "1px solid #d0d4da", borderRadius: 999,
+                      padding: "9px 20px", fontSize: 14, fontWeight: 600, color: "#374151", cursor: "pointer",
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = "#f5f6f8"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "#fff"; }}
+                  >
+                    Acknowledge
+                  </button>
+                </div>
+              ))}
             </div>
           </div>
-        ) : (
-          /* ── UNLOCKED: alerts + manual control ── */
-          <div style={{ flex: 1, minHeight: 0, display: "flex", gap: 28, alignItems: "stretch" }}>
 
-            {/* Active Alerts */}
-            <div style={{
-              flex: 1, minWidth: 0, border: "1px solid #e5e7eb", borderRadius: 16,
-              boxShadow: "0 1px 4px rgba(16,24,40,0.06)", padding: "20px 24px",
-              display: "flex", flexDirection: "column", minHeight: 0,
-            }}>
-              <div style={{ display: "flex", alignItems: "center", marginBottom: 16, flexShrink: 0 }}>
-                <span style={{ fontSize: 25, fontWeight: 800, color: "#1a1a1a" }}>Active Alerts</span>
-                <span style={{
-                  marginLeft: "auto", background: "#eef0f3", color: "#374151",
-                  fontSize: 13, fontWeight: 600, borderRadius: 999, padding: "5px 14px",
-                }}>{alerts.length} {alerts.length === 1 ? "Alert" : "Alerts"}</span>
-              </div>
+          {/* Manual Control (login until unlocked) */}
+          <div style={{
+            flex: 1, minWidth: 0, border: "1px solid #e5e7eb", borderRadius: 16,
+            boxShadow: "0 1px 4px rgba(16,24,40,0.06)", padding: "14px 20px",
+            display: "flex", flexDirection: "column", minHeight: 0,
+          }}>
+            <span style={{ fontSize: 22, fontWeight: 800, color: "#1a1a1a", flexShrink: 0 }}>Manual Control</span>
 
-              <div style={{ flex: 1, minHeight: 0, overflowY: "auto", display: "flex", flexDirection: "column", gap: 16 }}>
-                {alerts.length === 0 ? (
-                  <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <span style={{ fontSize: 16, color: "#6b7280" }}>No active alerts.</span>
-                  </div>
-                ) : alerts.map((a) => (
-                  <div key={a.id} style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
-                    <span style={{
-                      width: 44, height: 44, flexShrink: 0, borderRadius: 10,
-                      background: TONE[a.tone].box, display: "flex", alignItems: "center", justifyContent: "center",
-                    }}>
-                      {a.tone === "blue"
-                        ? <Info size={22} color={TONE[a.tone].icon} />
-                        : <AlertTriangle size={22} color={TONE[a.tone].icon} />}
+            {!unlocked ? (
+              /* ── ACCESS GATE inside the card ── */
+              <>
+                <div style={{ height: 1, background: "#e5e7eb", margin: "12px 0 0", flexShrink: 0 }} />
+                <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", paddingTop: 20 }}>
+                  <span style={{ fontSize: 17, color: "#6b7280", marginBottom: 24 }}>Enter Master Access to use manual mode</span>
+
+                  <label style={{ fontSize: 19, fontWeight: 700, color: "#1a1a1a", marginBottom: 9 }}>User ID</label>
+                  <input style={FIELD} placeholder="Enter user ID" value={userId}
+                    onChange={(e) => { setUserId(e.target.value); setError(false); }}
+                    onKeyDown={(e) => { if (e.key === "Enter") grantAccess(); }} />
+
+                  <label style={{ fontSize: 19, fontWeight: 700, color: "#1a1a1a", margin: "22px 0 9px" }}>Passkey</label>
+                  <input style={FIELD} type="password" placeholder="Enter passkey" value={passkey}
+                    onChange={(e) => { setPasskey(e.target.value); setError(false); }}
+                    onKeyDown={(e) => { if (e.key === "Enter") grantAccess(); }} />
+
+                  {error && (
+                    <span style={{ fontSize: 14, color: "#dc2626", fontWeight: 600, marginTop: 12 }}>
+                      Invalid User ID or Passkey.
                     </span>
-                    <div style={{ minWidth: 0, flex: 1 }}>
-                      <div style={{ fontSize: 16, fontWeight: 700, color: "#1a1a1a" }}>{a.title}</div>
-                      <div style={{ fontSize: 13.5, color: "#6b7280", marginTop: 2, lineHeight: 1.4 }}>{a.detail}</div>
-                    </div>
-                    <button
-                      onClick={() => acknowledge(a.id)}
+                  )}
+
+                  <div style={{ marginTop: "auto", display: "flex", justifyContent: "flex-end", paddingTop: 18 }}>
+                    <button onClick={grantAccess}
                       style={{
-                        flexShrink: 0, background: "#fff", border: "1px solid #d0d4da", borderRadius: 999,
-                        padding: "9px 20px", fontSize: 14, fontWeight: 600, color: "#374151", cursor: "pointer",
+                        background: "#28954b", color: "#fff", fontWeight: 700, fontSize: 18,
+                        border: "none", borderRadius: 10, padding: "14px 42px", cursor: "pointer",
+                        boxShadow: "0 3px 10px rgba(40,149,75,0.30)",
                       }}
-                      onMouseEnter={(e) => { e.currentTarget.style.background = "#f5f6f8"; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.background = "#fff"; }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = "#1e8449"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = "#28954b"; }}
                     >
-                      Acknowledge
+                      Grant Access
                     </button>
                   </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Manual Control */}
-            <div style={{
-              flex: 1, minWidth: 0, border: "1px solid #e5e7eb", borderRadius: 16,
-              boxShadow: "0 1px 4px rgba(16,24,40,0.06)", padding: "14px 20px",
-              display: "flex", flexDirection: "column", minHeight: 0,
-            }}>
-              <span style={{ fontSize: 22, fontWeight: 800, color: "#1a1a1a", flexShrink: 0 }}>Manual Control</span>
-
-              {/* axis + actual position */}
-              <div style={{ display: "flex", alignItems: "flex-start", marginTop: 10, flexShrink: 0 }}>
-                <div style={{ position: "relative" }}>
-                  <select
-                    value={axis}
-                    onChange={(e) => setAxis(e.target.value)}
-                    style={{
-                      appearance: "none", WebkitAppearance: "none", MozAppearance: "none",
-                      background: "#fff", border: "1px solid #d0d4da", borderRadius: 10,
-                      padding: "10px 38px 10px 16px", fontSize: 15, fontWeight: 600, color: "#1a1a1a",
-                      cursor: "pointer", outline: "none",
-                    }}
-                  >
-                    {AXIS_OPTS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-                  </select>
-                  <ChevronDown size={18} color="#374151" style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }} />
                 </div>
+              </>
+            ) : (
+              /* ── UNLOCKED: jog controls ── */
+              <>
+                {/* axis + actual position */}
+                <div style={{ display: "flex", alignItems: "flex-start", marginTop: 10, flexShrink: 0 }}>
+                  <div style={{ position: "relative" }}>
+                    <select
+                      value={axis}
+                      onChange={(e) => setAxis(e.target.value)}
+                      style={{
+                        appearance: "none", WebkitAppearance: "none", MozAppearance: "none",
+                        background: "#fff", border: "1px solid #d0d4da", borderRadius: 10,
+                        padding: "10px 38px 10px 16px", fontSize: 15, fontWeight: 600, color: "#1a1a1a",
+                        cursor: "pointer", outline: "none",
+                      }}
+                    >
+                      {AXIS_OPTS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                    </select>
+                    <ChevronDown size={18} color="#374151" style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }} />
+                  </div>
 
-                <div style={{ marginLeft: "auto", textAlign: "right" }}>
-                  <div style={{ fontSize: 15, fontWeight: 600, color: "#374151", letterSpacing: "0.03em" }}>ACTUAL POSITIONS</div>
-                  <div style={{
-                    marginTop: 5, minWidth: 130, background: "#e8eaed", border: "1px solid #dadce0",
-                    borderRadius: 10, padding: "8px 14px", textAlign: "left",
-                  }}>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: "#1a1a1a" }}>{axis}</div>
-                    <div style={{ fontSize: 22, fontWeight: 600, color: "#6b7280", lineHeight: 1.1 }}>
-                      {plcLive && actual !== null ? actual.toFixed(1) : "--"}
+                  <div style={{ marginLeft: "auto", textAlign: "right" }}>
+                    <div style={{ fontSize: 15, fontWeight: 600, color: "#374151", letterSpacing: "0.03em" }}>ACTUAL POSITIONS</div>
+                    <div style={{
+                      marginTop: 5, minWidth: 130, background: "#e8eaed", border: "1px solid #dadce0",
+                      borderRadius: 10, padding: "8px 14px", textAlign: "left",
+                    }}>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: "#1a1a1a" }}>{axis}</div>
+                      <div style={{ fontSize: 22, fontWeight: 600, color: "#6b7280", lineHeight: 1.1 }}>
+                        {plcLive && actual !== null ? actual.toFixed(1) : "--"}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Controls: Door = vertical Open/Stop/Close stack; axes = d-pad */}
-              <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", padding: "4px 0" }}>
-                {axis === "Door" ? (
-                  <div style={{ flex: 1, minHeight: 0, display: "grid", gridTemplateRows: "1fr 1fr 1fr", gap: 12, maxWidth: 300, width: "100%", margin: "0 auto" }}>
-                    <ControlTile icon={<ArrowUp size={18} color="#111827" />} label="Open Door" jogTag="Door_Open_CMD" />
-                    <ControlTile icon={<Square size={16} color="#111827" fill="#111827" />} label="Stop" onTap={stopAll} />
-                    <ControlTile icon={<ArrowDown size={18} color="#111827" />} label="Close Door" jogTag="Door_Close_CMD" />
-                  </div>
-                ) : (
-                  <div style={{ flex: 1, minHeight: 0, display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gridTemplateRows: "1fr 1fr 1fr", gap: 12, maxWidth: 520, width: "100%", margin: "0 auto" }}>
-                    <div /><ControlTile gray={vActive} disabled={!vActive} icon={<ArrowUp size={18} color="#111827" />} label={cfg.up} jogTag={DIR[axis].fwd} /><div />
-                    <ControlTile gray={hActive} disabled={!hActive} icon={<ArrowLeft size={18} color="#111827" />} label={cfg.left} jogTag={DIR[axis].rev} />
-                    <ControlTile icon={<Square size={16} color="#111827" fill="#111827" />} label="Stop" onTap={stopAll} />
-                    <ControlTile gray={hActive} disabled={!hActive} icon={<ArrowRight size={18} color="#111827" />} label={cfg.right} jogTag={DIR[axis].fwd} />
-                    <div /><ControlTile gray={vActive} disabled={!vActive} icon={<ArrowDown size={18} color="#111827" />} label={cfg.down} jogTag={DIR[axis].rev} /><div />
-                  </div>
-                )}
-              </div>
+                {/* Controls: Door = vertical Open/Stop/Close stack; axes = d-pad */}
+                <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", padding: "4px 0" }}>
+                  {axis === "Door" ? (
+                    <div style={{ flex: 1, minHeight: 0, display: "grid", gridTemplateRows: "1fr 1fr 1fr", gap: 12, maxWidth: 300, width: "100%", margin: "0 auto" }}>
+                      <ControlTile icon={<ArrowUp size={18} color="#111827" />} label="Open Door" jogTag="Door_Open_CMD" />
+                      <ControlTile icon={<Square size={16} color="#111827" fill="#111827" />} label="Stop" onTap={stopAll} />
+                      <ControlTile icon={<ArrowDown size={18} color="#111827" />} label="Close Door" jogTag="Door_Close_CMD" />
+                    </div>
+                  ) : (
+                    <div style={{ flex: 1, minHeight: 0, display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gridTemplateRows: "1fr 1fr 1fr", gap: 12, maxWidth: 520, width: "100%", margin: "0 auto" }}>
+                      <div /><ControlTile gray={vActive} disabled={!vActive} icon={<ArrowUp size={18} color="#111827" />} label={cfg.up} jogTag={DIR[axis].fwd} /><div />
+                      <ControlTile gray={hActive} disabled={!hActive} icon={<ArrowLeft size={18} color="#111827" />} label={cfg.left} jogTag={DIR[axis].rev} />
+                      <ControlTile icon={<Square size={16} color="#111827" fill="#111827" />} label="Stop" onTap={stopAll} />
+                      <ControlTile gray={hActive} disabled={!hActive} icon={<ArrowRight size={18} color="#111827" />} label={cfg.right} jogTag={DIR[axis].fwd} />
+                      <div /><ControlTile gray={vActive} disabled={!vActive} icon={<ArrowDown size={18} color="#111827" />} label={cfg.down} jogTag={DIR[axis].rev} /><div />
+                    </div>
+                  )}
+                </div>
 
-              {/* footer */}
-              <div style={{ display: "flex", gap: 16, flexShrink: 0, marginTop: 6 }}>
-                <button
-                  onClick={sendHome}
-                  style={{ flex: 1, background: "#fff", border: "1px solid #d0d4da", borderRadius: 10, padding: "11px 0", fontSize: 16, fontWeight: 600, color: "#1a1a1a", cursor: "pointer" }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = "#f5f6f8"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = "#fff"; }}
-                >
-                  Send to Home
-                </button>
-                <button
-                  onClick={quitManual}
-                  style={{ flex: 1, background: "#db0000", border: "none", borderRadius: 10, padding: "11px 0", fontSize: 16, fontWeight: 700, color: "#fff", cursor: "pointer", boxShadow: "0 3px 10px rgba(219,0,0,0.28)" }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = "#b00000"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = "#db0000"; }}
-                >
-                  Quit Manual Mode
-                </button>
-              </div>
-            </div>
-
+                {/* footer */}
+                <div style={{ display: "flex", gap: 16, flexShrink: 0, marginTop: 6 }}>
+                  <button
+                    onClick={sendHome}
+                    style={{ flex: 1, background: "#fff", border: "1px solid #d0d4da", borderRadius: 10, padding: "11px 0", fontSize: 16, fontWeight: 600, color: "#1a1a1a", cursor: "pointer" }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = "#f5f6f8"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "#fff"; }}
+                  >
+                    Send to Home
+                  </button>
+                  <button
+                    onClick={quitManual}
+                    style={{ flex: 1, background: "#db0000", border: "none", borderRadius: 10, padding: "11px 0", fontSize: 16, fontWeight: 700, color: "#fff", cursor: "pointer", boxShadow: "0 3px 10px rgba(219,0,0,0.28)" }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = "#b00000"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "#db0000"; }}
+                  >
+                    Quit Manual Mode
+                  </button>
+                </div>
+              </>
+            )}
           </div>
-        )}
+
+        </div>
       </div>
     </DashboardShell>
   );
