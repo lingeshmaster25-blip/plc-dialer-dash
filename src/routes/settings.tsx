@@ -60,19 +60,19 @@ function Toggle({ on, onChange }: { on: boolean; onChange: (v: boolean) => void 
 function FieldCard({ label, placeholder, unit }: { label: string; placeholder: string; unit?: string }) {
   const [val, setVal] = useState("");
   return (
-    <div style={CARD}>
-      <div style={SECTION_LABEL}>{label}</div>
+    <div style={{ ...CARD, padding: "12px 16px" }}>
+      <div style={{ ...SECTION_LABEL, marginBottom: 7 }}>{label}</div>
       <div style={{ position: "relative" }}>
         <input
-          style={{ ...FIELD, paddingRight: unit ? 56 : 14 }}
+          style={{ ...FIELD, padding: "9px 12px", paddingRight: unit ? 70 : 12, fontSize: 14 }}
           placeholder={placeholder}
           value={val}
           onChange={(e) => setVal(e.target.value)}
         />
         {unit && (
           <span style={{
-            position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)",
-            fontSize: 13, color: "#9ca3af", pointerEvents: "none",
+            position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)",
+            fontSize: 12, color: "#9ca3af", pointerEvents: "none",
           }}>
             {unit}
           </span>
@@ -89,23 +89,23 @@ function MachineTab() {
   const [weightCheck, setWeightCheck] = useState(false);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16, flex: 1, minHeight: 0 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 10, flex: 1, minHeight: 0, overflow: "hidden" }}>
       {/* top row */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
         <FieldCard label="MACHINE ID"       placeholder="Enter Machine Name" />
         <FieldCard label="COLUMNS"          placeholder="Enter Columns"      unit="front / back" />
         <FieldCard label="TRAY CAPACITY"    placeholder="Enter Capacity"     unit="trays" />
       </div>
       {/* bottom row */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
         <FieldCard label="BAY OPENING HEIGHT" placeholder="Enter Machine Name" unit="mm" />
         <FieldCard label="MAX TRAY LOAD"      placeholder="Enter Columns"      unit="kg" />
         <FieldCard label="MAX BOXES / CYCLE"  placeholder="Enter Capacity"     unit="boxes" />
       </div>
 
       {/* Pick behaviour */}
-      <div style={{ border: "1px solid #e5e7eb", borderRadius: 12, padding: "18px 24px" }}>
-        <div style={{ fontSize: 17, fontWeight: 700, color: "#1a1a1a", marginBottom: 16 }}>Pick behaviour</div>
+      <div style={{ border: "1px solid #e5e7eb", borderRadius: 12, padding: "12px 20px" }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: "#1a1a1a", marginBottom: 8 }}>Pick behaviour</div>
         {[
           { label: "Consolidate across trays", sub: "Group up to 9 boxes from different trays into one batch", on: consolidate, set: setConsolidate },
           { label: "Put-to-light at bay",       sub: "Illuminate the target bin via PLC output",               on: putToLight,  set: setPutToLight  },
@@ -113,12 +113,12 @@ function MachineTab() {
         ].map((row, i, arr) => (
           <div key={row.label} style={{
             display: "flex", justifyContent: "space-between", alignItems: "center",
-            padding: "13px 0",
+            padding: "9px 0",
             borderBottom: i < arr.length - 1 ? "1px solid #f3f4f6" : "none",
           }}>
             <div>
-              <div style={{ fontSize: 15, fontWeight: 600, color: "#1f2937" }}>{row.label}</div>
-              <div style={{ fontSize: 13, color: "#9ca3af", marginTop: 2 }}>{row.sub}</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "#1f2937" }}>{row.label}</div>
+              <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 1 }}>{row.sub}</div>
             </div>
             <Toggle on={row.on} onChange={row.set} />
           </div>
