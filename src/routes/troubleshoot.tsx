@@ -53,7 +53,7 @@ const AXIS_OPTS: { value: string; label: string }[] = [
 // Which jog pair a selection drives (and highlights):
 //   "v" = Lift Up / Lift Down,  "h" = Move Left / Move Right.
 const ORIENT: Record<string, "v" | "h"> = {
-  X: "v", Y: "h", Z: "v", A: "h", B: "h", Door: "h",
+  X: "v", Y: "h", Z: "h", A: "h", B: "h", Door: "h",
 };
 
 function ControlTile({ icon, label, gray, disabled, jogTag, onTap }: { icon: React.ReactNode; label: string; gray?: boolean; disabled?: boolean; jogTag?: string; onTap?: () => void }) {
