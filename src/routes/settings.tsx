@@ -167,8 +167,8 @@ function PlcTab() {
       <div style={{ display: "flex", gap: 18, alignItems: "stretch" }}>
 
         {/* Left: 3 field cards in a grid */}
-        <div style={{ flex: 1, minWidth: 0, display: "grid", gridTemplateColumns: "1fr 1.4fr 1fr", gap: 18 }}>
-          <div style={{ ...CARD, padding: "22px 22px 28px" }}>
+        <div style={{ flex: 1, minWidth: 0, display: "grid", gridTemplateColumns: "1fr 1.4fr 1fr", gap: 18, alignItems: "start" }}>
+          <div style={{ ...CARD, padding: "16px 18px" }}>
             <div style={SECTION_LABEL}>PROTOCOL</div>
             <div style={{ position: "relative" }}>
               <select value={protocol} onChange={(e) => setProtocol(e.target.value)}
@@ -182,11 +182,11 @@ function PlcTab() {
               <ChevronDown size={16} color="#6b7280" style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }} />
             </div>
           </div>
-          <div style={{ ...CARD, padding: "22px 22px 28px" }}>
+          <div style={{ ...CARD, padding: "16px 18px" }}>
             <div style={SECTION_LABEL}>CONTROLLER IP</div>
             <input style={FIELD} placeholder="Enter IP Address" value={ip} onChange={(e) => setIp(e.target.value)} />
           </div>
-          <div style={{ ...CARD, padding: "22px 22px 28px" }}>
+          <div style={{ ...CARD, padding: "16px 18px" }}>
             <div style={SECTION_LABEL}>PORT</div>
             <input style={FIELD} placeholder="Enter Port Address" value={port} onChange={(e) => setPort(e.target.value)} />
           </div>
@@ -219,8 +219,8 @@ function PlcTab() {
         </div>
       </div>
 
-      {/* Tag map — full width below */}
-      <div style={{ ...CARD, flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
+      {/* Tag map — full width below, takes all remaining vertical space */}
+      <div style={{ ...CARD, flex: 1, minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden" }}>
         <div style={SECTION_LABEL}>TAG MAP</div>
         <div style={{ display: "grid", gridTemplateColumns: "1.8fr 80px 1.4fr 1fr" }}>
           <span style={TH}>TAG</span>
