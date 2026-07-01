@@ -75,6 +75,35 @@ export const TAGS: TagDef[] = [
   { name: "SelectedBin",         address: "MW14",      group: "Watch Values",     type: "int" },
   { name: "RackNo",              address: "MW16",      group: "Watch Values",     type: "int" },
   { name: "RackBin",             address: "MW18",      group: "Watch Values",     type: "int" },
+  // Rack Positions (DB11 "DB_Parameter")
+  { name: "Rack_pos_1",          address: "DB11.DBW0",  group: "Rack Positions",   type: "int" },
+  { name: "Rack_pos_2",          address: "DB11.DBW2",  group: "Rack Positions",   type: "int" },
+  { name: "Rack_pos_3",          address: "DB11.DBW4",  group: "Rack Positions",   type: "int" },
+  { name: "Rack_pos_4",          address: "DB11.DBW6",  group: "Rack Positions",   type: "int" },
+  { name: "Rack_pos_5",          address: "DB11.DBW8",  group: "Rack Positions",   type: "int" },
+  { name: "Rack_pos_6",          address: "DB11.DBW10", group: "Rack Positions",   type: "int" },
+  { name: "Rack_pos_7",          address: "DB11.DBW12", group: "Rack Positions",   type: "int" },
+  { name: "Rack_pos_8",          address: "DB11.DBW14", group: "Rack Positions",   type: "int" },
+  { name: "Rack_pos_9",          address: "DB11.DBW16", group: "Rack Positions",   type: "int" },
+  { name: "Rack_pos_10",         address: "DB11.DBW18", group: "Rack Positions",   type: "int" },
+  { name: "Rack_pos_11",         address: "DB11.DBW20", group: "Rack Positions",   type: "int" },
+  // Bin Positions (DB11 "DB_Parameter")
+  { name: "Bin_Pos_1",           address: "DB11.DBW22", group: "Bin Positions",    type: "int" },
+  { name: "Bin_Pos_2",           address: "DB11.DBW24", group: "Bin Positions",    type: "int" },
+  { name: "Bin_Pos_3",           address: "DB11.DBW26", group: "Bin Positions",    type: "int" },
+  { name: "Bin_Pos_4",           address: "DB11.DBW28", group: "Bin Positions",    type: "int" },
+  { name: "Bin_Pos_5",           address: "DB11.DBW30", group: "Bin Positions",    type: "int" },
+  // Axis Parameters (DB11 "DB_Parameter")
+  { name: "B_Home_Pos",          address: "DB11.DBW32", group: "Axis Parameters",  type: "int" },
+  { name: "B_Unload_RH_Pos",     address: "DB11.DBW34", group: "Axis Parameters",  type: "int" },
+  { name: "B_LH_Tray_Pos",       address: "DB11.DBW36", group: "Axis Parameters",  type: "int" },
+  { name: "Z_Home_Pos",          address: "DB11.DBW38", group: "Axis Parameters",  type: "int" },
+  { name: "Z_Lift_Step1",        address: "DB11.DBW40", group: "Axis Parameters",  type: "int" },
+  { name: "Z_Lift_Step2",        address: "DB11.DBW42", group: "Axis Parameters",  type: "int" },
+  { name: "A_Home",              address: "DB11.DBW44", group: "Axis Parameters",  type: "int" },
+  { name: "A_LH_Retrivel",       address: "DB11.DBW46", group: "Axis Parameters",  type: "int" },
+  { name: "A_RH_Retrivel",       address: "DB11.DBW48", group: "Axis Parameters",  type: "int" },
+  { name: "Y_Home",              address: "DB11.DBW50", group: "Axis Parameters",  type: "int" },
 ];
 
 export const TAG_GROUPS = Array.from(new Set(TAGS.map((t) => t.group)));
