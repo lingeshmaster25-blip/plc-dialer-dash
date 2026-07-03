@@ -9,6 +9,7 @@ export const TAGS: TagDef[] = [
   { name: "Reset_PB",            address: "M0.2",      group: "Force Buttons",    type: "bool" },
   { name: "M_Run",               address: "M0.5",      group: "Force Buttons",    type: "bool" },
   { name: "SideSelect",          address: "M0.6",      group: "Force Buttons",    type: "bool" },
+  { name: "Tray_Call_Button",    address: "M0.6",      group: "Force Buttons",    type: "bool" },
   { name: "Home_Button",         address: "M6.0",      group: "Force Buttons",    type: "bool" },
   { name: "H_run",               address: "M6.1",      group: "System",           type: "bool" },
   { name: "Over_load",           address: "M8.0",      group: "System",           type: "bool" },
