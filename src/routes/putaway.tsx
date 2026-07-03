@@ -1,7 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
 import { ChevronUp, ChevronDown, Minus, Plus, Upload, FileDown, CheckCircle2 } from "lucide-react";
-import * as XLSX from "xlsx";
 import { DashboardShell } from "@/components/DashboardShell";
 import { addPutaway, getBinUsage } from "@/lib/inventory-store";
 import { addOrder, type Priority } from "@/lib/orders-store";
@@ -26,6 +25,35 @@ const FIELD: React.CSSProperties = {
 /** Normalise an id to PREFIX + 3-digit number, e.g. "b1" -> "B001". */
 const BIN_MAX = 55;
 const TRAY_MAX = 11;
+
+/** Minimal CSV parser: handles quoted fields, commas, and CRLF/LF. Returns row objects keyed by header. */
+function parseCSV(text: string): Record<string, string>[] {
+  const rows: string[][] = [];
+  let cur: string[] = [];
+  let field = "";
+  let inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQuotes) {
+      if (c === '"') {
+        if (text[i + 1] === '"') { field += '"'; i++; } else inQuotes = false;
+      } else field += c;
+    } else if (c === '"') inQuotes = true;
+    else if (c === ",") { cur.push(field); field = ""; }
+    else if (c === "\n") { cur.push(field); rows.push(cur); cur = []; field = ""; }
+    else if (c !== "\r") field += c;
+  }
+  if (field !== "" || cur.length) { cur.push(field); rows.push(cur); }
+  if (rows.length === 0) return [];
+  const headers = rows[0].map((h) => h.trim());
+  return rows.slice(1)
+    .filter((r) => r.some((v) => v.trim() !== ""))
+    .map((r) => {
+      const obj: Record<string, string> = {};
+      headers.forEach((h, i) => { obj[h] = (r[i] ?? "").trim(); });
+      return obj;
+    });
+}
 
 function padId(prefix: "B" | "T", raw: string): string {
   const digits = raw.replace(/\D/g, "");
@@ -353,15 +381,13 @@ function PutawayPage() {
     setTimeout(() => skuRef.current?.focus(), 0);
   };
 
-  // ── Bulk upload: each spreadsheet row becomes a Queued order ──
+  // ── Bulk upload: each CSV row becomes a Queued order ──
   const onBulkFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = ""; // allow re-selecting the same file
     if (!file) return;
     try {
-      const wb = XLSX.read(await file.arrayBuffer(), { type: "array" });
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: "" });
+      const rows = parseCSV(await file.text());
       let created = 0;
       const skipped: string[] = [];
       rows.forEach((r, i) => {
@@ -384,19 +410,23 @@ function PutawayPage() {
       });
       setBulkResult({ created, skipped });
     } catch {
-      setBulkResult({ created: 0, skipped: ["Could not read the file — please use the template format."] });
+      setBulkResult({ created: 0, skipped: ["Could not read the file — please use the CSV template format."] });
     }
   };
 
   const downloadTemplate = () => {
-    const data = [
-      { SKU: "SKU-1001", Item: "Widget A", Bin: "B001", Qty: 10, Employee: "John", Priority: "High" },
-      { SKU: "SKU-1002", Item: "Widget B", Bin: "B002", Qty: 5, Employee: "John", Priority: "Medium" },
-    ];
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Orders");
-    XLSX.writeFile(wb, "putaway-orders-template.xlsx");
+    const csv = [
+      "SKU,Item,Bin,Qty,Employee,Priority",
+      "SKU-1001,Widget A,B001,10,John,High",
+      "SKU-1002,Widget B,B002,5,John,Medium",
+    ].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "putaway-orders-template.csv";
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -430,7 +460,7 @@ function PutawayPage() {
             >
               <Upload size={16} /> Bulk Upload
             </button>
-            <input ref={bulkRef} type="file" accept=".xlsx,.xls,.csv" style={{ display: "none" }} onChange={onBulkFile} />
+            <input ref={bulkRef} type="file" accept=".csv,.txt" style={{ display: "none" }} onChange={onBulkFile} />
           </div>
         </div>
         <div style={{ height: 1, background: "#e5e7eb", margin: "11px 0 14px", flexShrink: 0 }} />
