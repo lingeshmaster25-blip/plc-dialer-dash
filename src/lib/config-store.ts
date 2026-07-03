@@ -10,13 +10,13 @@ export type AppConfig = {
 
 export const DEFAULT_CONFIG: AppConfig = {
   binCapacity: 100,
-  totalBins: 36,
-  totalTrays: 17,
+  totalBins: 55,
+  totalTrays: 11,
   lowStockThreshold: 10,
   staleOrderMins: 2,
 };
 
-const KEY = "trilo.config.v1";
+const KEY = "trilo.config.v2";
 
 function load(): AppConfig {
   try {
