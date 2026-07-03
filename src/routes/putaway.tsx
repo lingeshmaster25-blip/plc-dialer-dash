@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ChevronUp, ChevronDown, Minus, Plus } from "lucide-react";
 import { DashboardShell } from "@/components/DashboardShell";
 import { addPutaway, getBinUsage } from "@/lib/inventory-store";
@@ -208,6 +208,11 @@ function PutawayPage() {
 
   const isMultiBin = storingType === "Bin" && partition === "Multi";
 
+  // Barcode scanner acts as a keyboard: keep the SKU field focused so a scan lands there.
+  const skuRef = useRef<HTMLInputElement>(null);
+  const qtyRef = useRef<HTMLInputElement>(null);
+  useEffect(() => { skuRef.current?.focus(); }, []);
+
   // Bin ids selected in the preview (B1, B2, …), reflected into the BIN ID field.
   const selectedBins = Array.from(selected)
     .map(binLabelFromId)
@@ -288,6 +293,7 @@ function PutawayPage() {
     setSegCols(2);
     setError(false);
     setSelected(new Set());
+    setTimeout(() => skuRef.current?.focus(), 0);
   };
 
   return (
@@ -316,13 +322,16 @@ function PutawayPage() {
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
               <div>
                 <label style={LABEL}>SKUs</label>
-                <input style={FIELD} placeholder="Enter SKU or Scan SKU"
-                  value={sku} onChange={(e) => setSku(e.target.value)} />
+                <input ref={skuRef} style={FIELD} placeholder="Enter SKU or Scan SKU"
+                  value={sku}
+                  onChange={(e) => setSku(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); qtyRef.current?.focus(); } }} />
               </div>
               <div>
                 <label style={LABEL}>Quantity</label>
                 <div style={{ position: "relative" }}>
                   <input
+                    ref={qtyRef}
                     style={FIELD}
                     type="text"
                     inputMode="numeric"
