@@ -219,7 +219,9 @@ function PutawayPage() {
     .filter((x): x is string => x !== null);
 
   useEffect(() => {
-    if (selectedBins.length > 0) setBinId(selectedBins.join(" "));
+    // Reflect the current preview selection into the BIN ID field,
+    // and clear it when every bin is deselected.
+    setBinId(selectedBins.join(" "));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected]);
 
