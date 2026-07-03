@@ -1,8 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
-import { ChevronUp, ChevronDown, Minus, Plus } from "lucide-react";
+import { ChevronUp, ChevronDown, Minus, Plus, Upload, FileDown, CheckCircle2 } from "lucide-react";
+import * as XLSX from "xlsx";
 import { DashboardShell } from "@/components/DashboardShell";
 import { addPutaway, getBinUsage } from "@/lib/inventory-store";
+import { addOrder, type Priority } from "@/lib/orders-store";
 import { useConfig } from "@/lib/config-store";
 
 export const Route = createFileRoute("/putaway")({
@@ -44,6 +46,26 @@ function binLabelFromId(id: string): string | null {
   const m = id.match(/-bin-(\d+)$/);
   if (m) return `B${Number(m[1]) + 1}`;
   return null;
+}
+
+/** Parse the TRAY ID field (space/comma separated) into distinct formatted trays. */
+function parseTrays(raw: string): string[] {
+  const out: string[] = [];
+  for (const part of raw.split(/[\s,]+/)) {
+    const id = padId("T", part);
+    if (id && !out.includes(id)) out.push(id);
+  }
+  return out;
+}
+
+/** Map a preview-cell id to its tray number (tray-Tray1 or Tray1-bin-N). */
+function trayNumFromId(id: string): number | null {
+  let trayPart: string | null = null;
+  if (id.startsWith("tray-")) trayPart = id.slice(5);
+  else if (id.includes("-bin-")) trayPart = id.split("-bin-")[0];
+  if (!trayPart) return null;
+  const m = trayPart.match(/(\d+)/);
+  return m ? Number(m[1]) : null;
 }
 
 function Toggle({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
@@ -192,6 +214,7 @@ function SegmentGrid({ rows, cols, selected, onToggle }: {
 
 function PutawayPage() {
   const cfg = useConfig();
+  const navigate = useNavigate();
   const [storingType, setStoringType] = useState<"Tray" | "Bin" | null>(null);
   const [partition, setPartition] = useState<"Single" | "Multi" | null>(null);
   const [qty, setQty] = useState<number>(0);
@@ -199,6 +222,9 @@ function PutawayPage() {
   const [skuDesc, setSkuDesc] = useState("");
   const [binId, setBinId] = useState("");
   const [trayId, setTrayId] = useState("");
+  const [multiTray, setMultiTray] = useState<number | null>(null);
+  const bulkRef = useRef<HTMLInputElement>(null);
+  const [bulkResult, setBulkResult] = useState<null | { created: number; skipped: string[] }>(null);
   const [segRows, setSegRows] = useState(2);
   const [segCols, setSegCols] = useState(2);
   const [error, setError] = useState(false);
@@ -225,6 +251,18 @@ function PutawayPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected]);
 
+  // Tray(s) that the selected cells belong to, reflected into the TRAY ID field.
+  const selectedTrays = Array.from(
+    new Set(Array.from(selected).map(trayNumFromId).filter((n): n is number => n !== null))
+  ).sort((a, b) => a - b).map((n) => padId("T", String(n)));
+
+  useEffect(() => {
+    // Segments (Bin + Multi) carry no tray, so leave TRAY ID manual there.
+    if (isMultiBin) return;
+    setTrayId(selectedTrays.join(" "));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected, isMultiBin]);
+
   const toggleSeg = (id: string) => {
     setSelected((prev) => {
       const next = new Set(prev);
@@ -246,16 +284,16 @@ function PutawayPage() {
   };
 
   const binList = parseBins(binId);
-  const trayFmt = padId("T", trayId);
+  const trayList = parseTrays(trayId);
 
   const isComplete =
     sku.trim() !== "" && qty > 0 && skuDesc.trim() !== "" &&
     storingType !== null && partition !== null &&
-    binList.length > 0 && trayFmt !== "";
+    binList.length > 0 && trayList.length > 0;
 
   /** Write a record per bin and show the success modal. */
   const commitPutaway = () => {
-    const tray = padId("T", trayId);
+    const tray = parseTrays(trayId).join(", ");
     parseBins(binId).forEach((b) => {
       addPutaway({
         sku, description: skuDesc, qty,
@@ -291,6 +329,7 @@ function PutawayPage() {
     setPartition(null);
     setBinId("");
     setTrayId("");
+    setMultiTray(null);
     setSegRows(2);
     setSegCols(2);
     setError(false);
@@ -298,17 +337,86 @@ function PutawayPage() {
     setTimeout(() => skuRef.current?.focus(), 0);
   };
 
+  // ── Bulk upload: each spreadsheet row becomes a Queued order ──
+  const onBulkFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // allow re-selecting the same file
+    if (!file) return;
+    try {
+      const wb = XLSX.read(await file.arrayBuffer(), { type: "array" });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: "" });
+      let created = 0;
+      const skipped: string[] = [];
+      rows.forEach((r, i) => {
+        const pick = (...names: string[]) => {
+          for (const key of Object.keys(r)) {
+            if (names.includes(key.trim().toLowerCase())) return String(r[key] ?? "").trim();
+          }
+          return "";
+        };
+        const sku = pick("sku");
+        const item = pick("item", "description", "name", "product");
+        const bin = pick("bin", "bin id", "binid");
+        const qty = Number(pick("qty", "quantity")) || 0;
+        const emp = pick("employee", "emp", "operator") || "—";
+        const pr = pick("priority").toLowerCase();
+        const priority: Priority = pr.startsWith("h") ? "High" : pr.startsWith("l") ? "Low" : "Medium";
+        if (!sku || qty <= 0) { skipped.push(`Row ${i + 2}`); return; }
+        addOrder(emp, priority, [{ sku, item, bin, qty }]);
+        created++;
+      });
+      setBulkResult({ created, skipped });
+    } catch {
+      setBulkResult({ created: 0, skipped: ["Could not read the file — please use the template format."] });
+    }
+  };
+
+  const downloadTemplate = () => {
+    const data = [
+      { SKU: "SKU-1001", Item: "Widget A", Bin: "B001", Qty: 10, Employee: "John", Priority: "High" },
+      { SKU: "SKU-1002", Item: "Widget B", Bin: "B002", Qty: 5, Employee: "John", Priority: "Medium" },
+    ];
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Orders");
+    XLSX.writeFile(wb, "putaway-orders-template.xlsx");
+  };
+
   return (
     <DashboardShell>
       <div style={{ flex: 1, minWidth: 0, overflow: "hidden", padding: "18px 32px", display: "flex", flexDirection: "column", position: "relative" }}>
 
         {/* Header */}
-        <h1 style={{ fontSize: 28, fontWeight: 800, color: "#1a1a1a", margin: 0, letterSpacing: "-0.5px" }}>
-          Putaway Overview
-        </h1>
-        <p style={{ fontSize: 14, color: "#6b7280", margin: "3px 0 0" }}>
-          Store Items into the module
-        </p>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+          <div>
+            <h1 style={{ fontSize: 28, fontWeight: 800, color: "#1a1a1a", margin: 0, letterSpacing: "-0.5px" }}>
+              Putaway Overview
+            </h1>
+            <p style={{ fontSize: 14, color: "#6b7280", margin: "3px 0 0" }}>
+              Store Items into the module
+            </p>
+          </div>
+          <div style={{ display: "flex", gap: 10, alignItems: "center", flexShrink: 0 }}>
+            <button
+              onClick={downloadTemplate}
+              style={{ display: "inline-flex", alignItems: "center", gap: 7, background: "#fff", border: "1px solid #d0d4da", borderRadius: 8, padding: "9px 14px", fontSize: 13.5, fontWeight: 600, color: "#374151", cursor: "pointer" }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "#f5f6f8"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "#fff"; }}
+            >
+              <FileDown size={16} /> Template
+            </button>
+            <button
+              onClick={() => bulkRef.current?.click()}
+              style={{ display: "inline-flex", alignItems: "center", gap: 7, background: "#0058f1", border: "none", borderRadius: 8, padding: "9px 16px", fontSize: 13.5, fontWeight: 700, color: "#fff", cursor: "pointer", boxShadow: "0 2px 8px rgba(0,88,241,0.28)" }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "#0049c9"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "#0058f1"; }}
+            >
+              <Upload size={16} /> Bulk Upload
+            </button>
+            <input ref={bulkRef} type="file" accept=".xlsx,.xls,.csv" style={{ display: "none" }} onChange={onBulkFile} />
+          </div>
+        </div>
         <div style={{ height: 1, background: "#e5e7eb", margin: "11px 0 14px", flexShrink: 0 }} />
 
         {/* Two columns: form | preview */}
@@ -395,8 +503,8 @@ function PutawayPage() {
                 <label style={LABEL}>TRAY ID</label>
                 <input style={FIELD} placeholder="T001"
                   value={trayId}
-                  onChange={(e) => setTrayId(e.target.value.replace(/[^tT0-9]/g, "").toUpperCase())}
-                  onBlur={() => setTrayId(padId("T", trayId))} />
+                  onChange={(e) => setTrayId(e.target.value.replace(/[^tT0-9,\s]/g, "").toUpperCase())}
+                  onBlur={() => setTrayId(parseTrays(trayId).join(", "))} />
               </div>
             </div>
 
@@ -462,7 +570,34 @@ function PutawayPage() {
             </div>
 
             {isMultiBin ? (
-              <SegmentGrid rows={segRows} cols={segCols} selected={selected} onToggle={toggleSeg} />
+              <>
+                <div style={{ marginTop: 12, display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: "#374151" }}>Tray</span>
+                  <div style={{ position: "relative" }}>
+                    <select
+                      value={multiTray ?? ""}
+                      onChange={(e) => {
+                        const v = e.target.value ? Number(e.target.value) : null;
+                        setMultiTray(v);
+                        setTrayId(v ? padId("T", String(v)) : "");
+                      }}
+                      style={{
+                        appearance: "none", WebkitAppearance: "none", MozAppearance: "none",
+                        background: "#fff", border: "1px solid #d0d4da", borderRadius: 8,
+                        padding: "8px 34px 8px 12px", fontSize: 14, fontWeight: 600, color: "#1a1a1a",
+                        cursor: "pointer", outline: "none",
+                      }}
+                    >
+                      <option value="">Select tray</option>
+                      {Array.from({ length: cfg.totalTrays }).map((_, i) => (
+                        <option key={i} value={i + 1}>Tray {i + 1}</option>
+                      ))}
+                    </select>
+                    <ChevronDown size={16} color="#374151" style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }} />
+                  </div>
+                </div>
+                <SegmentGrid rows={segRows} cols={segCols} selected={selected} onToggle={toggleSeg} />
+              </>
             ) : storingType === "Bin" && partition === "Single" ? (
               <BinTrays
                 binsPerTray={4}
@@ -570,6 +705,52 @@ function PutawayPage() {
               >
                 Okay
               </button>
+            </div>
+          </div>
+        )}
+
+        {bulkResult && (
+          <div style={{
+            position: "absolute", inset: 0, zIndex: 60,
+            background: "rgba(255,255,255,0.42)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            <div style={{
+              width: "min(460px, 90%)", background: "#fff", borderRadius: 16, border: "1px solid #e5e7eb",
+              boxShadow: "0 20px 60px rgba(16,24,40,0.25)", padding: "28px 32px", textAlign: "center",
+            }}>
+              <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
+                <CheckCircle2 size={52} color="#28954b" />
+              </div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: "#1a1a1a" }}>
+                {bulkResult.created} {bulkResult.created === 1 ? "order" : "orders"} created
+              </div>
+              <div style={{ fontSize: 14, color: "#6b7280", marginTop: 6 }}>
+                {bulkResult.created > 0
+                  ? "Added to the Orders queue."
+                  : "No orders were created."}
+              </div>
+              {bulkResult.skipped.length > 0 && (
+                <div style={{ fontSize: 13, color: "#b45309", background: "#fff7ed", border: "1px solid #fed7aa", borderRadius: 8, padding: "8px 12px", marginTop: 14 }}>
+                  Skipped {bulkResult.skipped.length}: {bulkResult.skipped.join(", ")}
+                </div>
+              )}
+              <div style={{ display: "flex", gap: 12, justifyContent: "center", marginTop: 22 }}>
+                <button
+                  onClick={() => setBulkResult(null)}
+                  style={{ background: "#fff", border: "1px solid #d0d4da", borderRadius: 10, padding: "12px 26px", fontSize: 15, fontWeight: 600, color: "#374151", cursor: "pointer" }}
+                >
+                  Close
+                </button>
+                {bulkResult.created > 0 && (
+                  <button
+                    onClick={() => { setBulkResult(null); navigate({ to: "/orders" }); }}
+                    style={{ background: "#0058f1", border: "none", borderRadius: 10, padding: "12px 26px", fontSize: 15, fontWeight: 700, color: "#fff", cursor: "pointer", boxShadow: "0 3px 10px rgba(0,88,241,0.3)" }}
+                  >
+                    View Orders
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         )}
