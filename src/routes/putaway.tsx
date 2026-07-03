@@ -24,10 +24,16 @@ const FIELD: React.CSSProperties = {
 } as React.CSSProperties;
 
 /** Normalise an id to PREFIX + 3-digit number, e.g. "b1" -> "B001". */
+const BIN_MAX = 55;
+const TRAY_MAX = 11;
+
 function padId(prefix: "B" | "T", raw: string): string {
   const digits = raw.replace(/\D/g, "");
   if (!digits) return "";
-  return prefix + digits.padStart(3, "0");
+  const n = Number(digits);
+  const max = prefix === "B" ? BIN_MAX : TRAY_MAX;
+  if (n < 1 || n > max) return ""; // out of range → rejected
+  return prefix + String(n).padStart(3, "0");
 }
 
 /** Parse the BIN ID field (space/comma separated) into distinct formatted bins. */
@@ -266,7 +272,17 @@ function PutawayPage() {
   const toggleSeg = (id: string) => {
     setSelected((prev) => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) { next.delete(id); return next; }
+      // Only 1 tray can be called per cycle → tray selection is single.
+      if (id.startsWith("tray-")) {
+        Array.from(next).forEach((x) => { if (x.startsWith("tray-")) next.delete(x); });
+        next.add(id);
+        return next;
+      }
+      // Only 5 bins can be called per cycle.
+      const binCount = Array.from(next).filter((x) => !x.startsWith("tray-")).length;
+      if (binCount >= 5) return prev;
+      next.add(id);
       return next;
     });
   };
