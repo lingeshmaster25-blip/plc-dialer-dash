@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChevronUp, ChevronDown, Minus, Plus } from "lucide-react";
 import { DashboardShell } from "@/components/DashboardShell";
 import { addPutaway, getBinUsage } from "@/lib/inventory-store";
@@ -36,6 +36,14 @@ function parseBins(raw: string): string[] {
     if (id && !out.includes(id)) out.push(id);
   }
   return out;
+}
+
+/** Map an internal preview-cell id (seg-N or Tray-bin-N) to its bin label (B1, B2, …). */
+function binLabelFromId(id: string): string | null {
+  if (id.startsWith("seg-")) return `B${Number(id.slice(4)) + 1}`;
+  const m = id.match(/-bin-(\d+)$/);
+  if (m) return `B${Number(m[1]) + 1}`;
+  return null;
 }
 
 function Toggle({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
@@ -199,6 +207,16 @@ function PutawayPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const isMultiBin = storingType === "Bin" && partition === "Multi";
+
+  // Bin ids selected in the preview (B1, B2, …), reflected into the BIN ID field.
+  const selectedBins = Array.from(selected)
+    .map(binLabelFromId)
+    .filter((x): x is string => x !== null);
+
+  useEffect(() => {
+    if (selectedBins.length > 0) setBinId(selectedBins.join(" "));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected]);
 
   const toggleSeg = (id: string) => {
     setSelected((prev) => {
@@ -415,7 +433,22 @@ function PutawayPage() {
             flex: 1, minWidth: 0, border: "1px solid #d0d4da", borderRadius: 10,
             padding: "18px 22px", display: "flex", flexDirection: "column",
           }}>
-            <span style={{ fontSize: 19, fontWeight: 600, color: "#1a1a1a" }}>Storage Preview</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+              <span style={{ fontSize: 19, fontWeight: 600, color: "#1a1a1a" }}>Storage Preview</span>
+              <span style={{
+                marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 8,
+                fontSize: 13, fontWeight: 600, color: "#374151",
+              }}>
+                Selected Bin:
+                <span style={{
+                  background: selectedBins.length ? "#b5f09c" : "#eef0f3",
+                  color: selectedBins.length ? "#166534" : "#9ca3af",
+                  borderRadius: 999, padding: "3px 12px", fontWeight: 700,
+                }}>
+                  {selectedBins.length ? selectedBins.join(", ") : "None"}
+                </span>
+              </span>
+            </div>
 
             {isMultiBin ? (
               <SegmentGrid rows={segRows} cols={segCols} selected={selected} onToggle={toggleSeg} />
