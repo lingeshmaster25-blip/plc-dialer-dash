@@ -493,7 +493,7 @@ function PutawayPage() {
             >
               <Upload size={16} /> Bulk Upload
             </button>
-            <input ref={bulkRef} type="file" accept=".csv,.txt" style={{ display: "none" }} onChange={onBulkFile} />
+            <input ref={bulkRef} type="file" accept=".csv,.txt,.xlsx,.xls,.xlsm" style={{ display: "none" }} onChange={onBulkFile} />
           </div>
         </div>
         <div style={{ height: 1, background: "#e5e7eb", margin: "11px 0 14px", flexShrink: 0 }} />
