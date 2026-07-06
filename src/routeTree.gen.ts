@@ -10,16 +10,24 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TroubleshootRouteImport } from './routes/troubleshoot'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as PutawayRouteImport } from './routes/putaway'
 import { Route as PicklistRouteImport } from './routes/picklist'
 import { Route as OrdersRouteImport } from './routes/orders'
 import { Route as OrderNewRouteImport } from './routes/order-new'
+import { Route as MaintenanceRouteImport } from './routes/maintenance'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
 
 const TroubleshootRoute = TroubleshootRouteImport.update({
   id: '/troubleshoot',
   path: '/troubleshoot',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SearchRoute = SearchRouteImport.update({
@@ -47,6 +55,16 @@ const OrderNewRoute = OrderNewRouteImport.update({
   path: '/order-new',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MaintenanceRoute = MaintenanceRouteImport.update({
+  id: '/maintenance',
+  path: '/maintenance',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -55,69 +73,90 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/maintenance': typeof MaintenanceRoute
   '/order-new': typeof OrderNewRoute
   '/orders': typeof OrdersRoute
   '/picklist': typeof PicklistRoute
   '/putaway': typeof PutawayRoute
   '/search': typeof SearchRoute
+  '/settings': typeof SettingsRoute
   '/troubleshoot': typeof TroubleshootRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/maintenance': typeof MaintenanceRoute
   '/order-new': typeof OrderNewRoute
   '/orders': typeof OrdersRoute
   '/picklist': typeof PicklistRoute
   '/putaway': typeof PutawayRoute
   '/search': typeof SearchRoute
+  '/settings': typeof SettingsRoute
   '/troubleshoot': typeof TroubleshootRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/maintenance': typeof MaintenanceRoute
   '/order-new': typeof OrderNewRoute
   '/orders': typeof OrdersRoute
   '/picklist': typeof PicklistRoute
   '/putaway': typeof PutawayRoute
   '/search': typeof SearchRoute
+  '/settings': typeof SettingsRoute
   '/troubleshoot': typeof TroubleshootRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/login'
+    | '/maintenance'
     | '/order-new'
     | '/orders'
     | '/picklist'
     | '/putaway'
     | '/search'
+    | '/settings'
     | '/troubleshoot'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/login'
+    | '/maintenance'
     | '/order-new'
     | '/orders'
     | '/picklist'
     | '/putaway'
     | '/search'
+    | '/settings'
     | '/troubleshoot'
   id:
     | '__root__'
     | '/'
+    | '/login'
+    | '/maintenance'
     | '/order-new'
     | '/orders'
     | '/picklist'
     | '/putaway'
     | '/search'
+    | '/settings'
     | '/troubleshoot'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  LoginRoute: typeof LoginRoute
+  MaintenanceRoute: typeof MaintenanceRoute
   OrderNewRoute: typeof OrderNewRoute
   OrdersRoute: typeof OrdersRoute
   PicklistRoute: typeof PicklistRoute
   PutawayRoute: typeof PutawayRoute
   SearchRoute: typeof SearchRoute
+  SettingsRoute: typeof SettingsRoute
   TroubleshootRoute: typeof TroubleshootRoute
 }
 
@@ -128,6 +167,13 @@ declare module '@tanstack/react-router' {
       path: '/troubleshoot'
       fullPath: '/troubleshoot'
       preLoaderRoute: typeof TroubleshootRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/search': {
@@ -165,6 +211,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OrderNewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/maintenance': {
+      id: '/maintenance'
+      path: '/maintenance'
+      fullPath: '/maintenance'
+      preLoaderRoute: typeof MaintenanceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -177,13 +237,26 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  LoginRoute: LoginRoute,
+  MaintenanceRoute: MaintenanceRoute,
   OrderNewRoute: OrderNewRoute,
   OrdersRoute: OrdersRoute,
   PicklistRoute: PicklistRoute,
   PutawayRoute: PutawayRoute,
   SearchRoute: SearchRoute,
+  SettingsRoute: SettingsRoute,
   TroubleshootRoute: TroubleshootRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

@@ -1,6 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
 import { ChevronUp, ChevronDown, Minus, Plus, Upload, FileDown, CheckCircle2 } from "lucide-react";
+import * as XLSX from "xlsx";
+
 import { DashboardShell } from "@/components/DashboardShell";
 import { addPutaway, getBinUsage } from "@/lib/inventory-store";
 import { addOrder, type Priority } from "@/lib/orders-store";
@@ -54,6 +56,30 @@ function parseCSV(text: string): Record<string, string>[] {
       return obj;
     });
 }
+
+/** Convert an Excel workbook (first sheet) into the same row-object shape as parseCSV. */
+function parseExcel(buffer: ArrayBuffer): Record<string, string>[] {
+  const data = new Uint8Array(buffer);
+  const workbook = XLSX.read(data, { type: "array" });
+  const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+  if (!firstSheet) return [];
+  const rows = XLSX.utils.sheet_to_json<string[]>(firstSheet, { header: 1, defval: "" });
+  if (rows.length === 0) return [];
+  const headers = rows[0].map((h) => String(h ?? "").trim());
+  return rows.slice(1)
+    .filter((r) => r.some((v) => String(v ?? "").trim() !== ""))
+    .map((r) => {
+      const obj: Record<string, string> = {};
+      headers.forEach((h, i) => { obj[h] = String(r[i] ?? "").trim(); });
+      return obj;
+    });
+}
+
+const isExcelFile = (file: File) => {
+  const name = file.name.toLowerCase();
+  return name.endsWith(".xlsx") || name.endsWith(".xls") || name.endsWith(".xlsm");
+};
+
 
 function padId(prefix: "B" | "T", raw: string): string {
   const digits = raw.replace(/\D/g, "");
@@ -381,13 +407,19 @@ function PutawayPage() {
     setTimeout(() => skuRef.current?.focus(), 0);
   };
 
-  // ── Bulk upload: each CSV row becomes a Queued order ──
+  // ── Bulk upload: each row becomes a Queued order. Supports CSV, TXT, and Excel files. ──
   const onBulkFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = ""; // allow re-selecting the same file
     if (!file) return;
     try {
-      const rows = parseCSV(await file.text());
+      let rows: Record<string, string>[];
+      if (isExcelFile(file)) {
+        const buffer = await file.arrayBuffer();
+        rows = parseExcel(buffer);
+      } else {
+        rows = parseCSV(await file.text());
+      }
       let created = 0;
       const skipped: string[] = [];
       rows.forEach((r, i) => {
@@ -410,9 +442,10 @@ function PutawayPage() {
       });
       setBulkResult({ created, skipped });
     } catch {
-      setBulkResult({ created: 0, skipped: ["Could not read the file — please use the CSV template format."] });
+      setBulkResult({ created: 0, skipped: ["Could not read the file — please use the CSV or Excel template format."] });
     }
   };
+
 
   const downloadTemplate = () => {
     const csv = [
@@ -460,7 +493,7 @@ function PutawayPage() {
             >
               <Upload size={16} /> Bulk Upload
             </button>
-            <input ref={bulkRef} type="file" accept=".csv,.txt" style={{ display: "none" }} onChange={onBulkFile} />
+            <input ref={bulkRef} type="file" accept=".csv,.txt,.xlsx,.xls,.xlsm" style={{ display: "none" }} onChange={onBulkFile} />
           </div>
         </div>
         <div style={{ height: 1, background: "#e5e7eb", margin: "11px 0 14px", flexShrink: 0 }} />
