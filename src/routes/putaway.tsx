@@ -1,6 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
 import { ChevronUp, ChevronDown, Minus, Plus, Upload, FileDown, CheckCircle2 } from "lucide-react";
+import * as XLSX from "xlsx";
+
 import { DashboardShell } from "@/components/DashboardShell";
 import { addPutaway, getBinUsage } from "@/lib/inventory-store";
 import { addOrder, type Priority } from "@/lib/orders-store";
