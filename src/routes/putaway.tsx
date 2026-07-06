@@ -407,13 +407,19 @@ function PutawayPage() {
     setTimeout(() => skuRef.current?.focus(), 0);
   };
 
-  // ── Bulk upload: each CSV row becomes a Queued order ──
+  // ── Bulk upload: each row becomes a Queued order. Supports CSV, TXT, and Excel files. ──
   const onBulkFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = ""; // allow re-selecting the same file
     if (!file) return;
     try {
-      const rows = parseCSV(await file.text());
+      let rows: Record<string, string>[];
+      if (isExcelFile(file)) {
+        const buffer = await file.arrayBuffer();
+        rows = parseExcel(buffer);
+      } else {
+        rows = parseCSV(await file.text());
+      }
       let created = 0;
       const skipped: string[] = [];
       rows.forEach((r, i) => {
@@ -436,9 +442,10 @@ function PutawayPage() {
       });
       setBulkResult({ created, skipped });
     } catch {
-      setBulkResult({ created: 0, skipped: ["Could not read the file — please use the CSV template format."] });
+      setBulkResult({ created: 0, skipped: ["Could not read the file — please use the CSV or Excel template format."] });
     }
   };
+
 
   const downloadTemplate = () => {
     const csv = [
