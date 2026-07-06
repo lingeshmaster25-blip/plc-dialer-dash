@@ -57,6 +57,30 @@ function parseCSV(text: string): Record<string, string>[] {
     });
 }
 
+/** Convert an Excel workbook (first sheet) into the same row-object shape as parseCSV. */
+function parseExcel(buffer: ArrayBuffer): Record<string, string>[] {
+  const data = new Uint8Array(buffer);
+  const workbook = XLSX.read(data, { type: "array" });
+  const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+  if (!firstSheet) return [];
+  const rows = XLSX.utils.sheet_to_json<string[]>(firstSheet, { header: 1, defval: "" });
+  if (rows.length === 0) return [];
+  const headers = rows[0].map((h) => String(h ?? "").trim());
+  return rows.slice(1)
+    .filter((r) => r.some((v) => String(v ?? "").trim() !== ""))
+    .map((r) => {
+      const obj: Record<string, string> = {};
+      headers.forEach((h, i) => { obj[h] = String(r[i] ?? "").trim(); });
+      return obj;
+    });
+}
+
+const isExcelFile = (file: File) => {
+  const name = file.name.toLowerCase();
+  return name.endsWith(".xlsx") || name.endsWith(".xls") || name.endsWith(".xlsm");
+};
+
+
 function padId(prefix: "B" | "T", raw: string): string {
   const digits = raw.replace(/\D/g, "");
   if (!digits) return "";
