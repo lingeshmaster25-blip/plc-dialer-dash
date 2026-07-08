@@ -357,7 +357,14 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           <div style={{ height: 200, flexShrink: 0, display: "flex", flexDirection: "column", background: "#fff", borderRadius: 10, padding: "16px 18px", border: "1px solid #edeff2", boxShadow: CARD_SHADOW }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, flexShrink: 0 }}>
               <span style={{ fontWeight: 700, fontSize: 13, color: "#111827", letterSpacing: "0.6px" }}>RECENT ACTIVITY</span>
-              <span style={{ color: "#2563eb", fontSize: 12.5, cursor: "pointer", fontWeight: 600 }}>View all activity</span>
+              <span
+                onClick={() => navigate({ to: "/orders" })}
+                style={{ color: "#2563eb", fontSize: 12.5, cursor: "pointer", fontWeight: 600 }}
+                onMouseEnter={(e) => { e.currentTarget.style.textDecoration = "underline"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.textDecoration = "none"; }}
+              >
+                View all activity
+              </span>
             </div>
             <div style={{ flex: 1, minHeight: 0, overflowY: "auto", display: "flex", flexDirection: "column", gap: 11 }}>
               {activity.length === 0 ? (
