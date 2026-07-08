@@ -6,7 +6,7 @@ import { useLowStock } from "@/lib/inventory-store";
 import {
   Bell, Clock, Wifi, User, Home, Upload, Download, Package,
   Search, AlertTriangle, Settings, CheckCircle2,
-  Truck, ClipboardList, AlertCircle, X,
+  Truck, ClipboardList, AlertCircle, X, LogOut,
 } from "lucide-react";
 
 // `to` is the route each button navigates to. Only "/" and "/putaway"
@@ -302,6 +302,20 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                       Open Manual Control
                     </button>
                   </div>
+                  <div style={{ borderTop: "1px solid #eceef1" }}>
+                    <button
+                      onClick={() => {
+                        setProfileOpen(false);
+                        try { localStorage.removeItem("trilo.auth"); } catch { /* ignore */ }
+                        navigate({ to: "/login" });
+                      }}
+                      style={{ width: "100%", textAlign: "left", background: "none", border: "none", cursor: "pointer", padding: "12px 16px", fontSize: 13.5, fontWeight: 700, color: "#db0000", display: "flex", alignItems: "center", gap: 9 }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = "#fff5f5"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}>
+                      <LogOut size={16} color="#db0000" strokeWidth={2.2} />
+                      Log out
+                    </button>
+                  </div>
                 </div>
               </>
             )}
@@ -363,7 +377,14 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", background: "#fff", borderRadius: 10, padding: "16px 18px", border: "1px solid #edeff2", boxShadow: CARD_SHADOW }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10, flexShrink: 0 }}>
               <span style={{ fontWeight: 700, fontSize: 13, color: "#111827", letterSpacing: "0.6px" }}>INVENTORY OVERVIEW</span>
-              <span style={{ color: "#2563eb", fontSize: 12.5, cursor: "pointer", fontWeight: 600 }}>View all</span>
+              <span
+                onClick={() => navigate({ to: "/search" })}
+                style={{ color: "#2563eb", fontSize: 12.5, cursor: "pointer", fontWeight: 600 }}
+                onMouseEnter={(e) => { e.currentTarget.style.textDecoration = "underline"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.textDecoration = "none"; }}
+              >
+                View all
+              </span>
             </div>
             <div style={{ flex: 1, minHeight: 0, display: "flex", alignItems: "center", gap: 16 }}>
               <div style={{ display: "flex", alignItems: "center", flexShrink: 0 }}>
