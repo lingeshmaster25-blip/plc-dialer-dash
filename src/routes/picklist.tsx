@@ -3,6 +3,7 @@ import { Check } from "lucide-react";
 import { DashboardShell } from "@/components/DashboardShell";
 import { useOrders, getPickingOrder, toggleItemPicked, confirmPick, releaseToPicklist } from "@/lib/orders-store";
 import { pushActivity } from "@/lib/dashboard-store";
+import { hmiApi } from "@/lib/hmi-api";
 
 export const Route = createFileRoute("/picklist")({
   component: PicklistPage,
@@ -49,8 +50,23 @@ function PicklistPage() {
 
   const allPicked = items.length > 0 && items.every((it) => it.picked);
 
+  // Write a bin's coordinates to the PLC and pulse the cycle-start command.
+  // Global bin n (1..55) → tray = ceil(n/5), position-in-tray = ((n-1) % 5) + 1.
+  const callBinOnPlc = (bin: string) => {
+    const n = binNum(bin);
+    if (n < 1) return;
+    hmiApi.writeTag("SelectedBin", n);
+    hmiApi.writeTag("RackNo", Math.ceil(n / 5));
+    hmiApi.writeTag("RackBin", ((n - 1) % 5) + 1);
+    hmiApi.writeTag("Start_PB", true);
+    window.setTimeout(() => hmiApi.writeTag("Start_PB", false), 300);
+  };
+
   const handleConfirmPick = () => {
     if (!order) return;
+    // Call the picked bin's specific tag on the PLC, then complete the order.
+    const target = items[0];
+    if (target) callBinOnPlc(target.bin);
     const ok = confirmPick(order.id);
     if (ok) {
       pushActivity("Order Picked", `Order ${order.id} completed`);
