@@ -12,10 +12,7 @@ export const TAGS: TagDef[] = [
   { name: "Home_Button",         address: "M6.0",      group: "Force Buttons",    type: "bool" },
   // System
   { name: "H_run",               address: "M6.1",      group: "System",           type: "bool" },
-  { name: "Over_load",           address: "M8.0",      group: "System",           type: "bool" },
-  { name: "Bin_over_Height",     address: "M8.1",      group: "System",           type: "bool" },
   { name: "Bin_store_complete",  address: "M8.2",      group: "System",           type: "bool" },
-  { name: "Tray_Misalignment",   address: "M2.3",      group: "System",           type: "bool" },
   // Motor Status
   { name: "Y_InPos",             address: "M10.0",     group: "Motor Status",     type: "bool" },
   { name: "X_InPos",             address: "M10.1",     group: "Motor Status",     type: "bool" },
@@ -36,7 +33,6 @@ export const TAGS: TagDef[] = [
   { name: "Z_Up",                address: "Q1.2",      group: "Outputs",          type: "bool" },
   { name: "Z_Down",              address: "Q1.3",      group: "Outputs",          type: "bool" },
   { name: "Cycle_Complete",      address: "Q1.5",      group: "Outputs",          type: "bool" },
-  { name: "Fault_Alarm",         address: "Q1.6",      group: "Outputs",          type: "bool" },
   // Limit Switches
   { name: "Y_Top_LS",            address: "I0.0",      group: "Limit Switches",   type: "bool" },
   { name: "Y_Bottom_LS",         address: "I0.1",      group: "Limit Switches",   type: "bool" },
@@ -51,7 +47,6 @@ export const TAGS: TagDef[] = [
   { name: "Door_Open_LS",        address: "I1.2",      group: "Limit Switches",   type: "bool" },
   { name: "Door_Close_LS",       address: "I1.3",      group: "Limit Switches",   type: "bool" },
   // Buttons
-  { name: "Emergency_Stop",      address: "I3.5",      group: "Buttons",          type: "bool" },
   // Sensors
   { name: "Ext_Aisle_Area_S1",   address: "I1.4",      group: "Sensors",          type: "bool" },
   { name: "Ext_Aisle_Area_S2",   address: "I1.5",      group: "Sensors",          type: "bool" },
@@ -68,6 +63,26 @@ export const TAGS: TagDef[] = [
   { name: "Bin_spa_Right",       address: "I3.2",      group: "Sensors",          type: "bool" },
   { name: "Light_Grid_BinMax",   address: "I3.3",      group: "Sensors",          type: "bool" },
   { name: "Load_Cell_Overload",  address: "I3.4",      group: "Sensors",          type: "bool" },
+  // Alarms
+  { name: "Over_load",               address: "M8.0", group: "Alarms", type: "bool" },  // tray over load
+  { name: "Bin_over_Height",         address: "M8.1", group: "Alarms", type: "bool" },
+  { name: "Tray_Misalignment",       address: "M2.3", group: "Alarms", type: "bool" },  // tray misalignment in aisle area
+  { name: "Maintenance_Store_Open",  address: "M7.2", group: "Alarms", type: "bool" },  // maintenance store in open condition
+  { name: "Y_Over_Travel",           address: "M4.7", group: "Alarms", type: "bool" },
+  { name: "Z_Over_Travel",           address: "M5.0", group: "Alarms", type: "bool" },
+  { name: "X_Over_Travel",           address: "M5.1", group: "Alarms", type: "bool" },
+  { name: "Control_Panel_Door_Open", address: "M7.1", group: "Alarms", type: "bool" },
+  { name: "Extractor_Misalignment",  address: "M6.6", group: "Alarms", type: "bool" },  // extractor misalignment & unbalanced
+  { name: "Emergency_Stop",          address: "I3.5", group: "Alarms", type: "bool" },  // emergency stop pressed
+  { name: "Bin_Pressed_Left",        address: "M7.3", group: "Alarms", type: "bool" },
+  { name: "Bin_Pressed_Right",       address: "M7.4", group: "Alarms", type: "bool" },
+  { name: "Y_Home_Not_Reached",      address: "M7.5", group: "Alarms", type: "bool" },
+  { name: "Tray_Out_Not_Reached",    address: "M7.6", group: "Alarms", type: "bool" },
+  { name: "Door_Open_Not_Reached",   address: "M7.7", group: "Alarms", type: "bool" },
+  { name: "Door_Close_Not_Reached",  address: "M8.3", group: "Alarms", type: "bool" },
+  { name: "Fault_Alarm",             address: "Q1.6", group: "Alarms", type: "bool" },
+  { name: "Bin_Not_Seated",          address: "M8.4", group: "Alarms", type: "bool" },
+  { name: "Tray_Not_Seated",         address: "M8.5", group: "Alarms", type: "bool" },
   // Stage Bins
   { name: "DB_Input_BIN1",       address: "DB3.DBW10", group: "Stage Bins",       type: "int" },
   { name: "DB_Input_BIN2",       address: "DB3.DBW12", group: "Stage Bins",       type: "int" },
