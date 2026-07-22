@@ -207,12 +207,62 @@ function MaintIllustration() {
   );
 }
 
+type AlarmDef = { label: string; addr: string; tag: string };
+const ALARMS: AlarmDef[] = [
+  { label: "Emergency Stop Pressed", addr: "I3.5", tag: "Emergency_Stop" },
+  { label: "Fault Alarm", addr: "Q1.6", tag: "Fault_Alarm" },
+  { label: "Tray Over Load", addr: "M8.0", tag: "Over_load" },
+  { label: "Bin Over Height", addr: "M8.1", tag: "Bin_over_Height" },
+  { label: "Tray Misalignment (Aisle)", addr: "M2.3", tag: "Tray_Misalignment" },
+  { label: "Extractor Misalign / Unbalanced", addr: "M6.6", tag: "Extractor_Misalignment" },
+  { label: "Y Over Travel", addr: "M4.7", tag: "Y_Over_Travel" },
+  { label: "Z Over Travel", addr: "M5.0", tag: "Z_Over_Travel" },
+  { label: "X Over Travel", addr: "M5.1", tag: "X_Over_Travel" },
+  { label: "Control Panel Door Open", addr: "M7.1", tag: "Control_Panel_Door_Open" },
+  { label: "Maintenance Store Open", addr: "M7.2", tag: "Maintenance_Store_Open" },
+  { label: "Bin Pressed In Left", addr: "M7.3", tag: "Bin_Pressed_Left" },
+  { label: "Bin Pressed In Right", addr: "M7.4", tag: "Bin_Pressed_Right" },
+  { label: "Y Home Not Reached", addr: "M7.5", tag: "Y_Home_Not_Reached" },
+  { label: "Tray Out Not Reached", addr: "M7.6", tag: "Tray_Out_Not_Reached" },
+  { label: "Door Open Not Reached", addr: "M7.7", tag: "Door_Open_Not_Reached" },
+  { label: "Door Close Not Reached", addr: "M8.3", tag: "Door_Close_Not_Reached" },
+  { label: "Bin Not Seated Properly", addr: "M8.4", tag: "Bin_Not_Seated" },
+  { label: "Tray Not Seated Properly", addr: "M8.5", tag: "Tray_Not_Seated" },
+];
+
+function AlarmRow({ a, active, live }: { a: AlarmDef; active: boolean; live: boolean }) {
+  return (
+    <div style={{
+      display: "flex", alignItems: "center", gap: 12,
+      background: active ? "#fde2e2" : "#f4f5f7",
+      border: active ? "1px solid #f3b4b4" : "1px solid #e5e7eb",
+      borderRadius: 9, padding: "8px 14px", minWidth: 0, minHeight: 46,
+    }}>
+      <span style={{
+        width: 9, height: 9, borderRadius: "50%", flexShrink: 0,
+        background: active ? "#db0000" : "#c2c6cc",
+        boxShadow: active ? "0 0 8px 1px rgba(219,0,0,0.6)" : "none",
+      }} />
+      <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+        <span style={{ fontSize: 13, fontWeight: 700, color: "#1a1a1a", lineHeight: 1.2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{a.label}</span>
+        <span style={{ fontSize: 10.5, color: "#9ca3af", lineHeight: 1 }}>{a.addr}</span>
+      </div>
+      <span style={{
+        marginLeft: "auto", flexShrink: 0, fontSize: 11.5, fontWeight: 700,
+        color: !live ? "#9ca3af" : active ? "#db0000" : "#0a8f2e",
+      }}>
+        {!live ? "--" : active ? "ACTIVE" : "OK"}
+      </span>
+    </div>
+  );
+}
+
 function MaintenancePage() {
   const [userId, setUserId] = useState("");
   const [passkey, setPasskey] = useState("");
   const [unlocked, setUnlocked] = useState(false);
   const [error, setError] = useState(false);
-  const [tab, setTab] = useState<"output" | "sensor" | "live">("output");
+  const [tab, setTab] = useState<"output" | "sensor" | "live" | "alarm">("output");
   const [tags, setTags] = useState<Tags>({});
   const [plcLive, setPlcLive] = useState(false);
 
@@ -249,7 +299,7 @@ function MaintenancePage() {
     else hmiApi.writeTag(s.tag, v === "1");
   };
 
-  const TabBtn = ({ id, label }: { id: "output" | "sensor" | "live"; label: string }) => {
+  const TabBtn = ({ id, label }: { id: "output" | "sensor" | "live" | "alarm"; label: string }) => {
     const active = tab === id;
     return (
       <span
@@ -320,6 +370,7 @@ function MaintenancePage() {
               <TabBtn id="output" label="OUTPUT STATUS" />
               <TabBtn id="sensor" label="SENSOR STATUS" />
               <TabBtn id="live" label="LIVE MONITOR" />
+              <TabBtn id="alarm" label="ALARMS" />
               <span style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 7, fontSize: 12.5, fontWeight: 600, color: plcLive ? "#0a8f2e" : "#9ca3af", paddingBottom: 9 }}>
                 <span style={{
                   width: 9, height: 9, borderRadius: "50%",
@@ -386,6 +437,19 @@ function MaintenancePage() {
                   <WatchSection title="TARGET POSITIONS" items={TARGET_POS} tags={tags} decimals={1} />
                   <WatchSection title="ACTUAL POSITIONS" items={ACTUAL_POS} tags={tags} decimals={1} />
                   <WatchSection title="WATCH VALUES" items={WATCH_VALUES} tags={tags} decimals={0} />
+                </div>
+              )}
+
+              {tab === "alarm" && (
+                <div style={{
+                  flex: 1, minHeight: 0, overflowY: "auto",
+                  display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, alignContent: "start",
+                  border: "1px solid #e5e7eb", borderRadius: 14, padding: "16px 18px",
+                  boxShadow: "0 1px 3px rgba(16,24,40,0.06)",
+                }}>
+                  {ALARMS.map((a) => (
+                    <AlarmRow key={a.tag} a={a} active={plcLive && asBool(tags[a.tag])} live={plcLive} />
+                  ))}
                 </div>
               )}
 
