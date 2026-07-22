@@ -13,6 +13,11 @@ export const TAGS: TagDef[] = [
   // System
   { name: "H_run",               address: "M6.1",      group: "System",           type: "bool" },
   { name: "Bin_store_complete",  address: "M8.2",      group: "System",           type: "bool" },
+  { name: "Tray_store_complete", address: "M2.5",      group: "System",           type: "bool" },
+  { name: "Tray_Run",            address: "M6.2",      group: "System",           type: "bool" },
+  { name: "Tray_Store_Run",      address: "M2.1",      group: "System",           type: "bool" },
+  { name: "Manual_Run",          address: "M2.7",      group: "System",           type: "bool" },
+  { name: "Manual_Enable",       address: "M2.6",      group: "System",           type: "bool" },
   // Motor Status
   { name: "Y_InPos",             address: "M10.0",     group: "Motor Status",     type: "bool" },
   { name: "X_InPos",             address: "M10.1",     group: "Motor Status",     type: "bool" },
