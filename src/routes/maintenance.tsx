@@ -1,4 +1,4 @@
-=import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { DashboardShell } from "@/components/DashboardShell";
 import { hmiApi } from "@/lib/hmi-api";
