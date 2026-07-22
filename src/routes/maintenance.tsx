@@ -46,31 +46,37 @@ const SYSTEM: Signal[] = [
   { name: "BIN STORE COMPLETE", addr: "M8.2", tag: "Bin_store_complete" },
 ];
 
-const SENSOR_DOORS: Signal[] = [
-  { name: "DOOR OPEN LS", addr: "I0.3", tag: "Door_Open_LS" },
-  { name: "DOOR CLOSE LS", addr: "I0.4", tag: "Door_Close_LS" },
+const LIMIT_SWITCHES: Signal[] = [
+  { name: "Y TOP", addr: "I0.0", tag: "Y_Top_LS" }, { name: "Y BOTTOM", addr: "I0.1", tag: "Y_Bottom_LS" },
+  { name: "X LEFT", addr: "I0.2", tag: "X_Left_LS" }, { name: "X RIGHT", addr: "I0.3", tag: "X_Right_LS" },
+  { name: "Z TOP", addr: "I0.4", tag: "Z_Top_LS" }, { name: "Z BOTTOM", addr: "I0.5", tag: "Z_Bottom_LS" },
+  { name: "Y HOME", addr: "I0.6", tag: "Y_Home_LS" }, { name: "TRAY OUT", addr: "I0.7", tag: "Tray_Out_LS" },
+  { name: "CONTROL PANEL", addr: "I1.0", tag: "Control_Panel" }, { name: "MAINTENANCE DOOR", addr: "I1.1", tag: "Maintenance_Door" },
+  { name: "DOOR OPEN LS", addr: "I1.2", tag: "Door_Open_LS" }, { name: "DOOR CLOSE LS", addr: "I1.3", tag: "Door_Close_LS" },
+];
+const SENSOR_TRAY: Signal[] = [
+  { name: "TRAY PRESENCE S1", addr: "I2.4", tag: "Tray_Pos_S1" }, { name: "TRAY PRESENCE S2", addr: "I2.5", tag: "Tray_Pos_S2" },
+];
+const SENSOR_AISLE: Signal[] = [
+  { name: "AISLE S1", addr: "I1.4", tag: "Ext_Aisle_Area_S1" }, { name: "AISLE S2", addr: "I1.5", tag: "Ext_Aisle_Area_S2" },
+  { name: "AISLE S3", addr: "I2.0", tag: "Ext_Aisle_Area_S3" }, { name: "AISLE S4", addr: "I2.1", tag: "Ext_Aisle_Area_S4" },
+];
+const SENSOR_FORK: Signal[] = [
+  { name: "FINGER LEFT", addr: "I2.2", tag: "Finger_Left" }, { name: "FINGER RIGHT", addr: "I2.3", tag: "Finger_Right" },
+  { name: "FORK LH", addr: "I2.6", tag: "Fork_LH" }, { name: "FORK RH", addr: "I2.7", tag: "Fork_RH" },
+];
+const SENSOR_LOADBIN: Signal[] = [
+  { name: "BIN CONFIRM", addr: "I3.0", tag: "Bin_Confirm_Sensor" },
+  { name: "BIN LEFT CLEAN", addr: "I3.1", tag: "Bin_spa_Left" },
+  { name: "BIN RIGHT CLEAN", addr: "I3.2", tag: "Bin_spa_Right" },
+  { name: "LIGHT GRID HEIGHT", addr: "I3.3", tag: "Light_Grid_BinMax" },
+  { name: "LOAD CELL OVERLOAD", addr: "I3.4", tag: "Load_Cell_Overload" },
 ];
 const SENSOR_MODE: Signal[] = [
   { name: "M RUN", addr: "M0.5", tag: "M_Run" },
-  { name: "SIDE SELECT", addr: "M0.6", tag: "SideSelect" },
-];
-const SENSOR_TRAY: Signal[] = [
-  { name: "TRAY OUT LS", addr: "I0.6", tag: "Tray_Out_LS" }, { name: "TRAY POS S1", addr: "I1.3", tag: "Tray_Pos_S1" },
-  { name: "TRAY POS S2", addr: "I1.4", tag: "Tray_Pos_S2" }, { name: "TRAY MISALIGN", addr: "M2.3", tag: "Tray_Misalignment" },
-];
-const SENSOR_AISLE: Signal[] = [
-  { name: "AISLE S1", addr: "I0.5", tag: "Ext_Aisle_Area_S1" }, { name: "AISLE S2", addr: "I0.7", tag: "Ext_Aisle_Area_S2" },
-  { name: "AISLE S3", addr: "I1.6", tag: "Ext_Aisle_Area_S3" }, { name: "AISLE S4", addr: "I1.7", tag: "Ext_Aisle_Area_S4" },
-];
-const SENSOR_LOADBIN: Signal[] = [
-  { name: "BIN SPA LEFT", addr: "I0.0", tag: "Bin_spa_Left" },
-  { name: "BIN SPA RIGHT", addr: "I0.1", tag: "Bin_spa_Right" },
-  { name: "LOAD OVERLOAD", addr: "I1.1", tag: "Load_Cell_Overload" },
-  { name: "LIGHT GRID MAX", addr: "I1.2", tag: "Light_Grid_BinMax" },
-  { name: "BIN CONFIRM", addr: "I1.5", tag: "Bin_Confirm_Sensor" },
 ];
 const SENSOR_SAFETY: Signal[] = [
-  { name: "EMERGENCY STOP", addr: "I1.0", tag: "Emergency_Stop" },
+  { name: "EMERGENCY STOP", addr: "I3.5", tag: "Emergency_Stop" },
 ];
 
 const TARGET_POS: Watch[] = [
@@ -262,7 +268,7 @@ function MaintenancePage() {
   const [passkey, setPasskey] = useState("");
   const [unlocked, setUnlocked] = useState(false);
   const [error, setError] = useState(false);
-  const [tab, setTab] = useState<"output" | "sensor" | "live" | "alarm">("output");
+  const [tab, setTab] = useState<"output" | "sensor" | "live" | "limit" | "alarm">("output");
   const [tags, setTags] = useState<Tags>({});
   const [plcLive, setPlcLive] = useState(false);
 
@@ -299,7 +305,7 @@ function MaintenancePage() {
     else hmiApi.writeTag(s.tag, v === "1");
   };
 
-  const TabBtn = ({ id, label }: { id: "output" | "sensor" | "live" | "alarm"; label: string }) => {
+  const TabBtn = ({ id, label }: { id: "output" | "sensor" | "live" | "limit" | "alarm"; label: string }) => {
     const active = tab === id;
     return (
       <span
@@ -370,6 +376,7 @@ function MaintenancePage() {
               <TabBtn id="output" label="OUTPUT STATUS" />
               <TabBtn id="sensor" label="SENSOR STATUS" />
               <TabBtn id="live" label="LIVE MONITOR" />
+              <TabBtn id="limit" label="LIMIT SW" />
               <TabBtn id="alarm" label="ALARMS" />
               <span style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 7, fontSize: 12.5, fontWeight: 600, color: plcLive ? "#0a8f2e" : "#9ca3af", paddingBottom: 9 }}>
                 <span style={{
@@ -402,24 +409,24 @@ function MaintenancePage() {
               )}
 
               {tab === "sensor" && (
-                <div style={{ display: "flex", gap: 18, alignItems: "stretch", flex: 1, minHeight: 0 }}>
-                  <div style={{ flex: 1.3, minWidth: 0, display: "flex", flexDirection: "column", minHeight: 0, justifyContent: "space-between" }}>
-                    <IOCard title="DOORS">
-                      <div style={sgrid2}>{SENSOR_DOORS.map((s) => <SensorRow key={s.tag} s={s} value={asBool(tags[s.tag]) ? 1 : 0} onChange={(v) => onSensor(s, v)} />)}</div>
+                <div style={{ display: "flex", gap: 18, alignItems: "flex-start", flex: 1, minHeight: 0 }}>
+                  <div style={{ flex: 1.3, minWidth: 0, display: "flex", flexDirection: "column", gap: 10, minHeight: 0 }}>
+                    <IOCard title="EXTERNAL AISLE">
+                      <div style={sgrid2}>{SENSOR_AISLE.map((s) => <SensorRow key={s.tag} s={s} value={asBool(tags[s.tag]) ? 1 : 0} onChange={(v) => onSensor(s, v)} />)}</div>
                     </IOCard>
-                    <IOCard title="MODE">
-                      <div style={sgrid2}>{SENSOR_MODE.map((s) => <SensorRow key={s.tag} s={s} value={asBool(tags[s.tag]) ? 1 : 0} onChange={(v) => onSensor(s, v)} />)}</div>
+                    <IOCard title="FORK / FINGER">
+                      <div style={sgrid2}>{SENSOR_FORK.map((s) => <SensorRow key={s.tag} s={s} value={asBool(tags[s.tag]) ? 1 : 0} onChange={(v) => onSensor(s, v)} />)}</div>
                     </IOCard>
                     <IOCard title="TRAY">
                       <div style={sgrid2}>{SENSOR_TRAY.map((s) => <SensorRow key={s.tag} s={s} value={asBool(tags[s.tag]) ? 1 : 0} onChange={(v) => onSensor(s, v)} />)}</div>
                     </IOCard>
-                    <IOCard title="EXTERNAL AISLE">
-                      <div style={sgrid2}>{SENSOR_AISLE.map((s) => <SensorRow key={s.tag} s={s} value={asBool(tags[s.tag]) ? 1 : 0} onChange={(v) => onSensor(s, v)} />)}</div>
-                    </IOCard>
                   </div>
-                  <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", minHeight: 0, justifyContent: "space-between" }}>
+                  <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 10, minHeight: 0 }}>
                     <IOCard title="LOAD / BIN">
                       <div style={scol1}>{SENSOR_LOADBIN.map((s) => <SensorRow key={s.tag} s={s} value={asBool(tags[s.tag]) ? 1 : 0} onChange={(v) => onSensor(s, v)} />)}</div>
+                    </IOCard>
+                    <IOCard title="MODE">
+                      <div style={scol1}>{SENSOR_MODE.map((s) => <SensorRow key={s.tag} s={s} value={asBool(tags[s.tag]) ? 1 : 0} onChange={(v) => onSensor(s, v)} />)}</div>
                     </IOCard>
                     <IOCard title="SAFETY">
                       <div style={scol1}>{SENSOR_SAFETY.map((s) => <SensorRow key={s.tag} s={s} value={asBool(tags[s.tag]) ? 1 : 0} onChange={(v) => onSensor(s, v)} />)}</div>
@@ -450,6 +457,18 @@ function MaintenancePage() {
                   {ALARMS.map((a) => (
                     <AlarmRow key={a.tag} a={a} active={plcLive && asBool(tags[a.tag])} live={plcLive} />
                   ))}
+                </div>
+              )}
+
+              {tab === "limit" && (
+                <div style={{
+                  flex: 1, minHeight: 0, overflowY: "auto",
+                  border: "1px solid #e5e7eb", borderRadius: 14, padding: "16px 18px",
+                  boxShadow: "0 1px 3px rgba(16,24,40,0.06)",
+                }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, alignContent: "start" }}>
+                    {LIMIT_SWITCHES.map((s) => <SensorRow key={s.tag} s={s} value={asBool(tags[s.tag]) ? 1 : 0} onChange={(v) => onSensor(s, v)} />)}
+                  </div>
                 </div>
               )}
 
