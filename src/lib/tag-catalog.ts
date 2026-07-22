@@ -4,12 +4,13 @@ export type TagDef = { name: string; address: string; group: string; type: TagTy
 
 export const TAGS: TagDef[] = [
   // Force Buttons
-  { name: "Start_PB",            address: "M0.0",      group: "Force Buttons",    type: "bool" },
+  { name: "Bin_Call",            address: "M0.0",      group: "Force Buttons",    type: "bool" },  // bin call
   { name: "Stop_PB",             address: "M0.1",      group: "Force Buttons",    type: "bool" },
   { name: "Reset_PB",            address: "M0.2",      group: "Force Buttons",    type: "bool" },
   { name: "M_Run",               address: "M0.5",      group: "Force Buttons",    type: "bool" },
-  { name: "Tray_Call_Button",    address: "M0.6",      group: "Force Buttons",    type: "bool" },
-  { name: "Home_Button",         address: "M6.0",      group: "Force Buttons",    type: "bool" },
+  { name: "Tray_Call",           address: "M0.6",      group: "Force Buttons",    type: "bool" },  // tray call
+  { name: "Bin_Return_Home",     address: "M6.0",      group: "Force Buttons",    type: "bool" },  // bin return home
+  { name: "Tray_Return_Home",    address: "M0.7",      group: "Force Buttons",    type: "bool" },  // tray return home
   // System
   { name: "H_run",               address: "M6.1",      group: "System",           type: "bool" },
   { name: "Bin_store_complete",  address: "M8.2",      group: "System",           type: "bool" },
