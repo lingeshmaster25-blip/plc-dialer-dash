@@ -40,7 +40,6 @@ const AXIS_DRIVE: Signal[] = [
 const SYSTEM: Signal[] = [
   { name: "CYCLE COMPLETE", addr: "Q1.5", tag: "Cycle_Complete" },
   { name: "FAULT ALARM", addr: "Q1.6", tag: "Fault_Alarm" },
-  { name: "H RUN", addr: "M6.1", tag: "H_run" },
   { name: "OVER LOAD", addr: "M8.0", tag: "Over_load" },
   { name: "BIN OVER HEIGHT", addr: "M8.1", tag: "Bin_over_Height" },
   { name: "BIN STORE COMPLETE", addr: "M8.2", tag: "Bin_store_complete" },
@@ -49,6 +48,7 @@ const SYSTEM: Signal[] = [
 const OUTPUT_MODE: Signal[] = [
   { name: "TRAY RUN", addr: "M6.2", tag: "Tray_Run" },
   { name: "TRAY STORE RUN", addr: "M2.1", tag: "Tray_Store_Run" },
+  { name: "BIN STORE RUN", addr: "M6.1", tag: "H_run" },
   { name: "MANUAL RUN", addr: "M2.7", tag: "Manual_Run" },
   { name: "MANUAL ENABLE", addr: "M2.6", tag: "Manual_Enable" },
 ];
