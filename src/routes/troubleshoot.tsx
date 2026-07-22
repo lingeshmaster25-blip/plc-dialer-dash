@@ -132,8 +132,8 @@ function TroubleshootPage() {
     for (const a of Object.keys(DIR)) { hmiApi.writeTag(DIR[a].fwd, false); hmiApi.writeTag(DIR[a].rev, false); }
   };
   const sendHome = () => {
-    hmiApi.writeTag("Home_Button", true);
-    window.setTimeout(() => hmiApi.writeTag("Home_Button", false), 400);
+    hmiApi.writeTag("Bin_Return_Home", true);
+    window.setTimeout(() => hmiApi.writeTag("Bin_Return_Home", false), 400);
   };
   const quitManual = () => { stopAll(); setUnlocked(false); setUserId(""); setPasskey(""); };
 
