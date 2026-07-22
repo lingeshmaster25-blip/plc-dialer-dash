@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+=import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { DashboardShell } from "@/components/DashboardShell";
 import { hmiApi } from "@/lib/hmi-api";
@@ -44,6 +44,13 @@ const SYSTEM: Signal[] = [
   { name: "OVER LOAD", addr: "M8.0", tag: "Over_load" },
   { name: "BIN OVER HEIGHT", addr: "M8.1", tag: "Bin_over_Height" },
   { name: "BIN STORE COMPLETE", addr: "M8.2", tag: "Bin_store_complete" },
+  { name: "TRAY STORE COMPLETE", addr: "M2.5", tag: "Tray_store_complete" },
+];
+const OUTPUT_MODE: Signal[] = [
+  { name: "TRAY RUN", addr: "M6.2", tag: "Tray_Run" },
+  { name: "TRAY STORE RUN", addr: "M2.1", tag: "Tray_Store_Run" },
+  { name: "MANUAL RUN", addr: "M2.7", tag: "Manual_Run" },
+  { name: "MANUAL ENABLE", addr: "M2.6", tag: "Manual_Enable" },
 ];
 
 const LIMIT_SWITCHES: Signal[] = [
@@ -400,9 +407,12 @@ function MaintenancePage() {
                       <div style={grid2}>{AXIS_DRIVE.map((s) => <SignalRow key={s.tag} s={s} on={asBool(tags[s.tag])} />)}</div>
                     </IOCard>
                   </div>
-                  <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", minHeight: 0 }}>
+                  <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 10, minHeight: 0 }}>
                     <IOCard title="SYSTEM" grow>
                       <div style={col1}>{SYSTEM.map((s) => <SignalRow key={s.tag} s={s} on={asBool(tags[s.tag])} />)}</div>
+                    </IOCard>
+                    <IOCard title="MODE">
+                      <div style={col1}>{OUTPUT_MODE.map((s) => <SignalRow key={s.tag} s={s} on={asBool(tags[s.tag])} />)}</div>
                     </IOCard>
                   </div>
                 </div>
