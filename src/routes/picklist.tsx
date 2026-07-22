@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useState, useEffect } from "react";
 import { Check } from "lucide-react";
 import { DashboardShell } from "@/components/DashboardShell";
 import { useOrders, getPickingOrder, toggleItemPicked, confirmPick, releaseToPicklist } from "@/lib/orders-store";
@@ -28,6 +29,11 @@ function PicklistPage() {
   const order = getPickingOrder();
   const items = order?.items ?? [];
 
+  // Picking method chosen for the current order (SKU / Tray / Bin).
+  const [pickMode, setPickMode] = useState<"sku" | "tray" | "bin" | null>(null);
+  // Reset the chooser whenever a different order becomes active.
+  useEffect(() => { setPickMode(null); }, [order?.id]);
+
   // If the order is only "Released" (not yet Picking), auto-advance on first interaction
   const pickedSet = new Set(
     items.flatMap((it, i) => (it.picked ? [i] : []))
@@ -40,6 +46,16 @@ function PicklistPage() {
 
   const tileState = (n: number): keyof typeof TILE_COLOR =>
     pickedBins.has(n) ? "picked" : n === currentBin ? "now" : involved.has(n) ? "queued" : "empty";
+
+  // Tray-based helpers (bin n → tray = ceil(n/5)).
+  const trayOf = (b: string) => Math.ceil(binNum(b) / 5);
+  const involvedTrays = new Set(items.map((it) => trayOf(it.bin)));
+  const pickedTrays = new Set(
+    [...involvedTrays].filter((t) => items.filter((it) => trayOf(it.bin) === t).every((it) => it.picked))
+  );
+  const currentTray = currentBin > 0 ? Math.ceil(currentBin / 5) : -1;
+  const trayState = (t: number): keyof typeof TILE_COLOR =>
+    pickedTrays.has(t) ? "picked" : t === currentTray ? "now" : involvedTrays.has(t) ? "queued" : "empty";
 
   const handleToggle = (i: number) => {
     if (!order) return;
@@ -62,11 +78,24 @@ function PicklistPage() {
     window.setTimeout(() => hmiApi.writeTag("Start_PB", false), 300);
   };
 
+  // Call the PLC target based on the chosen picking method.
+  const callByMode = () => {
+    const target = items[0];
+    if (!target) return;
+    if (pickMode === "tray") {
+      hmiApi.writeTag("RackNo", trayOf(target.bin));
+      hmiApi.writeTag("Tray_Call_Button", true);
+      window.setTimeout(() => hmiApi.writeTag("Tray_Call_Button", false), 300);
+    } else {
+      // bin or sku → resolve to the bin's coordinates
+      callBinOnPlc(target.bin);
+    }
+  };
+
   const handleConfirmPick = () => {
     if (!order) return;
-    // Call the picked bin's specific tag on the PLC, then complete the order.
-    const target = items[0];
-    if (target) callBinOnPlc(target.bin);
+    // Call the PLC target for the chosen method, then complete the order.
+    callByMode();
     const ok = confirmPick(order.id);
     if (ok) {
       pushActivity("Order Picked", `Order ${order.id} completed`);
@@ -106,34 +135,81 @@ function PicklistPage() {
               Go to Orders
             </button>
           </div>
+        ) : !pickMode ? (
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 26 }}>
+            <span style={{ fontSize: 22, fontWeight: 700, color: "#1a1a1a" }}>
+              Choose picking method for Order {order.id}
+            </span>
+            <div style={{ display: "flex", gap: 22 }}>
+              {([
+                { id: "sku", label: "SKU", desc: "Pick by SKU" },
+                { id: "tray", label: "Tray", desc: "Pick by tray" },
+                { id: "bin", label: "Bin", desc: "Pick by bin" },
+              ] as const).map((m) => (
+                <button
+                  key={m.id}
+                  onClick={() => setPickMode(m.id)}
+                  style={{
+                    width: 190, height: 150, background: "#fff", border: "1.5px solid #d0d4da",
+                    borderRadius: 16, cursor: "pointer", display: "flex", flexDirection: "column",
+                    alignItems: "center", justifyContent: "center", gap: 10,
+                    boxShadow: "0 2px 8px rgba(16,24,40,0.08)", transition: "all .15s",
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#0058f1"; e.currentTarget.style.boxShadow = "0 6px 18px rgba(0,88,241,0.18)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#d0d4da"; e.currentTarget.style.boxShadow = "0 2px 8px rgba(16,24,40,0.08)"; }}
+                >
+                  <span style={{ fontSize: 30, fontWeight: 800, color: "#0058f1" }}>{m.label}</span>
+                  <span style={{ fontSize: 14, color: "#6b7280" }}>{m.desc}</span>
+                </button>
+              ))}
+            </div>
+          </div>
         ) : (
           <>
-            <h2 style={{ fontSize: 24, fontWeight: 800, color: "#1a1a1a", margin: "0 0 10px" }}>Order Picking</h2>
-
-            {/* Bin tiles */}
-            <div style={{
-              border: "1px solid #d8dbe0", borderRadius: 12, padding: 10, flexShrink: 0,
-              boxShadow: "0 1px 4px rgba(16,24,40,0.06)",
-            }}>
-              <div style={{ display: "flex", gap: 10 }}>
-                {Array.from({ length: 9 }).map((_, idx) => {
-                  const n = idx + 1;
-                  const state = tileState(n);
-                  return (
-                    <div key={n} style={{
-                      flex: 1, height: 80, borderRadius: 12, background: TILE_COLOR[state],
-                      border: "1px solid rgba(0,0,0,0.1)", boxShadow: "0 2px 5px rgba(0,0,0,0.18)",
-                      padding: "8px 11px", position: "relative",
-                    }}>
-                      <span style={{ fontSize: 18, fontWeight: 600, color: "#1f2937" }}>B{n}</span>
-                      {state === "picked" && (
-                        <Check size={18} color="#fff" strokeWidth={3} style={{ position: "absolute", left: 10, bottom: 8 }} />
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 14, margin: "0 0 10px" }}>
+              <h2 style={{ fontSize: 24, fontWeight: 800, color: "#1a1a1a", margin: 0 }}>Order Picking</h2>
+              <span style={{
+                fontSize: 13, fontWeight: 700, color: "#0058f1", background: "#e8f0ff",
+                borderRadius: 999, padding: "4px 14px", textTransform: "capitalize",
+              }}>
+                Picking by: {pickMode}
+              </span>
+              <button
+                onClick={() => setPickMode(null)}
+                style={{ marginLeft: "auto", background: "#fff", border: "1px solid #d0d4da", borderRadius: 8, padding: "7px 16px", fontSize: 13.5, fontWeight: 600, color: "#374151", cursor: "pointer" }}
+              >
+                Change
+              </button>
             </div>
+
+            {/* Tiles — bins for Bin mode, trays for Tray mode; hidden for SKU */}
+            {pickMode !== "sku" && (
+              <div style={{
+                border: "1px solid #d8dbe0", borderRadius: 12, padding: 10, flexShrink: 0,
+                boxShadow: "0 1px 4px rgba(16,24,40,0.06)",
+              }}>
+                <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                  {Array.from({ length: pickMode === "tray" ? 11 : 9 }).map((_, idx) => {
+                    const n = idx + 1;
+                    const state = pickMode === "tray" ? trayState(n) : tileState(n);
+                    const prefix = pickMode === "tray" ? "T" : "B";
+                    return (
+                      <div key={n} style={{
+                        flex: pickMode === "tray" ? "1 1 8%" : 1, minWidth: 64, height: 80, borderRadius: 12,
+                        background: TILE_COLOR[state],
+                        border: "1px solid rgba(0,0,0,0.1)", boxShadow: "0 2px 5px rgba(0,0,0,0.18)",
+                        padding: "8px 11px", position: "relative",
+                      }}>
+                        <span style={{ fontSize: 18, fontWeight: 600, color: "#1f2937" }}>{prefix}{n}</span>
+                        {state === "picked" && (
+                          <Check size={18} color="#fff" strokeWidth={3} style={{ position: "absolute", left: 10, bottom: 8 }} />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* Order card */}
             <div style={{
