@@ -209,8 +209,8 @@ function IOCard({ title, children, grow }: { title: string; children: React.Reac
   );
 }
 
-const grid2: React.CSSProperties = { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, height: "100%", gridAutoRows: "1fr" };
-const col1: React.CSSProperties = { display: "grid", gridTemplateColumns: "1fr", gap: 6, height: "100%", gridAutoRows: "1fr" };
+const grid2: React.CSSProperties = { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 };
+const col1: React.CSSProperties = { display: "grid", gridTemplateColumns: "1fr", gap: 6 };
 const sgrid2: React.CSSProperties = { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 };
 const scol1: React.CSSProperties = { display: "flex", flexDirection: "column", gap: 8 };
 
@@ -398,17 +398,17 @@ function MaintenancePage() {
             <div style={{ flex: 1, minHeight: 0, overflowY: "auto", paddingTop: 8, paddingRight: 4, display: "flex", flexDirection: "column" }}>
 
               {tab === "output" && (
-                <div style={{ display: "flex", gap: 18, alignItems: "stretch", flex: 1, minHeight: 0 }}>
+                <div style={{ display: "flex", gap: 18, alignItems: "flex-start" }}>
                   <div style={{ flex: 1.3, minWidth: 0, display: "flex", flexDirection: "column", gap: 10, minHeight: 0 }}>
                     <IOCard title="DOOR COMMANDS">
                       <div style={grid2}>{DOOR_CMDS.map((s) => <SignalRow key={s.tag} s={s} on={asBool(tags[s.tag])} />)}</div>
                     </IOCard>
-                    <IOCard title="AXIS DRIVE" grow>
+                    <IOCard title="AXIS DRIVE">
                       <div style={grid2}>{AXIS_DRIVE.map((s) => <SignalRow key={s.tag} s={s} on={asBool(tags[s.tag])} />)}</div>
                     </IOCard>
                   </div>
                   <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 10, minHeight: 0 }}>
-                    <IOCard title="SYSTEM" grow>
+                    <IOCard title="SYSTEM">
                       <div style={col1}>{SYSTEM.map((s) => <SignalRow key={s.tag} s={s} on={asBool(tags[s.tag])} />)}</div>
                     </IOCard>
                     <IOCard title="MODE">
@@ -419,7 +419,7 @@ function MaintenancePage() {
               )}
 
               {tab === "sensor" && (
-                <div style={{ display: "flex", gap: 18, alignItems: "flex-start", flex: 1, minHeight: 0 }}>
+                <div style={{ display: "flex", gap: 18, alignItems: "flex-start" }}>
                   <div style={{ flex: 1.3, minWidth: 0, display: "flex", flexDirection: "column", gap: 10, minHeight: 0 }}>
                     <IOCard title="EXTERNAL AISLE">
                       <div style={sgrid2}>{SENSOR_AISLE.map((s) => <SensorRow key={s.tag} s={s} value={asBool(tags[s.tag]) ? 1 : 0} onChange={(v) => onSensor(s, v)} />)}</div>
