@@ -74,8 +74,8 @@ function PicklistPage() {
     hmiApi.writeTag("SelectedBin", n);
     hmiApi.writeTag("RackNo", Math.ceil(n / 5));
     hmiApi.writeTag("RackBin", ((n - 1) % 5) + 1);
-    hmiApi.writeTag("Start_PB", true);
-    window.setTimeout(() => hmiApi.writeTag("Start_PB", false), 300);
+    hmiApi.writeTag("Bin_Call", true);
+    window.setTimeout(() => hmiApi.writeTag("Bin_Call", false), 300);
   };
 
   // Call the PLC target based on the chosen picking method.
@@ -84,8 +84,8 @@ function PicklistPage() {
     if (!target) return;
     if (pickMode === "tray") {
       hmiApi.writeTag("RackNo", trayOf(target.bin));
-      hmiApi.writeTag("Tray_Call_Button", true);
-      window.setTimeout(() => hmiApi.writeTag("Tray_Call_Button", false), 300);
+      hmiApi.writeTag("Tray_Call", true);
+      window.setTimeout(() => hmiApi.writeTag("Tray_Call", false), 300);
     } else {
       // bin or sku → resolve to the bin's coordinates
       callBinOnPlc(target.bin);
