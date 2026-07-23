@@ -187,15 +187,16 @@ function PicklistPage() {
               <div style={{
                 border: "1px solid #d8dbe0", borderRadius: 12, padding: 10, flexShrink: 0,
                 boxShadow: "0 1px 4px rgba(16,24,40,0.06)",
+                overflowX: "auto", overflowY: "hidden",
               }}>
-                <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                  {Array.from({ length: pickMode === "tray" ? 11 : 9 }).map((_, idx) => {
+                <div style={{ display: "flex", gap: 10, flexWrap: "nowrap", minWidth: "min-content" }}>
+                  {Array.from({ length: pickMode === "tray" ? 11 : 55 }).map((_, idx) => {
                     const n = idx + 1;
                     const state = pickMode === "tray" ? trayState(n) : tileState(n);
                     const prefix = pickMode === "tray" ? "T" : "B";
                     return (
                       <div key={n} style={{
-                        flex: pickMode === "tray" ? "1 1 8%" : 1, minWidth: 64, height: 80, borderRadius: 12,
+                        flex: "0 0 auto", width: pickMode === "tray" ? 110 : 92, height: 80, borderRadius: 12,
                         background: TILE_COLOR[state],
                         border: "1px solid rgba(0,0,0,0.1)", boxShadow: "0 2px 5px rgba(0,0,0,0.18)",
                         padding: "8px 11px", position: "relative",
