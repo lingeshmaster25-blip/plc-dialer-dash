@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Check } from "lucide-react";
 import { DashboardShell } from "@/components/DashboardShell";
 import { useOrders, getPickingOrder, toggleItemPicked, confirmPick, releaseToPicklist } from "@/lib/orders-store";
@@ -56,6 +56,12 @@ function PicklistPage() {
   const currentTray = currentBin > 0 ? Math.ceil(currentBin / 5) : -1;
   const trayState = (t: number): keyof typeof TILE_COLOR =>
     pickedTrays.has(t) ? "picked" : t === currentTray ? "now" : involvedTrays.has(t) ? "queued" : "empty";
+
+  // Scroll the tile strip so the active bin/tray is always visible.
+  const activeTileRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    activeTileRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+  }, [currentBin, currentTray, pickMode]);
 
   const handleToggle = (i: number) => {
     if (!order) return;
@@ -195,7 +201,7 @@ function PicklistPage() {
                     const state = pickMode === "tray" ? trayState(n) : tileState(n);
                     const prefix = pickMode === "tray" ? "T" : "B";
                     return (
-                      <div key={n} style={{
+                      <div key={n} ref={state === "now" ? activeTileRef : undefined} style={{
                         flex: "0 0 auto", width: pickMode === "tray" ? 110 : 92, height: 80, borderRadius: 12,
                         background: TILE_COLOR[state],
                         border: "1px solid rgba(0,0,0,0.1)", boxShadow: "0 2px 5px rgba(0,0,0,0.18)",
