@@ -20,12 +20,13 @@ const SET_BIT = (byte, bit, on) =>
 
 // Byte ranges to read for each area, large enough to cover all tags.
 const READ_PLAN = {
-  I:  [{ start: 0, len: 2 }],            // IB0..IB1
-  Q:  [{ start: 0, len: 2 }],            // QB0..QB1
-  M:  [{ start: 0, len: 20 },            // MB0..MB19  (M0.x, M2.x, M10.x, MW12..MW18)
-       { start: 100, len: 2 }],          // MW100
-  DB3:[{ start: 0, len: 20 }],           // DBW0..DBW18
-  DB4:[{ start: 0, len: 40 }],           // DBD0..DBD36
+  I:   [{ start: 0, len: 4 }],           // IB0..IB3  (sensors extend to I3.x)
+  Q:   [{ start: 0, len: 2 }],           // QB0..QB1
+  M:   [{ start: 0, len: 20 },           // MB0..MB19  (M0.x, M2.x, M10.x, MW12..MW18)
+        { start: 100, len: 2 }],         // MW100
+  DB3: [{ start: 0, len: 20 }],          // DBW0..DBW18
+  DB4: [{ start: 0, len: 40 }],          // DBD0..DBD36
+  DB11:[{ start: 0, len: 52 }],          // DBW0..DBW50 (rack/bin/axis parameters)
 };
 
 class PlcService {
@@ -43,7 +44,7 @@ class PlcService {
     this.reconnectTimer = null;
 
     // Raw buffers per area (Buffer or null)
-    this.buffers = { I: null, Q: null, M0: null, M100: null, DB3: null, DB4: null };
+    this.buffers = { I: null, Q: null, M0: null, M100: null, DB3: null, DB4: null, DB11: null };
 
     this.state = {
       inputs: {
@@ -118,16 +119,17 @@ class PlcService {
   async pollOnce() {
     if (!this.connected) return;
     try {
-      const [ib, qb, mb0, mb100, db3, db4] = await Promise.all([
+      const [ib, qb, mb0, mb100, db3, db4, db11] = await Promise.all([
         this.readArea(this.client.S7AreaPE, 0, READ_PLAN.I[0].start, READ_PLAN.I[0].len),
         this.readArea(this.client.S7AreaPA, 0, READ_PLAN.Q[0].start, READ_PLAN.Q[0].len),
         this.readArea(this.client.S7AreaMK, 0, READ_PLAN.M[0].start, READ_PLAN.M[0].len),
         this.readArea(this.client.S7AreaMK, 0, READ_PLAN.M[1].start, READ_PLAN.M[1].len),
         this.readArea(this.client.S7AreaDB, 3, READ_PLAN.DB3[0].start, READ_PLAN.DB3[0].len),
         this.readArea(this.client.S7AreaDB, 4, READ_PLAN.DB4[0].start, READ_PLAN.DB4[0].len),
+        this.readArea(this.client.S7AreaDB, 11, READ_PLAN.DB11[0].start, READ_PLAN.DB11[0].len),
       ]);
 
-      this.buffers = { I: ib, Q: qb, M0: mb0, M100: mb100, DB3: db3, DB4: db4 };
+      this.buffers = { I: ib, Q: qb, M0: mb0, M100: mb100, DB3: db3, DB4: db4, DB11: db11 };
 
       // Legacy fixed fields (kept for the existing UI panels)
       const ib0 = ib[0], qb0 = qb[0], mb = mb0[0];
@@ -159,6 +161,7 @@ class PlcService {
     }
     if (p.area === "DB" && p.db === 3) return { buf: this.buffers.DB3, off: p.byte };
     if (p.area === "DB" && p.db === 4) return { buf: this.buffers.DB4, off: p.byte };
+    if (p.area === "DB" && p.db === 11) return { buf: this.buffers.DB11, off: p.byte };
     return { buf: null, off: 0 };
   }
 
