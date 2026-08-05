@@ -34,17 +34,35 @@ const API_BASE =
   (import.meta.env.VITE_HMI_API as string | undefined)?.replace(/\/$/, "") ||
   "http://localhost:4000";
 
+// Error thrown when the backend is genuinely unreachable (network/DNS/refused).
+// Only THIS should trigger the simulation fallback. An HTTP error status means
+// the backend IS reachable and answered — surfacing it (not hiding it in sim)
+// is what makes bugs like "unknown tag: Bin_Call" visible instead of silent.
+class OfflineError extends Error {}
+class HttpError extends Error {
+  constructor(public status: number, message: string) { super(message); }
+}
+
 async function call<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
-    ...init,
-    headers: { "Content-Type": "application/json", ...(init?.headers || {}) },
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}${path}`, {
+      ...init,
+      headers: { "Content-Type": "application/json", ...(init?.headers || {}) },
+    });
+  } catch (e) {
+    // fetch() rejects only on network-level failure -> backend is offline
+    throw new OfflineError((e as Error)?.message || "backend unreachable");
+  }
   if (!res.ok) {
     const text = await res.text().catch(() => "");
-    throw new Error(`HTTP ${res.status}: ${text || res.statusText}`);
+    // e.g. 404 "Unknown tag: Bin_Call" — the backend answered, don't go to sim
+    throw new HttpError(res.status, `HTTP ${res.status}: ${text || res.statusText}`);
   }
   return (await res.json()) as T;
 }
+
+const isOffline = (e: unknown) => e instanceof OfflineError;
 
 // ---------- Real API ----------
 export const realApi = {
@@ -341,7 +359,15 @@ export const hmiApi = {
   },
   async writeTag(tag: string, value: boolean | number) {
     if (useSim) return sim.writeTag(tag, value);
-    try { return await realApi.writeTag(tag, value); }
-    catch { useSim = true; return sim.writeTag(tag, value); }
+    try {
+      return await realApi.writeTag(tag, value);
+    } catch (e) {
+      if (isOffline(e)) { useSim = true; return sim.writeTag(tag, value); }
+      // Backend is up but rejected the write (e.g. unknown tag / PLC not
+      // connected). Do NOT silently switch to simulation — that hides the
+      // failure and makes every later write go to the sim. Surface it.
+      console.error(`[hmiApi] writeTag("${tag}", ${value}) failed:`, (e as Error).message);
+      throw e;
+    }
   },
 };
