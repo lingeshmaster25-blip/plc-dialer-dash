@@ -5,6 +5,7 @@ import { DashboardShell } from "@/components/DashboardShell";
 import { useOrders, getPickingOrder, toggleItemPicked, confirmPick, releaseToPicklist } from "@/lib/orders-store";
 import { pushActivity } from "@/lib/dashboard-store";
 import { hmiApi } from "@/lib/hmi-api";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/picklist")({
   component: PicklistPage,
@@ -72,36 +73,57 @@ function PicklistPage() {
 
   const allPicked = items.length > 0 && items.every((it) => it.picked);
 
-  // Write a bin's coordinates to the PLC and pulse the cycle-start command.
-  // Global bin n (1..55) → tray = ceil(n/5), position-in-tray = ((n-1) % 5) + 1.
-  const callBinOnPlc = (bin: string) => {
+  // Write a bin's coordinates to the PLC, THEN pulse the call bit.
+  // The coordinate words must land before the trigger's rising edge, so the
+  // writes are awaited in order — a fire-and-forget sequence can let Bin_Call
+  // reach the PLC before SelectedBin/RackNo/RackBin, and the PLC would act on
+  // stale coordinates (or none). Global bin n (1..55) → tray = ceil(n/5),
+  // position-in-tray = ((n-1) % 5) + 1.
+  const callBinOnPlc = async (bin: string) => {
     const n = binNum(bin);
     if (n < 1) return;
-    hmiApi.writeTag("SelectedBin", n);
-    hmiApi.writeTag("RackNo", Math.ceil(n / 5));
-    hmiApi.writeTag("RackBin", ((n - 1) % 5) + 1);
-    hmiApi.writeTag("Bin_Call", true);
-    window.setTimeout(() => hmiApi.writeTag("Bin_Call", false), 300);
+    await hmiApi.writeTag("SelectedBin", n);
+    await hmiApi.writeTag("RackNo", Math.ceil(n / 5));
+    await hmiApi.writeTag("RackBin", ((n - 1) % 5) + 1);
+    await hmiApi.writeTag("Bin_Call", true);          // rising edge
+    window.setTimeout(() => { hmiApi.writeTag("Bin_Call", false).catch(() => {}); }, 300);
   };
 
   // Call the PLC target based on the chosen picking method.
-  const callByMode = () => {
-    const target = items[0];
+  // Target the CURRENT (first unpicked) item, not items[0] — otherwise every
+  // confirm re-calls the first bin and later bins are never sent to the PLC.
+  const callByMode = async () => {
+    const target = items[firstUnpicked] ?? items[0];
     if (!target) return;
-    if (pickMode === "tray") {
-      hmiApi.writeTag("RackNo", trayOf(target.bin));
-      hmiApi.writeTag("Tray_Call", true);
-      window.setTimeout(() => hmiApi.writeTag("Tray_Call", false), 300);
-    } else {
-      // bin or sku → resolve to the bin's coordinates
-      callBinOnPlc(target.bin);
+    try {
+      if (pickMode === "tray") {
+        await hmiApi.writeTag("RackNo", trayOf(target.bin));
+        await hmiApi.writeTag("Tray_Call", true);     // rising edge
+        window.setTimeout(() => { hmiApi.writeTag("Tray_Call", false).catch(() => {}); }, 300);
+      } else {
+        // bin or sku → resolve to the bin's coordinates
+        await callBinOnPlc(target.bin);
+      }
+    } catch (e) {
+      // Backend reachable but the write was rejected (unknown tag / PLC not
+      // connected). Surface it instead of failing silently.
+      toast.error(`Could not call ${pickMode === "tray" ? "tray" : "bin " + target.bin} on the PLC`, {
+        description: (e as Error).message,
+      });
+      throw e;
     }
   };
 
-  const handleConfirmPick = () => {
+  const handleConfirmPick = async () => {
     if (!order) return;
-    // Call the PLC target for the chosen method, then complete the order.
-    callByMode();
+    // Call the PLC target for the chosen method first. If the PLC write fails,
+    // callByMode throws and we do NOT mark the order complete — so the queue
+    // reflects reality instead of showing "picked" while nothing moved.
+    try {
+      await callByMode();
+    } catch {
+      return;
+    }
     const ok = confirmPick(order.id);
     if (ok) {
       pushActivity("Order Picked", `Order ${order.id} completed`);
