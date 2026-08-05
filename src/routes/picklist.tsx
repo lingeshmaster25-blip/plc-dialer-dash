@@ -23,6 +23,17 @@ const ROW_COLS = "44px 1.2fr 1.3fr 0.8fr 0.6fr";
 
 const binNum = (b: string) => parseInt(b.replace(/\D/g, ""), 10) || 0;
 
+// ── Machine layout — SET THESE TO YOUR RACK ─────────────────────────────
+// The app maps a global bin number to (tray, position-in-tray) with these.
+// If your machine is not 5 bins per tray, the tray it calls will be wrong
+// even when the write itself succeeds. Change only these two values.
+const BINS_PER_TRAY = 5;                              // bins in one tray/rack
+const TRAY_COUNT    = 11;                             // number of trays/racks
+const BIN_COUNT     = TRAY_COUNT * BINS_PER_TRAY;     // total bins (derived)
+const trayOfBin = (n: number) => Math.ceil(n / BINS_PER_TRAY);
+const posInTray = (n: number) => ((n - 1) % BINS_PER_TRAY) + 1;
+// ────────────────────────────────────────────────────────────────────────
+
 function PicklistPage() {
   const navigate = useNavigate();
   useOrders(); // subscribe so component re-renders on store changes
@@ -49,12 +60,12 @@ function PicklistPage() {
     pickedBins.has(n) ? "picked" : n === currentBin ? "now" : involved.has(n) ? "queued" : "empty";
 
   // Tray-based helpers (bin n → tray = ceil(n/5)).
-  const trayOf = (b: string) => Math.ceil(binNum(b) / 5);
+  const trayOf = (b: string) => trayOfBin(binNum(b));
   const involvedTrays = new Set(items.map((it) => trayOf(it.bin)));
   const pickedTrays = new Set(
     [...involvedTrays].filter((t) => items.filter((it) => trayOf(it.bin) === t).every((it) => it.picked))
   );
-  const currentTray = currentBin > 0 ? Math.ceil(currentBin / 5) : -1;
+  const currentTray = currentBin > 0 ? trayOfBin(currentBin) : -1;
   const trayState = (t: number): keyof typeof TILE_COLOR =>
     pickedTrays.has(t) ? "picked" : t === currentTray ? "now" : involvedTrays.has(t) ? "queued" : "empty";
 
@@ -77,14 +88,14 @@ function PicklistPage() {
   // The coordinate words must land before the trigger's rising edge, so the
   // writes are awaited in order — a fire-and-forget sequence can let Bin_Call
   // reach the PLC before SelectedBin/RackNo/RackBin, and the PLC would act on
-  // stale coordinates (or none). Global bin n (1..55) → tray = ceil(n/5),
-  // position-in-tray = ((n-1) % 5) + 1.
+  // stale coordinates (or none). Global bin n → tray = trayOfBin(n),
+  // position-in-tray = posInTray(n)  (see BINS_PER_TRAY at top of file).
   const callBinOnPlc = async (bin: string) => {
     const n = binNum(bin);
     if (n < 1) return;
     await hmiApi.writeTag("SelectedBin", n);
-    await hmiApi.writeTag("RackNo", Math.ceil(n / 5));
-    await hmiApi.writeTag("RackBin", ((n - 1) % 5) + 1);
+    await hmiApi.writeTag("RackNo", trayOfBin(n));
+    await hmiApi.writeTag("RackBin", posInTray(n));
     await hmiApi.writeTag("Bin_Call", true);          // rising edge
     window.setTimeout(() => { hmiApi.writeTag("Bin_Call", false).catch(() => {}); }, 300);
   };
@@ -218,7 +229,7 @@ function PicklistPage() {
                 overflowX: "auto", overflowY: "hidden",
               }}>
                 <div style={{ display: "flex", gap: 10, flexWrap: "nowrap", minWidth: "min-content" }}>
-                  {Array.from({ length: pickMode === "tray" ? 11 : 55 }).map((_, idx) => {
+                  {Array.from({ length: pickMode === "tray" ? TRAY_COUNT : BIN_COUNT }).map((_, idx) => {
                     const n = idx + 1;
                     const state = pickMode === "tray" ? trayState(n) : tileState(n);
                     const prefix = pickMode === "tray" ? "T" : "B";
