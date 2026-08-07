@@ -114,6 +114,21 @@ function PicklistPage() {
   // reach the PLC before SelectedBin/RackNo/RackBin, and the PLC would act on
   // stale coordinates (or none). Global bin n → tray = trayOfBin(n),
   // position-in-tray = posInTray(n)  (see BINS_PER_TRAY at top of file).
+  // Determine what the call will actually reach:
+  //  "live"    → real, connected PLC (writes land in the PLC / TIA Portal)
+  //  "sim"     → simulation (no backend reachable) — UI animates, nothing real
+  //  "offline" → backend up but PLC not connected — writes would fail
+  const plcLinkState = async (): Promise<"live" | "sim" | "offline"> => {
+    try {
+      const st = await hmiApi.status();
+      if (st.simulated === true) return "sim";
+      if (st.connected === false) return "offline";
+      return "live";
+    } catch {
+      return "sim";
+    }
+  };
+
   // Poll the PLC snapshot until the given tags read back the expected values
   // (i.e. visible in the PLC / TIA Portal watch table), or time out. Returns
   // true only when the PLC confirms them. In simulation (no real PLC to read)
@@ -167,6 +182,23 @@ function PicklistPage() {
   const callByMode = async (): Promise<boolean> => {
     const target = items[firstUnpicked] ?? items[0];
     if (!target) return false;
+
+    // Tell the operator what this call will actually reach. This is the fix for
+    // "the app shows a response but TIA shows nothing": in SIM the UI animates
+    // but nothing is written to the real PLC.
+    const link = await plcLinkState();
+    if (link === "offline") {
+      toast.error("PLC offline — nothing written", {
+        description: "The gateway is running but not connected to the PLC. Check IP / rack / slot and PUT-GET access.",
+      });
+      return false;
+    }
+    if (link === "sim") {
+      toast.warning("SIMULATION mode — not a real PLC", {
+        description: "Values are NOT being written to the PLC and will not appear in TIA Portal. Run the gateway (localhost:4000) on the PLC network to go live.",
+      });
+    }
+
     try {
       if (pickMode === "tray") {
         const rackNo = trayOf(target.bin);
