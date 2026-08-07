@@ -79,14 +79,37 @@ app.post("/stop", asyncH(async (_req, res) => {
 app.post("/write", asyncH(async (req, res) => {
   const { tag, value } = req.body || {};
   const def = TAG_BY_NAME.get(tag);
-  if (!def) return res.status(404).json({ ok: false, error: `Unknown tag: ${tag}` });
-  if (def.type === "bool") {
-    await plc.writeByAddr(def.address, Boolean(value));
-  } else {
-    await plc.writeByAddr(def.address, Number(value));
+  if (!def) {
+    console.warn(`[write] UNKNOWN TAG "${tag}" — check that server and client tag catalogs match`);
+    return res.status(404).json({ ok: false, error: `Unknown tag: ${tag}` });
   }
-  res.json({ ok: true });
+  const v = def.type === "bool" ? Boolean(value) : Number(value);
+  try {
+    await plc.writeByAddr(def.address, v);
+    // This log line is ground truth: it shows exactly what was written and to
+    // which absolute PLC address. Match `address` against your TIA watch table
+    // (e.g. MW14 => %MW14, M0.0 => %M0.0). If you see this line but TIA shows
+    // nothing, you are watching a different address than the app writes.
+    console.log(`[write] ${tag} = ${v}  ->  ${def.address}  (${plc.connected ? "LIVE PLC" : "NOT CONNECTED"})`);
+    res.json({ ok: true, tag, address: def.address, value: v, connected: plc.connected });
+  } catch (e) {
+    console.error(`[write] ${tag} -> ${def.address} FAILED: ${e.message}`);
+    res.status(500).json({ ok: false, error: e.message, tag, address: def.address });
+  }
 }));
+
+// Debug: read one tag's current value from the latest poll snapshot.
+// Use it to compare against TIA:  GET /read/SelectedBin
+app.get("/read/:tag", (req, res) => {
+  const def = TAG_BY_NAME.get(req.params.tag);
+  if (!def) return res.status(404).json({ ok: false, error: `Unknown tag: ${req.params.tag}` });
+  const snap = plc.snapshot();
+  res.json({
+    ok: true, tag: req.params.tag, address: def.address,
+    value: snap.tags?.[req.params.tag] ?? null,
+    connected: snap.connected, simulated: snap.simulated,
+  });
+});
 
 app.listen(PORT, () => {
   console.log(`[HMI backend] listening on http://localhost:${PORT}`);
