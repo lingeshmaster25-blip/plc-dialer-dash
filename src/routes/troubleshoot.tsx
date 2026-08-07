@@ -54,7 +54,7 @@ const AXIS_OPTS: { value: string; label: string }[] = [
 // "h" = Move Left/Right) plus the label shown on each of the four direction buttons.
 type AxisCfg = { active: "v" | "h"; up: string; down: string; left: string; right: string };
 const AXIS_CFG: Record<string, AxisCfg> = {
-  X:    { active: "v", up: "Lift Up",      down: "Lift Down",     left: "Move Left", right: "Move Right" },
+  X:    { active: "h", up: "Lift Up",      down: "Lift Down",     left: "Move Left", right: "Move Right" },
   Y:    { active: "h", up: "Lift Up",      down: "Lift Down",     left: "Move Left", right: "Move Right" },
   Z:    { active: "h", up: "Lift Up",      down: "Lift Down",     left: "Move Left", right: "Move Right" },
   A:    { active: "h", up: "Move Forward", down: "Move Downward", left: "Move Left", right: "Move Right" },
