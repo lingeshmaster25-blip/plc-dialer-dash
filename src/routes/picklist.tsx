@@ -32,6 +32,18 @@ const TRAY_COUNT    = 11;                             // number of trays/racks
 const BIN_COUNT     = TRAY_COUNT * BINS_PER_TRAY;     // total bins (derived)
 const trayOfBin = (n: number) => Math.ceil(n / BINS_PER_TRAY);
 const posInTray = (n: number) => ((n - 1) % BINS_PER_TRAY) + 1;
+
+// Resolve the three values a bin call needs (SelectedBin / RackNo / RackBin).
+// Returns null if the item has no usable location — the caller must NOT call
+// the PLC in that case, and the Confirm button must stay disabled.
+const binCallValues = (bin: string | undefined) => {
+  const n = binNum(bin ?? "");
+  if (n < 1) return null;
+  const rackNo = trayOfBin(n);
+  const rackBin = posInTray(n);
+  if (rackNo < 1 || rackBin < 1 || rackBin > BINS_PER_TRAY) return null;
+  return { selectedBin: n, rackNo, rackBin };
+};
 // ────────────────────────────────────────────────────────────────────────
 
 function PicklistPage() {
@@ -43,6 +55,8 @@ function PicklistPage() {
 
   // Picking method chosen for the current order (SKU / Tray / Bin).
   const [pickMode, setPickMode] = useState<"sku" | "tray" | "bin" | null>(null);
+  // True while a call is in flight (writing values + confirming them in the PLC).
+  const [calling, setCalling] = useState(false);
   // Reset the chooser whenever a different order becomes active.
   useEffect(() => { setPickMode(null); }, [order?.id]);
 
@@ -84,57 +98,119 @@ function PicklistPage() {
 
   const allPicked = items.length > 0 && items.every((it) => it.picked);
 
+  // Does the current target actually have the values a PLC call needs?
+  // The Confirm button stays disabled until it does, so a bin can never be
+  // "confirmed" (and marked picked) without a real call going out.
+  const currentTarget = items[firstUnpicked] ?? items[0];
+  const canCall =
+    pickMode === "tray"
+      ? !!currentTarget && trayOf(currentTarget.bin) >= 1
+      : !!currentTarget && binCallValues(currentTarget.bin) !== null;
+  const confirmDisabled = order?.status === "Completed" || !canCall || calling;
+
   // Write a bin's coordinates to the PLC, THEN pulse the call bit.
   // The coordinate words must land before the trigger's rising edge, so the
   // writes are awaited in order — a fire-and-forget sequence can let Bin_Call
   // reach the PLC before SelectedBin/RackNo/RackBin, and the PLC would act on
   // stale coordinates (or none). Global bin n → tray = trayOfBin(n),
   // position-in-tray = posInTray(n)  (see BINS_PER_TRAY at top of file).
-  const callBinOnPlc = async (bin: string) => {
-    const n = binNum(bin);
-    if (n < 1) return;
-    await hmiApi.writeTag("SelectedBin", n);
-    await hmiApi.writeTag("RackNo", trayOfBin(n));
-    await hmiApi.writeTag("RackBin", posInTray(n));
-    await hmiApi.writeTag("Bin_Call", true);          // rising edge
+  // Poll the PLC snapshot until the given tags read back the expected values
+  // (i.e. visible in the PLC / TIA Portal watch table), or time out. Returns
+  // true only when the PLC confirms them. In simulation (no real PLC to read)
+  // it returns true so preview still works.
+  const verifyTagsInPlc = async (expected: Record<string, number>) => {
+    const deadline = Date.now() + 4000;
+    while (Date.now() < deadline) {
+      let st: Awaited<ReturnType<typeof hmiApi.status>> | null = null;
+      try { st = await hmiApi.status(); } catch { st = null; }
+      if (st) {
+        if (st.simulated === true) return true;                 // no real PLC to verify against
+        const t = st.tags ?? {};
+        if (Object.entries(expected).every(([k, v]) => Number(t[k]) === v)) return true;
+      }
+      await new Promise((r) => setTimeout(r, 250));
+    }
+    return false;
+  };
+
+  const callBinOnPlc = async (bin: string): Promise<boolean> => {
+    const vals = binCallValues(bin);
+    if (!vals) {
+      // No values → do not touch Bin_Call. Nothing is sent to the PLC.
+      toast.error("Bin not called — no location values", {
+        description: "SelectedBin / RackNo / RackBin could not be resolved for this item.",
+      });
+      return false;
+    }
+    // 1) write the coordinate words into the PLC (these show up in TIA Portal).
+    await hmiApi.writeTag("SelectedBin", vals.selectedBin);
+    await hmiApi.writeTag("RackNo", vals.rackNo);
+    await hmiApi.writeTag("RackBin", vals.rackBin);
+    // 2) confirm the PLC actually holds those values before triggering.
+    const confirmed = await verifyTagsInPlc({ SelectedBin: vals.selectedBin, RackNo: vals.rackNo, RackBin: vals.rackBin });
+    if (!confirmed) {
+      toast.error("Bin not called — values not confirmed in PLC", {
+        description: `Wrote Bin ${vals.selectedBin} (Rack ${vals.rackNo}, Pos ${vals.rackBin}) but the PLC did not read them back. Check the PLC connection.`,
+      });
+      return false;
+    }
+    // 3) only now pulse the call bit (rising edge) — values are present in PLC.
+    await hmiApi.writeTag("Bin_Call", true);
     window.setTimeout(() => { hmiApi.writeTag("Bin_Call", false).catch(() => {}); }, 300);
+    toast.success(`Bin ${vals.selectedBin} called`, { description: `Rack ${vals.rackNo} · Pos ${vals.rackBin}` });
+    return true;
   };
 
   // Call the PLC target based on the chosen picking method.
   // Target the CURRENT (first unpicked) item, not items[0] — otherwise every
   // confirm re-calls the first bin and later bins are never sent to the PLC.
-  const callByMode = async () => {
+  const callByMode = async (): Promise<boolean> => {
     const target = items[firstUnpicked] ?? items[0];
-    if (!target) return;
+    if (!target) return false;
     try {
       if (pickMode === "tray") {
-        await hmiApi.writeTag("RackNo", trayOf(target.bin));
-        await hmiApi.writeTag("Tray_Call", true);     // rising edge
+        const rackNo = trayOf(target.bin);
+        if (rackNo < 1) {
+          toast.error("Tray not called — no tray value for this item");
+          return false;
+        }
+        await hmiApi.writeTag("RackNo", rackNo);                 // shows in TIA Portal (MW16)
+        const confirmed = await verifyTagsInPlc({ RackNo: rackNo });
+        if (!confirmed) {
+          toast.error("Tray not called — value not confirmed in PLC", {
+            description: `Wrote Rack ${rackNo} but the PLC did not read it back. Check the PLC connection.`,
+          });
+          return false;
+        }
+        await hmiApi.writeTag("Tray_Call", true);     // rising edge — only after value confirmed
         window.setTimeout(() => { hmiApi.writeTag("Tray_Call", false).catch(() => {}); }, 300);
-      } else {
-        // bin or sku → resolve to the bin's coordinates
-        await callBinOnPlc(target.bin);
+        toast.success(`Tray ${rackNo} called`);
+        return true;
       }
+      // bin or sku → resolve to the bin's coordinates (returns false if no values)
+      return await callBinOnPlc(target.bin);
     } catch (e) {
       // Backend reachable but the write was rejected (unknown tag / PLC not
-      // connected). Surface it instead of failing silently.
+      // connected). Surface it and report that nothing was called.
       toast.error(`Could not call ${pickMode === "tray" ? "tray" : "bin " + target.bin} on the PLC`, {
         description: (e as Error).message,
       });
-      throw e;
+      return false;
     }
   };
 
   const handleConfirmPick = async () => {
-    if (!order) return;
-    // Call the PLC target for the chosen method first. If the PLC write fails,
-    // callByMode throws and we do NOT mark the order complete — so the queue
-    // reflects reality instead of showing "picked" while nothing moved.
+    if (!order || calling) return;
+    // Write values → confirm they're in the PLC → pulse the call. Only if the
+    // call actually fired do we complete the order.
+    setCalling(true);
+    let called = false;
     try {
-      await callByMode();
-    } catch {
-      return;
+      called = await callByMode();
+    } finally {
+      setCalling(false);
     }
+    if (!called) return;
     const ok = confirmPick(order.id);
     if (ok) {
       pushActivity("Order Picked", `Order ${order.id} completed`);
@@ -355,20 +431,21 @@ function PicklistPage() {
                   <div style={{ display: "flex", gap: 14 }}>
                     <button
                       onClick={handleConfirmPick}
-                      disabled={order.status === "Completed"}
+                      disabled={confirmDisabled}
+                      title={!canCall && order.status !== "Completed" ? "No location values for this item — call disabled" : undefined}
                       style={{
                         flex: 1, fontSize: 15, fontWeight: 600,
-                        border: "none", borderRadius: 8, padding: "11px 0", cursor: order.status === "Completed" ? "not-allowed" : "pointer",
+                        border: "none", borderRadius: 8, padding: "11px 0", cursor: confirmDisabled ? "not-allowed" : "pointer",
                         display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
                         transition: "background .15s",
-                        background: order.status === "Completed" ? "#d1d5db" : "#1e8449",
-                        color: order.status === "Completed" ? "#9ca3af" : "#fff",
+                        background: confirmDisabled ? "#d1d5db" : "#1e8449",
+                        color: confirmDisabled ? "#9ca3af" : "#fff",
                       }}
-                      onMouseEnter={(e) => { if (order.status !== "Completed") e.currentTarget.style.background = "#196e3c"; }}
-                      onMouseLeave={(e) => { if (order.status !== "Completed") e.currentTarget.style.background = "#1e8449"; }}
+                      onMouseEnter={(e) => { if (!confirmDisabled) e.currentTarget.style.background = "#196e3c"; }}
+                      onMouseLeave={(e) => { if (!confirmDisabled) e.currentTarget.style.background = "#1e8449"; }}
                     >
                       <Check size={18} strokeWidth={3} />
-                      {order.status === "Completed" ? "Completed" : "Confirm Pick"}
+                      {calling ? "Calling…" : order.status === "Completed" ? "Completed" : "Confirm Pick"}
                     </button>
                     <button style={{
                       width: 140, background: "#fff", color: "#1f2937", fontSize: 15, fontWeight: 600,
