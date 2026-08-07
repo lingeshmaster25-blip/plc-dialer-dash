@@ -56,9 +56,9 @@ type AxisCfg = { active: "v" | "h"; up: string; down: string; left: string; righ
 const AXIS_CFG: Record<string, AxisCfg> = {
   X:    { active: "h", up: "Lift Up",      down: "Lift Down",     left: "Move Left", right: "Move Right" },
   Y:    { active: "h", up: "Lift Up",      down: "Lift Down",     left: "Move Left", right: "Move Right" },
-  Z:    { active: "h", up: "Lift Up",      down: "Lift Down",     left: "Move Left", right: "Move Right" },
-  A:    { active: "h", up: "Move Forward", down: "Move Downward", left: "Move Left", right: "Move Right" },
-  B:    { active: "h", up: "Move Forward", down: "Move Downward", left: "Move Left", right: "Move Right" },
+  Z:    { active: "v", up: "Lift Up",      down: "Lift Down",     left: "Move Left", right: "Move Right" },
+  A:    { active: "v", up: "Move Forward", down: "Move Backward", left: "Move Left", right: "Move Right" },
+  B:    { active: "v", up: "Move Forward", down: "Move Backward", left: "Move Left", right: "Move Right" },
   Door: { active: "h", up: "Lift Up",      down: "Lift Down",     left: "Move Left", right: "Move Right" },
 };
 
