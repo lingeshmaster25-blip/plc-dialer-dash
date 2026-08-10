@@ -76,6 +76,8 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const prevRef = useRef<PlcStatus | null>(null);
   const [now, setNow] = useState(new Date());
   const [estop, setEstop] = useState(false);
+  const [estopArmed, setEstopArmed] = useState(false); // "click ESTOP again" step — arms the Deactivate button
+  const autoResetTimer = useRef<number | null>(null);
   const m = useDashboardMetrics();
   const activity = useActivity();
   const lowStock = useLowStock();
@@ -85,18 +87,6 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const [profileOpen, setProfileOpen] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
-  const triggerEstop = () => {
-    setEstop(true);
-    // Best-effort hardware stop; ignore errors when no PLC backend is present.
-    try { Promise.resolve(hmiApi.stop()).catch(() => {}); } catch {}
-    try { Promise.resolve(hmiApi.writeTag("Emergency_Stop_CMD", true)).catch(() => {}); } catch {}
-  };
-
-  const clearEstop = () => {
-    setEstop(false);
-    try { Promise.resolve(hmiApi.writeTag("Emergency_Stop_CMD", false)).catch(() => {}); } catch {}
-  };
-
   const triggerReset = () => {
     try {
       Promise.resolve(hmiApi.writeTag("Reset_PB", true))
@@ -104,6 +94,36 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         .catch(() => {});
     } catch {}
   };
+
+  // Click #1 on the dashboard E-STOP button: activates M5.5 and shows the
+  // overlay. ~2.5s later it auto-pulses Reset_PB (M0.2), matching the
+  // header Reset button's behavior.
+  const triggerEstop = () => {
+    setEstop(true);
+    setEstopArmed(false);
+    // Best-effort hardware stop; ignore errors when no PLC backend is present.
+    try { Promise.resolve(hmiApi.stop()).catch(() => {}); } catch {}
+    try { Promise.resolve(hmiApi.writeTag("Emergency_Stop_CMD", true)).catch(() => {}); } catch {}
+    if (autoResetTimer.current) window.clearTimeout(autoResetTimer.current);
+    autoResetTimer.current = window.setTimeout(() => {
+      triggerReset();
+      autoResetTimer.current = null;
+    }, 2500);
+  };
+
+  // Click #2: tapping the "ESTOP ACTIVATED" indicator in the overlay arms
+  // the Deactivate button — it does nothing to M5.5 by itself.
+  const armEstop = () => setEstopArmed(true);
+
+  // Click #3: only once armed does Deactivate actually release M5.5.
+  const deactivateEstop = () => {
+    if (!estopArmed) return;
+    setEstop(false);
+    setEstopArmed(false);
+    try { Promise.resolve(hmiApi.writeTag("Emergency_Stop_CMD", false)).catch(() => {}); } catch {}
+  };
+
+  useEffect(() => () => { if (autoResetTimer.current) window.clearTimeout(autoResetTimer.current); }, []);
 
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 1000);
@@ -507,18 +527,22 @@ export function DashboardShell({ children }: { children: ReactNode }) {
 
         {/* E-STOP */}
         <button
-          onClick={triggerEstop}
+          onClick={estop ? undefined : triggerEstop}
+          disabled={estop}
+          title={estop ? "E-STOP is activated — use the overlay to deactivate" : "Activate E-STOP (M5.5)"}
           style={{
-          flex: 1, background: "#db0000", borderRadius: 10, border: "none",
-          boxShadow: CARD_SHADOW, cursor: "pointer", display: "flex",
+          flex: 1, background: estop ? "#7f1d1d" : "#db0000", borderRadius: 10, border: "none",
+          boxShadow: CARD_SHADOW, cursor: estop ? "not-allowed" : "pointer", display: "flex",
           flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8,
           transition: "background .15s",
         }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = "#c40000"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "#db0000"; }}
+          onMouseEnter={(e) => { if (!estop) e.currentTarget.style.background = "#c40000"; }}
+          onMouseLeave={(e) => { if (!estop) e.currentTarget.style.background = "#db0000"; }}
         >
           <AlertTriangle size={40} color="#fff" strokeWidth={2.25} />
-          <span style={{ color: "#fff", fontWeight: 800, fontSize: 18, letterSpacing: "1px" }}>E-STOP</span>
+          <span style={{ color: "#fff", fontWeight: 800, fontSize: 18, letterSpacing: "1px" }}>
+            {estop ? "ESTOP ACTIVATED" : "E-STOP"}
+          </span>
         </button>
       </div>
 
@@ -535,39 +559,51 @@ export function DashboardShell({ children }: { children: ReactNode }) {
             display: "flex", flexDirection: "column", alignItems: "center", gap: 18,
             width: "min(560px, 90%)", textAlign: "center",
           }}>
-            <div style={{
-              width: 84, height: 84, borderRadius: "50%", background: "#fde2e2",
-              display: "flex", alignItems: "center", justifyContent: "center",
-            }}>
-              <AlertTriangle size={46} color="#db0000" strokeWidth={2.4} />
-            </div>
-            <span style={{ fontSize: 28, fontWeight: 800, color: "#db0000", letterSpacing: "0.5px" }}>
-              EMERGENCY STOP ACTIVATED
-            </span>
+            {/* Tap this to arm — mirrors the dashboard E-STOP button ("click ESTOP again") */}
+            <button
+              onClick={armEstop}
+              title={estopArmed ? "Armed — press Deactivate below to release" : "Tap to arm release"}
+              style={{
+                display: "flex", flexDirection: "column", alignItems: "center", gap: 14,
+                background: "none", border: "none", padding: 0, cursor: "pointer", width: "100%",
+              }}
+            >
+              <div style={{
+                width: 84, height: 84, borderRadius: "50%",
+                background: estopArmed ? "#fff3cd" : "#fde2e2",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                boxShadow: estopArmed ? "0 0 0 6px rgba(234,179,8,0.18)" : "0 0 0 6px rgba(219,0,0,0.10)",
+                transition: "background .15s, box-shadow .15s",
+              }}>
+                <AlertTriangle size={46} color={estopArmed ? "#b45309" : "#db0000"} strokeWidth={2.4} />
+              </div>
+              <span style={{ fontSize: 28, fontWeight: 800, color: estopArmed ? "#b45309" : "#db0000", letterSpacing: "0.5px" }}>
+                {estopArmed ? "READY TO DEACTIVATE" : "EMERGENCY STOP ACTIVATED"}
+              </span>
+            </button>
+
             <span style={{ fontSize: 17, color: "#4b5563", lineHeight: 1.4 }}>
-              All operations have been halted. Inspect the system and ensure it is safe before resuming.
+              {estopArmed
+                ? "Press Deactivate to release the E-STOP and resume operation."
+                : "All operations have been halted. Tap the indicator above, then press Deactivate to release."}
             </span>
+
             <div style={{ display: "flex", gap: 14, marginTop: 6 }}>
               <button
-                onClick={clearEstop}
+                onClick={deactivateEstop}
+                disabled={!estopArmed}
+                title={estopArmed ? "Release E-STOP (M5.5 = 0)" : "Tap the indicator above first"}
                 style={{
-                  background: "#fff", color: "#1f2937", fontSize: 18, fontWeight: 700,
-                  border: "1px solid #d0d4da", borderRadius: 10, padding: "14px 40px", cursor: "pointer",
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={clearEstop}
-                style={{
-                  background: "#1e8449", color: "#fff", fontSize: 18, fontWeight: 700,
-                  border: "none", borderRadius: 10, padding: "14px 40px", cursor: "pointer",
+                  background: estopArmed ? "#1e8449" : "#c9ccd1",
+                  color: "#fff", fontSize: 18, fontWeight: 700,
+                  border: "none", borderRadius: 10, padding: "14px 46px",
+                  cursor: estopArmed ? "pointer" : "not-allowed",
                   transition: "background .15s",
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = "#196e3c"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = "#1e8449"; }}
+                onMouseEnter={(e) => { if (estopArmed) e.currentTarget.style.background = "#196e3c"; }}
+                onMouseLeave={(e) => { if (estopArmed) e.currentTarget.style.background = "#1e8449"; }}
               >
-                Reset System
+                Deactivate
               </button>
             </div>
           </div>
