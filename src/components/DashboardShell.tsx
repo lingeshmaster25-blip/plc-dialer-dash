@@ -6,7 +6,7 @@ import { useLowStock } from "@/lib/inventory-store";
 import {
   Bell, Clock, Wifi, User, Home, Upload, Download, Package,
   Search, AlertTriangle, Settings, CheckCircle2,
-  Truck, ClipboardList, AlertCircle, X, LogOut,
+  Truck, ClipboardList, AlertCircle, X, LogOut, FlaskConical,
 } from "lucide-react";
 
 // `to` is the route each button navigates to. Only "/" and "/putaway"
@@ -158,6 +158,23 @@ export function DashboardShell({ children }: { children: ReactNode }) {
 
         {/* Right icons */}
         <div style={{ display: "flex", alignItems: "center", gap: 26 }}>
+          <button
+            onClick={() => navigate({ to: "/testing" })}
+            aria-label="Testing"
+            title="Testing — manual bin & tray call"
+            style={{
+              display: "flex", alignItems: "center", gap: 7,
+              background: pathname === "/testing" ? "#0058f1" : "transparent",
+              border: pathname === "/testing" ? "1px solid #0058f1" : "1px solid #2a3a5c",
+              borderRadius: 999, padding: "6px 14px", cursor: "pointer",
+              transition: "background .15s, border-color .15s",
+            }}
+            onMouseEnter={(e) => { if (pathname !== "/testing") e.currentTarget.style.background = "#122048"; }}
+            onMouseLeave={(e) => { if (pathname !== "/testing") e.currentTarget.style.background = "transparent"; }}
+          >
+            <FlaskConical size={16} color="#fff" strokeWidth={2} />
+            <span style={{ color: "#fff", fontSize: 13, fontWeight: 700, letterSpacing: "0.4px" }}>Testing</span>
+          </button>
           <Home size={19} color="#c7cdd8" strokeWidth={2} style={{ cursor: "pointer" }}
             onClick={() => navigate({ to: "/" })} />
           <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
