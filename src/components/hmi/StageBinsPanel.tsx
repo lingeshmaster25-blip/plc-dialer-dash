@@ -1,11 +1,11 @@
 import { useMemo, useState } from "react";
 
 const STAGES = [
-  { tag: "DB_Input_BIN1", label: "BIN 1", addr: "DB3.DBW10" },
-  { tag: "DB_Input_BIN2", label: "BIN 2", addr: "DB3.DBW12" },
-  { tag: "DB_Input_BIN3", label: "BIN 3", addr: "DB3.DBW14" },
-  { tag: "DB_Input_BIN4", label: "BIN 4", addr: "DB3.DBW16" },
-  { tag: "DB_Input_BIN5", label: "BIN 5", addr: "DB3.DBW18" },
+  { tag: "DB_Input_BIN1", label: "BIN 1", addr: "DB3.DBW14" },
+  { tag: "DB_Input_BIN2", label: "BIN 2", addr: "DB3.DBW16" },
+  { tag: "DB_Input_BIN3", label: "BIN 3", addr: "DB3.DBW18" },
+  { tag: "DB_Input_BIN4", label: "BIN 4", addr: "DB3.DBW20" },
+  { tag: "DB_Input_BIN5", label: "BIN 5", addr: "DB3.DBW22" },
 ];
 
 const MAX_BIN = 85;
@@ -53,7 +53,7 @@ export function StageBinsPanel({ tags, disabled, onWrite }: Props) {
           Stage Bin Selection
         </h2>
         <span className="text-[10px] font-mono text-muted-foreground">
-          DB3.DBW10 – DBW18 · 1 to {MAX_BIN}
+          DB3.DBW14 – DBW22 · 1 to {MAX_BIN}
         </span>
       </div>
 
