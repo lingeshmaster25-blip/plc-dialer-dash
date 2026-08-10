@@ -24,7 +24,7 @@ const READ_PLAN = {
   Q:  [{ start: 0, len: 2 }],            // QB0..QB1
   M:  [{ start: 0, len: 20 },            // MB0..MB19  (M0.x, M2.x, M10.x, MW12..MW18)
        { start: 100, len: 2 }],          // MW100
-  DB3:[{ start: 0, len: 20 }],           // DBW0..DBW18
+  DB3:[{ start: 0, len: 24 }],           // DBW0..DBW22
   DB4:[{ start: 0, len: 40 }],           // DBD0..DBD36
 };
 
