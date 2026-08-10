@@ -52,15 +52,40 @@ const AXIS_OPTS: { value: string; label: string }[] = [
 ];
 // Per-selection jog config: which pair is active/highlighted ("v" = Lift/top-bottom,
 // "h" = Move Left/Right) plus the label shown on each of the four direction buttons.
-type AxisCfg = { active: "v" | "h"; up: string; down: string; left: string; right: string };
-const AXIS_CFG: Record<string, AxisCfg> = {
-  X:    { active: "h", up: "Lift Up",      down: "Lift Down",     left: "Move Left", right: "Move Right" },
-  Y:    { active: "h", up: "Lift Up",      down: "Lift Down",     left: "Move Left", right: "Move Right" },
-  Z:    { active: "v", up: "Lift Up",      down: "Lift Down",     left: "Move Left", right: "Move Right" },
-  A:    { active: "v", up: "Move Forward", down: "Move Backward", left: "Move Left", right: "Move Right" },
-  B:    { active: "v", up: "Move Forward", down: "Move Backward", left: "Move Left", right: "Move Right" },
-  Door: { active: "h", up: "Lift Up",      down: "Lift Down",     left: "Move Left", right: "Move Right" },
+// Per-axis manual controls — only the buttons each axis needs. Every button
+// calls a PLC tag: direction buttons jog their Q output (press = true, release
+// = false); Stop calls stopAll (which also clears the outputs).
+type AxisBtn = { label: string; icon: "up" | "down" | "left" | "right" | "stop"; tag?: string; stop?: boolean };
+const AXIS_CONTROLS: Record<string, { layout: "row" | "col"; buttons: AxisBtn[] }> = {
+  X: { layout: "row", buttons: [
+    { label: "Move Left",     icon: "left",  tag: DIR.X.rev },   // X_Rev  Q0.5
+    { label: "Stop",          icon: "stop",  stop: true },
+    { label: "Move Right",    icon: "right", tag: DIR.X.fwd },   // X_Fwd  Q0.4
+  ] },
+  Y: { layout: "col", buttons: [
+    { label: "Lift Up",       icon: "up",    tag: DIR.Y.fwd },   // Y_Fwd  Q0.2
+    { label: "Stop",          icon: "stop",  stop: true },
+    { label: "Lift Down",     icon: "down",  tag: DIR.Y.rev },   // Y_Rev  Q0.3
+  ] },
+  Z: { layout: "col", buttons: [
+    { label: "Lift Up",       icon: "up",    tag: DIR.Z.fwd },   // Z_Up   Q1.2
+    { label: "Lift Down",     icon: "down",  tag: DIR.Z.rev },   // Z_Down Q1.3
+  ] },
+  A: { layout: "col", buttons: [
+    { label: "Move Forward",  icon: "up",    tag: DIR.A.fwd },   // A_Fwd  Q0.6
+    { label: "Move Backward", icon: "down",  tag: DIR.A.rev },   // A_Rev  Q0.7
+  ] },
+  B: { layout: "col", buttons: [
+    { label: "Move Forward",  icon: "up",    tag: DIR.B.fwd },   // B_Fwd  Q1.0
+    { label: "Move Backward", icon: "down",  tag: DIR.B.rev },   // B_Rev  Q1.1
+  ] },
 };
+const iconFor = (k: AxisBtn["icon"]) =>
+  k === "up"    ? <ArrowUp size={18} color="#111827" /> :
+  k === "down"  ? <ArrowDown size={18} color="#111827" /> :
+  k === "left"  ? <ArrowLeft size={18} color="#111827" /> :
+  k === "right" ? <ArrowRight size={18} color="#111827" /> :
+                  <Square size={16} color="#111827" fill="#111827" />;
 
 function ControlTile({ icon, label, gray, disabled, jogTag, onTap }: { icon: React.ReactNode; label: string; gray?: boolean; disabled?: boolean; jogTag?: string; onTap?: () => void }) {
   const press = () => { if (!disabled && jogTag) hmiApi.writeTag(jogTag, true); };
@@ -137,9 +162,7 @@ function TroubleshootPage() {
   };
   const quitManual = () => { stopAll(); setUnlocked(false); setUserId(""); setPasskey(""); };
 
-  const cfg = AXIS_CFG[axis] ?? AXIS_CFG.X;
-  const vActive = cfg.active === "v";
-  const hActive = cfg.active === "h";
+  const ctrl = AXIS_CONTROLS[axis] ?? AXIS_CONTROLS.X;
 
   return (
     <DashboardShell>
@@ -294,12 +317,21 @@ function TroubleshootPage() {
                       <ControlTile icon={<ArrowDown size={18} color="#111827" />} label="Close Door" jogTag="Door_Close_CMD" />
                     </div>
                   ) : (
-                    <div style={{ flex: 1, minHeight: 0, display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gridTemplateRows: "1fr 1fr 1fr", gap: 12, maxWidth: 520, width: "100%", margin: "0 auto" }}>
-                      <div /><ControlTile gray={vActive} disabled={!vActive} icon={<ArrowUp size={18} color="#111827" />} label={cfg.up} jogTag={DIR[axis].fwd} /><div />
-                      <ControlTile gray={hActive} disabled={!hActive} icon={<ArrowLeft size={18} color="#111827" />} label={cfg.left} jogTag={DIR[axis].rev} />
-                      <ControlTile icon={<Square size={16} color="#111827" fill="#111827" />} label="Stop" onTap={stopAll} />
-                      <ControlTile gray={hActive} disabled={!hActive} icon={<ArrowRight size={18} color="#111827" />} label={cfg.right} jogTag={DIR[axis].fwd} />
-                      <div /><ControlTile gray={vActive} disabled={!vActive} icon={<ArrowDown size={18} color="#111827" />} label={cfg.down} jogTag={DIR[axis].rev} /><div />
+                    <div style={{
+                      flex: 1, minHeight: 0, display: "flex",
+                      flexDirection: ctrl.layout === "row" ? "row" : "column",
+                      gap: 12, maxWidth: ctrl.layout === "row" ? 520 : 300, width: "100%",
+                      margin: "0 auto", alignItems: "stretch", justifyContent: "center",
+                    }}>
+                      {ctrl.buttons.map((b) => (
+                        <ControlTile
+                          key={b.label}
+                          icon={iconFor(b.icon)}
+                          label={b.label}
+                          jogTag={b.stop ? undefined : b.tag}
+                          onTap={b.stop ? stopAll : undefined}
+                        />
+                      ))}
                     </div>
                   )}
                 </div>
