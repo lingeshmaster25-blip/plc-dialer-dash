@@ -95,6 +95,7 @@ export const TAGS: TagDef[] = [
   { name: "DB_Input_BIN3",       address: "DB3.DBW14", group: "Stage Bins",       type: "int" },
   { name: "DB_Input_BIN4",       address: "DB3.DBW16", group: "Stage Bins",       type: "int" },
   { name: "DB_Input_BIN5",       address: "DB3.DBW18", group: "Stage Bins",       type: "int" },
+  { name: "Tray_Input",          address: "DB3.DBW2",  group: "Stage Bins",       type: "int" },  // tray number for Tray_Call
   // Target Positions
   { name: "Y_Target",            address: "DB4.DBD0",  group: "Target Positions", type: "real" },
   { name: "X_Target",            address: "DB4.DBD4",  group: "Target Positions", type: "real" },
