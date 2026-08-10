@@ -6,7 +6,7 @@ import { useLowStock } from "@/lib/inventory-store";
 import {
   Bell, Clock, Wifi, User, Home, Upload, Download, Package,
   Search, AlertTriangle, Settings, CheckCircle2,
-  Truck, ClipboardList, AlertCircle, X, LogOut, FlaskConical,
+  Truck, ClipboardList, AlertCircle, X, LogOut, FlaskConical, RotateCcw,
 } from "lucide-react";
 
 // `to` is the route each button navigates to. Only "/" and "/putaway"
@@ -89,6 +89,20 @@ export function DashboardShell({ children }: { children: ReactNode }) {
     setEstop(true);
     // Best-effort hardware stop; ignore errors when no PLC backend is present.
     try { Promise.resolve(hmiApi.stop()).catch(() => {}); } catch {}
+    try { Promise.resolve(hmiApi.writeTag("Emergency_Stop_CMD", true)).catch(() => {}); } catch {}
+  };
+
+  const clearEstop = () => {
+    setEstop(false);
+    try { Promise.resolve(hmiApi.writeTag("Emergency_Stop_CMD", false)).catch(() => {}); } catch {}
+  };
+
+  const triggerReset = () => {
+    try {
+      Promise.resolve(hmiApi.writeTag("Reset_PB", true))
+        .then(() => { window.setTimeout(() => { hmiApi.writeTag("Reset_PB", false).catch(() => {}); }, 400); })
+        .catch(() => {});
+    } catch {}
   };
 
   useEffect(() => {
@@ -174,6 +188,22 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           >
             <FlaskConical size={16} color="#fff" strokeWidth={2} />
             <span style={{ color: "#fff", fontSize: 13, fontWeight: 700, letterSpacing: "0.4px" }}>Testing</span>
+          </button>
+          <button
+            onClick={triggerReset}
+            aria-label="Reset"
+            title="Reset — pulses Reset_PB (M0.2)"
+            style={{
+              display: "flex", alignItems: "center", gap: 7,
+              background: "transparent", border: "1px solid #2a3a5c",
+              borderRadius: 999, padding: "6px 14px", cursor: "pointer",
+              transition: "background .15s",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "#122048"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+          >
+            <RotateCcw size={16} color="#fff" strokeWidth={2} />
+            <span style={{ color: "#fff", fontSize: 13, fontWeight: 700, letterSpacing: "0.4px" }}>Reset</span>
           </button>
           <Home size={19} color="#c7cdd8" strokeWidth={2} style={{ cursor: "pointer" }}
             onClick={() => navigate({ to: "/" })} />
@@ -519,7 +549,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
             </span>
             <div style={{ display: "flex", gap: 14, marginTop: 6 }}>
               <button
-                onClick={() => setEstop(false)}
+                onClick={clearEstop}
                 style={{
                   background: "#fff", color: "#1f2937", fontSize: 18, fontWeight: 700,
                   border: "1px solid #d0d4da", borderRadius: 10, padding: "14px 40px", cursor: "pointer",
@@ -528,7 +558,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                 Cancel
               </button>
               <button
-                onClick={() => setEstop(false)}
+                onClick={clearEstop}
                 style={{
                   background: "#1e8449", color: "#fff", fontSize: 18, fontWeight: 700,
                   border: "none", borderRadius: 10, padding: "14px 40px", cursor: "pointer",
