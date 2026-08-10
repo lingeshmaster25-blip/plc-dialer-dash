@@ -69,14 +69,17 @@ const AXIS_CONTROLS: Record<string, { layout: "row" | "col"; buttons: AxisBtn[] 
   ] },
   Z: { layout: "col", buttons: [
     { label: "Lift Up",       icon: "up",    tag: DIR.Z.fwd },   // Z_Up   Q1.2
+    { label: "Stop",          icon: "stop",  stop: true },
     { label: "Lift Down",     icon: "down",  tag: DIR.Z.rev },   // Z_Down Q1.3
   ] },
   A: { layout: "col", buttons: [
     { label: "Move Forward",  icon: "up",    tag: DIR.A.fwd },   // A_Fwd  Q0.6
+    { label: "Stop",          icon: "stop",  stop: true },
     { label: "Move Backward", icon: "down",  tag: DIR.A.rev },   // A_Rev  Q0.7
   ] },
   B: { layout: "col", buttons: [
     { label: "Move Forward",  icon: "up",    tag: DIR.B.fwd },   // B_Fwd  Q1.0
+    { label: "Stop",          icon: "stop",  stop: true },
     { label: "Move Backward", icon: "down",  tag: DIR.B.rev },   // B_Rev  Q1.1
   ] },
 };
