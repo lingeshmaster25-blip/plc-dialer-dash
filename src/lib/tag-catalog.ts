@@ -11,6 +11,7 @@ export const TAGS: TagDef[] = [
   { name: "Tray_Call",           address: "M0.6",      group: "Force Buttons",    type: "bool" },  // tray call
   { name: "Bin_Return_Home",     address: "M6.0",      group: "Force Buttons",    type: "bool" },  // bin return home
   { name: "Tray_Return_Home",    address: "M0.7",      group: "Force Buttons",    type: "bool" },  // tray return home
+  { name: "Emergency_Stop_CMD",  address: "M5.5",      group: "Force Buttons",    type: "bool" },  // E-STOP button (header/dashboard)
   // System
   { name: "H_run",               address: "M6.1",      group: "System",           type: "bool" },
   { name: "Bin_store_complete",  address: "M8.2",      group: "System",           type: "bool" },
@@ -90,11 +91,11 @@ export const TAGS: TagDef[] = [
   { name: "Bin_Not_Seated",          address: "M8.4", group: "Alarms", type: "bool" },
   { name: "Tray_Not_Seated",         address: "M8.5", group: "Alarms", type: "bool" },
   // Stage Bins
-  { name: "DB_Input_BIN1",       address: "DB3.DBW10", group: "Stage Bins",       type: "int" },
-  { name: "DB_Input_BIN2",       address: "DB3.DBW12", group: "Stage Bins",       type: "int" },
-  { name: "DB_Input_BIN3",       address: "DB3.DBW14", group: "Stage Bins",       type: "int" },
-  { name: "DB_Input_BIN4",       address: "DB3.DBW16", group: "Stage Bins",       type: "int" },
-  { name: "DB_Input_BIN5",       address: "DB3.DBW18", group: "Stage Bins",       type: "int" },
+  { name: "DB_Input_BIN1",       address: "DB3.DBW14", group: "Stage Bins",       type: "int" },
+  { name: "DB_Input_BIN2",       address: "DB3.DBW16", group: "Stage Bins",       type: "int" },
+  { name: "DB_Input_BIN3",       address: "DB3.DBW18", group: "Stage Bins",       type: "int" },
+  { name: "DB_Input_BIN4",       address: "DB3.DBW20", group: "Stage Bins",       type: "int" },
+  { name: "DB_Input_BIN5",       address: "DB3.DBW22", group: "Stage Bins",       type: "int" },
   { name: "Tray_Input",          address: "DB3.DBW2",  group: "Stage Bins",       type: "int" },  // tray number for Tray_Call
   // Target Positions
   { name: "Y_Target",            address: "DB4.DBD0",  group: "Target Positions", type: "real" },
