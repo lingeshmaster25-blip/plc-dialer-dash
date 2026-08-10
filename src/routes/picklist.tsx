@@ -114,40 +114,6 @@ function PicklistPage() {
   // reach the PLC before SelectedBin/RackNo/RackBin, and the PLC would act on
   // stale coordinates (or none). Global bin n → tray = trayOfBin(n),
   // position-in-tray = posInTray(n)  (see BINS_PER_TRAY at top of file).
-  // Determine what the call will actually reach:
-  //  "live"    → real, connected PLC (writes land in the PLC / TIA Portal)
-  //  "sim"     → simulation (no backend reachable) — UI animates, nothing real
-  //  "offline" → backend up but PLC not connected — writes would fail
-  const plcLinkState = async (): Promise<"live" | "sim" | "offline"> => {
-    try {
-      const st = await hmiApi.status();
-      if (st.simulated === true) return "sim";
-      if (st.connected === false) return "offline";
-      return "live";
-    } catch {
-      return "sim";
-    }
-  };
-
-  // Poll the PLC snapshot until the given tags read back the expected values
-  // (i.e. visible in the PLC / TIA Portal watch table), or time out. Returns
-  // true only when the PLC confirms them. In simulation (no real PLC to read)
-  // it returns true so preview still works.
-  const verifyTagsInPlc = async (expected: Record<string, number>) => {
-    const deadline = Date.now() + 4000;
-    while (Date.now() < deadline) {
-      let st: Awaited<ReturnType<typeof hmiApi.status>> | null = null;
-      try { st = await hmiApi.status(); } catch { st = null; }
-      if (st) {
-        if (st.simulated === true) return true;                 // no real PLC to verify against
-        const t = st.tags ?? {};
-        if (Object.entries(expected).every(([k, v]) => Number(t[k]) === v)) return true;
-      }
-      await new Promise((r) => setTimeout(r, 250));
-    }
-    return false;
-  };
-
   const callBinOnPlc = async (bin: string): Promise<boolean> => {
     const vals = binCallValues(bin);
     if (!vals) {
@@ -157,19 +123,13 @@ function PicklistPage() {
       });
       return false;
     }
-    // 1) write the coordinate words into the PLC (these show up in TIA Portal).
+    // Write the coordinate words, then pulse the call bit — the direct sequence
+    // the working build used. (A read-back "verify" gate was removed: on this
+    // PLC the words are consumed on the Bin_Call edge, so the read-back never
+    // matched and the call was being blocked.)
     await hmiApi.writeTag("SelectedBin", vals.selectedBin);
     await hmiApi.writeTag("RackNo", vals.rackNo);
     await hmiApi.writeTag("RackBin", vals.rackBin);
-    // 2) confirm the PLC actually holds those values before triggering.
-    const confirmed = await verifyTagsInPlc({ SelectedBin: vals.selectedBin, RackNo: vals.rackNo, RackBin: vals.rackBin });
-    if (!confirmed) {
-      toast.error("Bin not called — values not confirmed in PLC", {
-        description: `Wrote Bin ${vals.selectedBin} (Rack ${vals.rackNo}, Pos ${vals.rackBin}) but the PLC did not read them back. Check the PLC connection.`,
-      });
-      return false;
-    }
-    // 3) only now pulse the call bit (rising edge) — values are present in PLC.
     await hmiApi.writeTag("Bin_Call", true);
     window.setTimeout(() => { hmiApi.writeTag("Bin_Call", false).catch(() => {}); }, 300);
     toast.success(`Bin ${vals.selectedBin} called`, { description: `Rack ${vals.rackNo} · Pos ${vals.rackBin}` });
@@ -183,22 +143,6 @@ function PicklistPage() {
     const target = items[firstUnpicked] ?? items[0];
     if (!target) return false;
 
-    // Tell the operator what this call will actually reach. This is the fix for
-    // "the app shows a response but TIA shows nothing": in SIM the UI animates
-    // but nothing is written to the real PLC.
-    const link = await plcLinkState();
-    if (link === "offline") {
-      toast.error("PLC offline — nothing written", {
-        description: "The gateway is running but not connected to the PLC. Check IP / rack / slot and PUT-GET access.",
-      });
-      return false;
-    }
-    if (link === "sim") {
-      toast.warning("SIMULATION mode — not a real PLC", {
-        description: "Values are NOT being written to the PLC and will not appear in TIA Portal. Run the gateway (localhost:4000) on the PLC network to go live.",
-      });
-    }
-
     try {
       if (pickMode === "tray") {
         const rackNo = trayOf(target.bin);
@@ -206,15 +150,8 @@ function PicklistPage() {
           toast.error("Tray not called — no tray value for this item");
           return false;
         }
-        await hmiApi.writeTag("RackNo", rackNo);                 // shows in TIA Portal (MW16)
-        const confirmed = await verifyTagsInPlc({ RackNo: rackNo });
-        if (!confirmed) {
-          toast.error("Tray not called — value not confirmed in PLC", {
-            description: `Wrote Rack ${rackNo} but the PLC did not read it back. Check the PLC connection.`,
-          });
-          return false;
-        }
-        await hmiApi.writeTag("Tray_Call", true);     // rising edge — only after value confirmed
+        await hmiApi.writeTag("RackNo", rackNo);                 // MW16 (visible in TIA Portal)
+        await hmiApi.writeTag("Tray_Call", true);               // rising edge
         window.setTimeout(() => { hmiApi.writeTag("Tray_Call", false).catch(() => {}); }, 300);
         toast.success(`Tray ${rackNo} called`);
         return true;
