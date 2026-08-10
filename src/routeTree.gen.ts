@@ -9,55 +9,21 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as TroubleshootRouteImport } from './routes/troubleshoot'
-import { Route as SettingsRouteImport } from './routes/settings'
-import { Route as SearchRouteImport } from './routes/search'
-import { Route as PutawayRouteImport } from './routes/putaway'
-import { Route as PicklistRouteImport } from './routes/picklist'
-import { Route as OrdersRouteImport } from './routes/orders'
-import { Route as OrderNewRouteImport } from './routes/order-new'
-import { Route as MaintenanceRouteImport } from './routes/maintenance'
-import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as MaintenanceRouteImport } from './routes/maintenance'
+import { Route as OrderNewRouteImport } from './routes/order-new'
+import { Route as OrdersRouteImport } from './routes/orders'
+import { Route as PicklistRouteImport } from './routes/picklist'
+import { Route as PutawayRouteImport } from './routes/putaway'
+import { Route as SearchRouteImport } from './routes/search'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as TestingRouteImport } from './routes/testing'
+import { Route as TroubleshootRouteImport } from './routes/troubleshoot'
 
-const TroubleshootRoute = TroubleshootRouteImport.update({
-  id: '/troubleshoot',
-  path: '/troubleshoot',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SettingsRoute = SettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SearchRoute = SearchRouteImport.update({
-  id: '/search',
-  path: '/search',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PutawayRoute = PutawayRouteImport.update({
-  id: '/putaway',
-  path: '/putaway',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PicklistRoute = PicklistRouteImport.update({
-  id: '/picklist',
-  path: '/picklist',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OrdersRoute = OrdersRouteImport.update({
-  id: '/orders',
-  path: '/orders',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OrderNewRoute = OrderNewRouteImport.update({
-  id: '/order-new',
-  path: '/order-new',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MaintenanceRoute = MaintenanceRouteImport.update({
-  id: '/maintenance',
-  path: '/maintenance',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -65,9 +31,49 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const MaintenanceRoute = MaintenanceRouteImport.update({
+  id: '/maintenance',
+  path: '/maintenance',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OrderNewRoute = OrderNewRouteImport.update({
+  id: '/order-new',
+  path: '/order-new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OrdersRoute = OrdersRouteImport.update({
+  id: '/orders',
+  path: '/orders',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PicklistRoute = PicklistRouteImport.update({
+  id: '/picklist',
+  path: '/picklist',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PutawayRoute = PutawayRouteImport.update({
+  id: '/putaway',
+  path: '/putaway',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SearchRoute = SearchRouteImport.update({
+  id: '/search',
+  path: '/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TestingRoute = TestingRouteImport.update({
+  id: '/testing',
+  path: '/testing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TroubleshootRoute = TroubleshootRouteImport.update({
+  id: '/troubleshoot',
+  path: '/troubleshoot',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -81,6 +87,7 @@ export interface FileRoutesByFullPath {
   '/putaway': typeof PutawayRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
+  '/testing': typeof TestingRoute
   '/troubleshoot': typeof TroubleshootRoute
 }
 export interface FileRoutesByTo {
@@ -93,6 +100,7 @@ export interface FileRoutesByTo {
   '/putaway': typeof PutawayRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
+  '/testing': typeof TestingRoute
   '/troubleshoot': typeof TroubleshootRoute
 }
 export interface FileRoutesById {
@@ -106,6 +114,7 @@ export interface FileRoutesById {
   '/putaway': typeof PutawayRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
+  '/testing': typeof TestingRoute
   '/troubleshoot': typeof TroubleshootRoute
 }
 export interface FileRouteTypes {
@@ -120,6 +129,7 @@ export interface FileRouteTypes {
     | '/putaway'
     | '/search'
     | '/settings'
+    | '/testing'
     | '/troubleshoot'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -132,6 +142,7 @@ export interface FileRouteTypes {
     | '/putaway'
     | '/search'
     | '/settings'
+    | '/testing'
     | '/troubleshoot'
   id:
     | '__root__'
@@ -144,6 +155,7 @@ export interface FileRouteTypes {
     | '/putaway'
     | '/search'
     | '/settings'
+    | '/testing'
     | '/troubleshoot'
   fileRoutesById: FileRoutesById
 }
@@ -157,65 +169,17 @@ export interface RootRouteChildren {
   PutawayRoute: typeof PutawayRoute
   SearchRoute: typeof SearchRoute
   SettingsRoute: typeof SettingsRoute
+  TestingRoute: typeof TestingRoute
   TroubleshootRoute: typeof TroubleshootRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/troubleshoot': {
-      id: '/troubleshoot'
-      path: '/troubleshoot'
-      fullPath: '/troubleshoot'
-      preLoaderRoute: typeof TroubleshootRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/settings': {
-      id: '/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof SettingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/search': {
-      id: '/search'
-      path: '/search'
-      fullPath: '/search'
-      preLoaderRoute: typeof SearchRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/putaway': {
-      id: '/putaway'
-      path: '/putaway'
-      fullPath: '/putaway'
-      preLoaderRoute: typeof PutawayRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/picklist': {
-      id: '/picklist'
-      path: '/picklist'
-      fullPath: '/picklist'
-      preLoaderRoute: typeof PicklistRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/orders': {
-      id: '/orders'
-      path: '/orders'
-      fullPath: '/orders'
-      preLoaderRoute: typeof OrdersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/order-new': {
-      id: '/order-new'
-      path: '/order-new'
-      fullPath: '/order-new'
-      preLoaderRoute: typeof OrderNewRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/maintenance': {
-      id: '/maintenance'
-      path: '/maintenance'
-      fullPath: '/maintenance'
-      preLoaderRoute: typeof MaintenanceRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -225,11 +189,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/maintenance': {
+      id: '/maintenance'
+      path: '/maintenance'
+      fullPath: '/maintenance'
+      preLoaderRoute: typeof MaintenanceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/order-new': {
+      id: '/order-new'
+      path: '/order-new'
+      fullPath: '/order-new'
+      preLoaderRoute: typeof OrderNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/orders': {
+      id: '/orders'
+      path: '/orders'
+      fullPath: '/orders'
+      preLoaderRoute: typeof OrdersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/picklist': {
+      id: '/picklist'
+      path: '/picklist'
+      fullPath: '/picklist'
+      preLoaderRoute: typeof PicklistRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/putaway': {
+      id: '/putaway'
+      path: '/putaway'
+      fullPath: '/putaway'
+      preLoaderRoute: typeof PutawayRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/search': {
+      id: '/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof SearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/testing': {
+      id: '/testing'
+      path: '/testing'
+      fullPath: '/testing'
+      preLoaderRoute: typeof TestingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/troubleshoot': {
+      id: '/troubleshoot'
+      path: '/troubleshoot'
+      fullPath: '/troubleshoot'
+      preLoaderRoute: typeof TroubleshootRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -245,6 +265,7 @@ const rootRouteChildren: RootRouteChildren = {
   PutawayRoute: PutawayRoute,
   SearchRoute: SearchRoute,
   SettingsRoute: SettingsRoute,
+  TestingRoute: TestingRoute,
   TroubleshootRoute: TroubleshootRoute,
 }
 export const routeTree = rootRouteImport
