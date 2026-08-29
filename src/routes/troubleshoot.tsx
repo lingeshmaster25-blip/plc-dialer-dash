@@ -36,10 +36,10 @@ const FIELD: React.CSSProperties = {
 // Direction bits per selection (Z uses Up/Down, Door uses Open/Close).
 const DIR: Record<string, { fwd: string; rev: string }> = {
   X: { fwd: "X_Fwd", rev: "X_Rev" },
-  Y: { fwd: "Y_Fwd", rev: "Y_Rev" },
+  Y: { fwd: "Y_Up", rev: "Y_Down" },         // manual jog M3.0 / M3.1 (press & hold)
   Z: { fwd: "Z_Up", rev: "Z_Down" },
   A: { fwd: "A_Fwd", rev: "A_Rev" },
-  B: { fwd: "B_Fwd", rev: "B_Rev" },
+  B: { fwd: "B_Forward", rev: "B_Reverse" },  // manual jog M4.2 / M4.3 (press & hold)
   Door: { fwd: "Door_Open_CMD", rev: "Door_Close_CMD" },
 };
 const AXIS_OPTS: { value: string; label: string }[] = [
@@ -149,7 +149,12 @@ function TroubleshootPage() {
   const grantAccess = () => {
     const idOk = userId.trim().toLowerCase() === MASTER_USER.toLowerCase();
     const keyOk = passkey.trim() === MASTER_KEY;
-    if (idOk && keyOk) { setUnlocked(true); setError(false); }
+    if (idOk && keyOk) {
+      setUnlocked(true); setError(false);
+      // Manual enable (M2.6): pulse 1 then back to 0 on login.
+      hmiApi.writeTag("Manual_Enable", true);
+      window.setTimeout(() => hmiApi.writeTag("Manual_Enable", false), 400);
+    }
     else setError(true);
   };
 
