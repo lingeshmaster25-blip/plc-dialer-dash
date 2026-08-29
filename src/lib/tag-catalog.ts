@@ -20,6 +20,10 @@ export const TAGS: TagDef[] = [
   { name: "Tray_Store_Run",      address: "M2.1",      group: "System",           type: "bool" },
   { name: "Manual_Run",          address: "M2.7",      group: "System",           type: "bool" },
   { name: "Manual_Enable",       address: "M2.6",      group: "System",           type: "bool" },
+  { name: "Y_Up",                address: "M3.0",      group: "Manual Jog",       type: "bool" },
+  { name: "Y_Down",              address: "M3.1",      group: "Manual Jog",       type: "bool" },
+  { name: "B_Forward",           address: "M4.2",      group: "Manual Jog",       type: "bool" },
+  { name: "B_Reverse",           address: "M4.3",      group: "Manual Jog",       type: "bool" },
   // Motor Status
   { name: "Y_InPos",             address: "M10.0",     group: "Motor Status",     type: "bool" },
   { name: "X_InPos",             address: "M10.1",     group: "Motor Status",     type: "bool" },
